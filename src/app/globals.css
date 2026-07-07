@@ -77,16 +77,38 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   object-fit: cover;
 }
 
-/* 후기/인증 갤러리 이미지 (자연 비율 masonry — CSS columns) */
-.rev-img {
-  width: 100%;
-  height: auto;
+/* 후기/인증 자동 스크롤 마퀴 월 */
+.mq-wall { display: flex; flex-direction: column; gap: 16px; }
+.mq {
+  overflow: hidden;
+  /* 좌우 가장자리 페이드 */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+}
+.mq-track { display: flex; gap: 16px; width: max-content; will-change: transform; }
+.mq-l { animation: mq-left 70s linear infinite; }
+.mq-r { animation: mq-right 70s linear infinite; }
+.mq:hover .mq-track { animation-play-state: paused; }
+.mq-card { flex: 0 0 auto; }
+.mq-card img {
+  height: 218px;
+  width: auto;
   display: block;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
+  border-radius: 12px;
   border: 1px solid #E6DFD2;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(32, 28, 23, 0.05);
+}
+@keyframes mq-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes mq-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@media (max-width: 760px) {
+  .mq-card img { height: 168px; border-radius: 10px; }
+  .mq-wall { gap: 12px; }
+  .mq-track { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mq-track { animation: none; }
+  .mq { overflow-x: auto; }
 }
 
 #curriculum, #reviews, #top { scroll-margin-top: 90px; }
