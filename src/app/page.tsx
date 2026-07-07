@@ -274,15 +274,18 @@ export default function Home() {
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(28px,3.6vw,42px)', letterSpacing: '-0.01em', margin: '0 0 8px', maxWidth: '16ch'}}>수강생들의 실제 수익화 인증</h2>
         <p data-reveal="" style={{fontSize: '16px', color: '#938B7F', margin: '0 0 48px'}}>작은 계정으로 협찬과 원고료를 받아낸 진짜 기록입니다.</p>
-        <div data-reveal="" style={{columns: '4', columnGap: '16px'}}>
-          <div id="res1" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res2" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res3" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res4" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res5" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res6" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res7" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
-          <div id="res8" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="수익화 인증"><span>수익화 인증</span></div>
+        <div data-reveal="" className="gallery" style={{columns: '2', columnGap: '16px'}}>
+          <img src="/assets/proof/proof-01.jpg" alt="수강생 수익화 인증 1" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-02.jpg" alt="수강생 수익화 인증 2" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-03.jpg" alt="수강생 수익화 인증 3" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-04.jpg" alt="수강생 수익화 인증 4" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-05.jpg" alt="수강생 수익화 인증 5" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-06.jpg" alt="수강생 수익화 인증 6" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-07.jpg" alt="수강생 수익화 인증 7" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-08.jpg" alt="수강생 수익화 인증 8" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-09.jpg" alt="수강생 수익화 인증 9" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-10.jpg" alt="수강생 수익화 인증 10" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/proof/proof-11.jpg" alt="수강생 수익화 인증 11" loading="lazy" className="rev-img imghover" />
         </div>
       </section>
 
@@ -297,13 +300,20 @@ export default function Home() {
           <h2 className="serif" style={{fontSize: 'clamp(28px,3.6vw,42px)', letterSpacing: '-0.01em', margin: '0', maxWidth: '16ch'}}>수강생들의 강의 후기</h2>
           <div style={{fontSize: '15px', color: '#57514A', borderLeft: '2px solid #B85C38', paddingLeft: '16px', lineHeight: '1.5', maxWidth: '320px'}}>오픈카톡방에서의 <span style={{color: '#201C17', fontWeight: '600'}}>1:1 밀착 피드백</span>이 가장 큰 메리트예요.</div>
         </div>
-        <div data-reveal="" style={{columns: '3', columnGap: '16px'}}>
-          <div id="rev1" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
-          <div id="rev2" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
-          <div id="rev3" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
-          <div id="rev4" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
-          <div id="rev5" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
-          <div id="rev6" className="imghover image-slot" style={{width: '100%', aspectRatio: '9/16', display: 'block', marginBottom: '16px', borderRadius: '10px'}} data-slot="강의 후기"><span>강의 후기</span></div>
+        <div data-reveal="" className="gallery" style={{columns: '2', columnGap: '16px'}}>
+          <img src="/assets/reviews/review-01.jpg" alt="수강생 강의 후기 1" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-02.jpg" alt="수강생 강의 후기 2" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-03.jpg" alt="수강생 강의 후기 3" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-04.jpg" alt="수강생 강의 후기 4" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-05.jpg" alt="수강생 강의 후기 5" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-06.jpg" alt="수강생 강의 후기 6" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-07.jpg" alt="수강생 강의 후기 7" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-08.jpg" alt="수강생 강의 후기 8" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-09.jpg" alt="수강생 강의 후기 9" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-10.jpg" alt="수강생 강의 후기 10" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-11.jpg" alt="수강생 강의 후기 11" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-12.jpg" alt="수강생 강의 후기 12" loading="lazy" className="rev-img imghover" />
+          <img src="/assets/reviews/review-13.jpg" alt="수강생 강의 후기 13" loading="lazy" className="rev-img imghover" />
         </div>
       </section>
 

@@ -77,6 +77,18 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   object-fit: cover;
 }
 
+/* 후기/인증 갤러리 이미지 (자연 비율 masonry — CSS columns) */
+.rev-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  border: 1px solid #E6DFD2;
+}
+
 #curriculum, #reviews, #top { scroll-margin-top: 90px; }
 
 /* =========================================================
@@ -109,8 +121,8 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
     gap: 28px !important;
   }
 
-  /* CSS 다단(columns) 이미지 갤러리 → 2단 */
-  [style*="column-gap"] { columns: 2 !important; }
+  /* 후기/인증 갤러리 → 모바일 1단 (가로 메시지 캡처 가독성 확보) */
+  [style*="column-gap"] { columns: 1 !important; }
 
   /* 3단 통계: 세로 스택 시 데스크톱용 세로 구분선(border-right) 제거 →
      항목 간 가로 구분선으로 교체, 과한 세로 여백 축소 */
