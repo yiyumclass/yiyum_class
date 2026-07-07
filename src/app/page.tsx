@@ -78,27 +78,25 @@ export default function Home() {
             <span className="serif" style={{fontSize: '30px', color: '#201C17'}}>이윰</span>
             <span style={{fontSize: '13px', letterSpacing: '0.04em', color: '#938B7F', lineHeight: '1.5'}}>리빙 크리에이터<br />SNS 수익화 코치<br />@yiyum_home</span>
           </div>
-          <div></div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', paddingTop: '28px', borderTop: '1px solid #DDD5C8'}}>
+            <div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>3주 만에</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>1,000</div>
+              <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워</div>
+            </div>
+            <div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>7주차</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>5,000</div>
+              <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워</div>
+            </div>
+            <div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#B85C38', marginBottom: '7px'}}>12주차</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#B85C38'}}>10,000</div>
+              <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워 달성</div>
+            </div>
+          </div>
         </div>
 
-        {/* growth */}
-        <div data-reveal="" className="stat-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0', margin: '96px 0 0', borderTop: '1px solid #DDD5C8'}}>
-          <div style={{padding: '32px 28px 32px 0', borderRight: '1px solid #DDD5C8'}}>
-            <div style={{fontSize: '13px', letterSpacing: '0.06em', color: '#938B7F', marginBottom: '14px'}}>3주 만에</div>
-            <div className="serif" style={{fontSize: '46px', lineHeight: '1', color: '#201C17'}}>1,000</div>
-            <div style={{fontSize: '14px', color: '#938B7F', marginTop: '8px'}}>팔로워</div>
-          </div>
-          <div style={{padding: '32px 28px', borderRight: '1px solid #DDD5C8'}}>
-            <div style={{fontSize: '13px', letterSpacing: '0.06em', color: '#938B7F', marginBottom: '14px'}}>7주차</div>
-            <div className="serif" style={{fontSize: '46px', lineHeight: '1', color: '#201C17'}}>5,000</div>
-            <div style={{fontSize: '14px', color: '#938B7F', marginTop: '8px'}}>팔로워</div>
-          </div>
-          <div style={{padding: '32px 0 32px 28px'}}>
-            <div style={{fontSize: '13px', letterSpacing: '0.06em', color: '#B85C38', marginBottom: '14px'}}>12주차</div>
-            <div className="serif" style={{fontSize: '46px', lineHeight: '1', color: '#B85C38'}}>10,000</div>
-            <div style={{fontSize: '14px', color: '#938B7F', marginTop: '8px'}}>팔로워 달성</div>
-          </div>
-        </div>
 
         {/* 협찬 로드맵 */}
         <div style={{marginTop: '110px'}}>
