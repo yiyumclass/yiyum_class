@@ -31,19 +31,19 @@ export default function Home() {
             <span style={{display: 'block', overflow: 'hidden', paddingBottom: '6px'}}><span style={{display: 'block', animation: 'rise 1s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}>수가 <span style={{color: '#B85C38'}}>아닙니다</span></span></span>
           </h1>
 
-          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: '44px', marginTop: '52px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.85s both'}}>
+          <div className="hero-stats" style={{display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: '44px', marginTop: '52px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.85s both'}}>
             <div style={{maxWidth: '180px', textAlign: 'left'}}>
               <div style={{fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A79F92', marginBottom: '10px'}}>흔한 착각</div>
-              <div style={{fontSize: '16px', lineHeight: '1.55', color: '#938B7F'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#57514A'}}>5만</span>인데<br className="bk" />수익화 실패</div>
+              <div style={{fontSize: '16px', lineHeight: '1.55', color: '#938B7F'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#57514A'}}>5만</span>인데{" "}<br className="bk" />수익화 실패</div>
             </div>
             <div style={{width: '1px', background: '#DDD5C8'}}></div>
             <div style={{maxWidth: '200px', textAlign: 'left'}}>
               <div style={{fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#B85C38', marginBottom: '10px'}}>이윰의 방식</div>
-              <div style={{fontSize: '16px', lineHeight: '1.55', color: '#2E2820'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>500</span>부터 협찬,<br className="bk" /><span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>1,000</span>대부터 수익화</div>
+              <div style={{fontSize: '16px', lineHeight: '1.55', color: '#2E2820'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>500</span>부터 협찬,{" "}<br className="bk" /><span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>1,000</span>대부터 수익화</div>
             </div>
           </div>
 
-          <p style={{fontSize: '18px', lineHeight: '1.85', color: '#57514A', margin: '46px auto 0', maxWidth: '520px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1s both'}}>"일단 팔로워부터 늘려." 다들 이렇게 말하지만, 반대입니다.<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 설계해야 해요.</p>
+          <p style={{fontSize: '18px', lineHeight: '1.85', color: '#57514A', margin: '46px auto 0', maxWidth: '520px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1s both'}}>"일단 팔로워부터 늘려." 다들 이렇게 말하지만, 반대입니다.{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 설계해야 해요.</p>
 
           <div style={{marginTop: '44px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1.15s both'}}>
             <a href="#apply" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: '#B85C38', color: '#F6F1E9', borderRadius: '100px', fontSize: '16px', fontWeight: '600', transition: 'transform 0.3s ease,box-shadow 0.3s ease', boxShadow: '0 8px 24px rgba(184,92,56,0.24)'}} className="cta-lift">32강 커리큘럼 보기<span style={{fontSize: '18px'}}>→</span></a>
@@ -62,9 +62,9 @@ export default function Home() {
 
         <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', gap: '72px', alignItems: 'start'}}>
           <div data-reveal="">
-            <p className="serif" style={{fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,<br className="bk" />12주 만에 1만 명을 넘겼어요.</p>
-            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇만은 돼야 협찬이 들어온다'고 생각하세요.<br className="bk" />하지만 저는 1,000명대부터 소파·식탁 같은 가구 협찬을,<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
-            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 40px'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
+            <p className="serif" style={{fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.</p>
+            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇만은 돼야 협찬이 들어온다'고 생각하세요.{" "}<br className="bk" />하지만 저는 1,000명대부터 소파·식탁 같은 가구 협찬을,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
+            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 40px'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
             <div style={{display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '28px', borderTop: '1px solid #DDD5C8'}}>
               <span className="serif" style={{fontSize: '30px', color: '#201C17'}}>이윰</span>
               <span style={{fontSize: '13px', letterSpacing: '0.04em', color: '#938B7F', lineHeight: '1.5'}}>리빙 크리에이터<br />@yiyum_home</span>

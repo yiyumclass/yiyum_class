@@ -79,4 +79,53 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
 
 #curriculum, #reviews, #top { scroll-margin-top: 90px; }
 
+/* =========================================================
+   반응형 (태블릿 이하)
+   원본 디자인은 데스크톱 고정 인라인 스타일이라, 여기서
+   속성 선택자 + !important 로 모바일 레이아웃을 재정의한다.
+   React는 인라인 스타일을 `prop:value`(콜론 뒤 공백 없음)로
+   렌더링하므로 [style*="..."] 매칭이 안정적이다.
+   ========================================================= */
+/* 선택자는 값이 아니라 "속성 이름"으로 매칭한다.
+   React dev/prod가 스타일 값의 공백을 다르게 직렬화하므로
+   (예: `1fr 0.82fr` vs `repeat(3, 1fr)`) 값 매칭은 취약하지만,
+   속성 이름(grid-template-columns, column-gap)은 항상 동일하다. */
+@media (max-width: 760px) {
+  /* 좌우 패딩 축소: 40px → 22px */
+  section,
+  footer,
+  #hero,
+  #nav > div,
+  #buyBar > div {
+    padding-left: 22px !important;
+    padding-right: 22px !important;
+  }
+  /* 섹션 상단 여백 축소 */
+  section { padding-top: 96px !important; }
+
+  /* 모든 다단 grid → 1단 세로 나열 (about, 대상, 로드맵, 3단 통계) */
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+
+  /* CSS 다단(columns) 이미지 갤러리 → 2단 */
+  [style*="column-gap"] { columns: 2 !important; }
+
+  /* 히어로 통계: 컬럼 간격 축소 */
+  .hero-stats { gap: 20px !important; }
+
+  /* 네비: 로고 줄바꿈 방지 + 텍스트 링크 숨김(수강신청 CTA는 유지) */
+  #nav a.serif { white-space: nowrap; }
+  #nav .ulink { display: none !important; }
+}
+
+/* 반응형 (모바일) */
+@media (max-width: 480px) {
+  /* 히어로 통계: 좌우 2단 → 세로 스택 + 가운데 구분선 숨김 */
+  .hero-stats { flex-direction: column !important; align-items: center !important; gap: 16px !important; }
+  .hero-stats > div:nth-child(2) { display: none !important; }
+  .hero-stats > div { text-align: center !important; max-width: 100% !important; }
+}
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
