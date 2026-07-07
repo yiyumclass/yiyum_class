@@ -295,7 +295,7 @@ export default function Home() {
       </section>
 
       {/* ===== 06 FAQ ===== */}
-      <section style={{maxWidth: '820px', margin: '0 auto', padding: '150px 40px 0'}}>
+      <section style={{maxWidth: '1200px', margin: '0 auto', padding: '150px 40px 0'}}>
         <div data-reveal="" style={{display: 'flex', alignItems: 'baseline', gap: '20px', borderTop: '1px solid #DDD5C8', paddingTop: '24px', marginBottom: '34px'}}>
           <span className="serif" style={{fontSize: '15px', color: '#B85C38'}}>06</span>
           <span style={{fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#938B7F', fontWeight: '600'}}>FAQ</span>
