@@ -125,7 +125,10 @@ export default function Home() {
               <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>역제안 템플릿으로 10만원 제안을 <span style={{color: '#B85C38'}}>100만원으로 협상</span> · 식세기 · 냉장고 등 굵직한 가전</span>
             </div>
           </div>
-          <div data-reveal="" style={{margin: '56px 0 0', padding: '34px 38px', background: '#201C17', borderRadius: '16px', maxWidth: '800px'}}><p style={{fontSize: '17px', color: '#EDE7DC', lineHeight: '1.85', margin: '0'}}>제 수강생들도 <span style={{color: '#E0A57E'}}>200~300명</span>의 적은 팔로워로 협찬과 원고료를 받았어요. 비결은 처음부터 <span style={{color: '#ffffff', fontWeight: '600'}}>광고주가 원하는 계정으로 설계</span>하는 것! 계정을 설계하는 단계에서부터 수익 모델까지 그리는 법만 알면 저와 제 수강생처럼 작은 계정으로도 수익화 가능해요.</p></div>
+          <div data-reveal="" className="road-callout">
+            <span className="road-callout-label">결론</span>
+            <p className="road-callout-text">제 수강생들도 <span style={{color: '#E9B48E'}}>200~300명</span>의 적은 팔로워로 협찬과 원고료를 받았어요. 비결은 처음부터 <span style={{color: '#ffffff', fontWeight: '600'}}>광고주가 원하는 계정으로 설계</span>하는 것! 계정을 설계하는 단계에서부터 수익 모델까지 그리는 법만 알면 저와 제 수강생처럼 <span style={{color: '#E9B48E'}}>작은 계정으로도 수익화 가능</span>해요.</p>
+          </div>
         </div>
       </section>
 
