@@ -14,7 +14,7 @@ export default function Home() {
             <a href="#curriculum" className="ulink">강의</a>
             <a href="#apply" className="ulink">전자책</a>
             <a href="#reviews" className="ulink">후기</a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener" className="ulink">SNS</a>
+            <a href="/sns" className="ulink">SNS</a>
             <a href="#apply" style={{padding: '9px 20px', border: '1px solid currentColor', borderRadius: '100px', fontWeight: '600'}}>수강 신청</a>
           </div>
         </div>
