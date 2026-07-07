@@ -115,6 +115,18 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
 
 #curriculum, #reviews, #top { scroll-margin-top: 90px; }
 
+/* About 프로필 사진: 왼쪽 텍스트 컬럼 높이에 맞춰 세로로 채움
+   (오른쪽 캡션 끝이 왼쪽 서명 끝과 수평 정렬되도록) */
+.about-figure { height: 100%; display: flex; flex-direction: column; }
+.about-imgwrap { flex: 1 1 auto; min-height: 0; }
+.about-img { height: 100%; }
+@media (max-width: 760px) {
+  /* 모바일(1단 스택)에선 원래 4:5 비율로 복귀 */
+  .about-figure { height: auto; display: block; }
+  .about-imgwrap { flex: none; }
+  .about-img { height: auto; aspect-ratio: 4 / 5; }
+}
+
 /* 로드맵 결론 다크 콜아웃 (표 전체폭 정렬 + 가운데 정렬) */
 .road-callout {
   margin-top: 44px;

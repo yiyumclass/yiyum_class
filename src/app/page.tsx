@@ -61,7 +61,7 @@ export default function Home() {
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 64px', maxWidth: '18ch'}}>작은 계정이 수익이 되기까지</h2>
 
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', gap: '72px', alignItems: 'start'}}>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', gap: '72px', alignItems: 'stretch'}}>
           <div data-reveal="">
             <p className="serif" style={{fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
@@ -72,8 +72,8 @@ export default function Home() {
               <span style={{fontSize: '13px', letterSpacing: '0.04em', color: '#938B7F', lineHeight: '1.5'}}>리빙 크리에이터<br />SNS 수익화 코치<br />@yiyum_home</span>
             </div>
           </div>
-          <figure data-reveal="" data-reveal-delay="120" style={{margin: '0'}}>
-            <div style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" style={{width: '100%', aspectRatio: '4/5', objectFit: 'cover', display: 'block'}} /></div>
+          <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{margin: '0'}}>
+            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" style={{width: '100%', objectFit: 'cover', display: 'block'}} /></div>
             <figcaption style={{fontSize: '12px', letterSpacing: '0.08em', color: '#A79F92', marginTop: '14px', lineHeight: '1.75'}}>리빙 크리에이터<br />SNS 수익화 코치<br />@yiyum_home</figcaption>
           </figure>
         </div>
