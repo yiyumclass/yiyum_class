@@ -319,7 +319,7 @@ export default function Home() {
         <div data-reveal="" style={{maxWidth: '820px', margin: '0 auto', textAlign: 'center'}}>
           <div style={{fontSize: '13px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#B7A995', marginBottom: '28px'}}>Enroll</div>
           <h2 className="serif" style={{fontSize: 'clamp(32px,4.6vw,56px)', lineHeight: '1.2', letterSpacing: '-0.01em', margin: '0 0 20px'}}>이윰 SNS 수익화 클래스</h2>
-          <p style={{fontSize: '16px', color: '#9A9082', margin: '0 0 56px'}}>5개 챕터 · 총 32강 · 오픈카톡방 1:1 피드백 포함 · 365일 VOD 소장</p>
+          <p style={{fontSize: '16px', color: '#9A9082', margin: '0 0 56px'}}>5개 챕터 · 총 32강 · 1:1 피드백 포함 · 오픈카톡방 인사이트 포함 · 365일 VOD 소장</p>
           <div style={{display: 'inline-flex', alignItems: 'baseline', gap: '10px', paddingBottom: '30px'}}>
             <span className="serif" style={{fontSize: 'clamp(56px,9vw,96px)', lineHeight: '1', color: '#EDE7DC'}}>300,000</span>
             <span className="serif" style={{fontSize: '32px', color: '#D9825E'}}>원</span>
