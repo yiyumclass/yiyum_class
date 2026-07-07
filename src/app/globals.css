@@ -127,6 +127,11 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   .about-img { height: auto; aspect-ratio: 4 / 5; }
 }
 
+/* Before→After 전환 블록: 모바일에선 카드가 세로로 쌓이므로 화살표를 아래로 */
+@media (max-width: 760px) {
+  .ba-arrow { transform: rotate(90deg); font-size: 26px !important; margin: 2px 0; }
+}
+
 /* 로드맵 결론 다크 콜아웃 (표 전체폭 정렬 + 가운데 정렬) */
 .road-callout {
   margin-top: 44px;
