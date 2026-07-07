@@ -72,6 +72,15 @@ export default function Home() {
             <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" style={{width: '100%', objectFit: 'cover', display: 'block'}} /></div>          </figure>
         </div>
 
+        {/* 서명 (본문 아래, 좌측 컬럼 폭에 맞춤) */}
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', gap: '72px', marginTop: '40px'}}>
+          <div data-reveal="" style={{display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '28px', borderTop: '1px solid #DDD5C8'}}>
+            <span className="serif" style={{fontSize: '30px', color: '#201C17'}}>이윰</span>
+            <span style={{fontSize: '13px', letterSpacing: '0.04em', color: '#938B7F', lineHeight: '1.5'}}>리빙 크리에이터<br />SNS 수익화 코치<br />@yiyum_home</span>
+          </div>
+          <div></div>
+        </div>
+
         {/* growth */}
         <div data-reveal="" className="stat-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0', margin: '96px 0 0', borderTop: '1px solid #DDD5C8'}}>
           <div style={{padding: '32px 28px 32px 0', borderRight: '1px solid #DDD5C8'}}>
