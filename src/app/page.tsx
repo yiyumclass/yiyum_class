@@ -77,7 +77,7 @@ export default function Home() {
         </div>
 
         {/* growth */}
-        <div data-reveal="" style={{display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0', margin: '96px 0 0', borderTop: '1px solid #DDD5C8'}}>
+        <div data-reveal="" className="stat-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0', margin: '96px 0 0', borderTop: '1px solid #DDD5C8'}}>
           <div style={{padding: '32px 28px 32px 0', borderRight: '1px solid #DDD5C8'}}>
             <div style={{fontSize: '13px', letterSpacing: '0.06em', color: '#938B7F', marginBottom: '14px'}}>3주 만에</div>
             <div className="serif" style={{fontSize: '46px', lineHeight: '1', color: '#201C17'}}>1,000</div>

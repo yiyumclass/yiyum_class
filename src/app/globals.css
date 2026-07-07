@@ -112,6 +112,20 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   /* CSS 다단(columns) 이미지 갤러리 → 2단 */
   [style*="column-gap"] { columns: 2 !important; }
 
+  /* 3단 통계: 세로 스택 시 데스크톱용 세로 구분선(border-right) 제거 →
+     항목 간 가로 구분선으로 교체, 과한 세로 여백 축소 */
+  .stat-grid { gap: 0 !important; }
+  .stat-grid > div {
+    border-right: none !important;
+    border-bottom: 1px solid #E3DACB;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+  }
+  .stat-grid > div:last-child { border-bottom: none; }
+
+  /* 소개 세리프 리드 문단: 모바일에서 크기 축소로 어색한 줄바꿈 완화 */
+  p.serif { font-size: 18px !important; line-height: 1.7 !important; }
+
   /* 히어로 통계: 컬럼 간격 축소 */
   .hero-stats { gap: 20px !important; }
 
