@@ -33,12 +33,12 @@ export default function Home() {
           </h1>
 
           <div className="hero-stats" style={{display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: '44px', marginTop: '52px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.85s both'}}>
-            <div style={{maxWidth: '180px', textAlign: 'left'}}>
+            <div style={{width: '190px', textAlign: 'right'}}>
               <div style={{fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A79F92', marginBottom: '10px'}}>흔한 착각</div>
               <div style={{fontSize: '16px', lineHeight: '1.55', color: '#938B7F'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#57514A'}}>5만</span>인데{" "}<br className="bk" />수익화 실패</div>
             </div>
             <div style={{width: '1px', background: '#DDD5C8'}}></div>
-            <div style={{maxWidth: '200px', textAlign: 'left'}}>
+            <div style={{width: '190px', textAlign: 'left'}}>
               <div style={{fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#B85C38', marginBottom: '10px'}}>이윰의 방식</div>
               <div style={{fontSize: '16px', lineHeight: '1.55', color: '#2E2820'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>300</span>부터 협찬,{" "}<br className="bk" /><span className="serif" style={{fontSize: '22px', color: '#B85C38'}}>1,000</span>대부터 수익화</div>
             </div>
@@ -50,7 +50,7 @@ export default function Home() {
             <a href="#apply" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: '#B85C38', color: '#F6F1E9', borderRadius: '100px', fontSize: '16px', fontWeight: '600', transition: 'transform 0.3s ease,box-shadow 0.3s ease', boxShadow: '0 8px 24px rgba(184,92,56,0.24)'}} className="cta-lift">32강 커리큘럼 보기<span style={{fontSize: '18px'}}>→</span></a>
           </div>
         </div>
-        <div style={{position: 'absolute', bottom: '34px', left: '50%', transform: 'translateX(-50%)', fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#A79F92', animation: 'fadeUp 1s ease 1.5s both'}}>Scroll</div>
+        <div style={{position: 'absolute', bottom: '34px', left: '0', right: '0', textAlign: 'center', fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#A79F92', animation: 'fadeUp 1s ease 1.5s both'}}>Scroll</div>
       </header>
 
       {/* ===== 01 ABOUT ===== */}
