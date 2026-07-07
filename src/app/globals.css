@@ -1,6 +1,6 @@
-/* 폰트: Pretendard(jsdelivr) + Song Myung(Google Fonts) */
+/* 폰트: Pretendard(jsdelivr, 본문) + Noto Serif KR(Google, 세리프 헤딩) */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css");
-@import url("https://fonts.googleapis.com/css2?family=Song+Myung&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap");
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -14,7 +14,9 @@ body {
 }
 ::selection { background: #E5C9B8; }
 a { text-decoration: none; color: inherit; }
-.serif { font-family: "Song Myung", serif; font-weight: 400; }
+.serif { font-family: "Noto Serif KR", serif; font-weight: 600; letter-spacing: -0.02em; }
+/* 세리프 리드 문단은 중간 굵기로(헤딩보다 가볍게) */
+p.serif { font-weight: 500; }
 body, h1, h2, h3, p, li, span, a, div { word-break: keep-all; }
 h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
