@@ -33,7 +33,7 @@ export default function Home() {
             <span style={{display: 'block', overflow: 'hidden', paddingBottom: '6px'}}><span style={{display: 'block', animation: 'rise 1s cubic-bezier(0.16,1,0.3,1) 0.4s both'}}>수가 <span style={{color: '#B85C38'}}>아닙니다</span></span></span>
           </h1>
 
-          <div className="hero-stats" style={{display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: '44px', marginTop: '52px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.85s both'}}>
+          <div className="hero-stats" style={{display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: '30px', marginTop: '52px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.85s both'}}>
             <div style={{width: '190px', textAlign: 'right'}}>
               <div style={{fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A79F92', marginBottom: '10px'}}>흔한 착각</div>
               <div style={{fontSize: '16px', lineHeight: '1.55', color: '#938B7F'}}>팔로워 <span className="serif" style={{fontSize: '22px', color: '#57514A'}}>5만</span>인데{" "}<br className="bk" />수익화 실패</div>
