@@ -285,10 +285,8 @@ export default function Home() {
           <span className="serif" style={{fontSize: '15px', color: '#B85C38'}}>05</span>
           <span style={{fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#938B7F', fontWeight: '600'}}>Reviews</span>
         </div>
-        <div data-reveal="" style={{marginBottom: '44px'}}>
-          <h2 className="serif" style={{fontSize: 'clamp(28px,3.6vw,42px)', letterSpacing: '-0.01em', margin: '0 0 18px'}}>수강생들의 강의 후기</h2>
-          <div style={{fontSize: '16px', color: '#57514A', borderLeft: '2px solid #B85C38', paddingLeft: '16px', lineHeight: '1.6', maxWidth: '480px'}}>오픈카톡방에서의 <span style={{color: '#201C17', fontWeight: '600'}}>1:1 밀착 피드백</span>이 가장 큰 메리트예요.</div>
-        </div>
+        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(28px,3.6vw,42px)', letterSpacing: '-0.01em', margin: '0 0 8px', maxWidth: '16ch'}}>수강생들의 강의 후기</h2>
+        <p data-reveal="" style={{fontSize: '16px', color: '#938B7F', margin: '0 0 48px'}}>오픈카톡방에서의 1:1 밀착 피드백이 가장 큰 메리트예요.</p>
         <ReviewMarquee alt="수강생 강의 후기" images={["/assets/reviews/review-01.jpg", "/assets/reviews/review-02.jpg", "/assets/reviews/review-03.jpg", "/assets/reviews/review-04.jpg", "/assets/reviews/review-05.jpg", "/assets/reviews/review-06.jpg", "/assets/reviews/review-07.jpg", "/assets/reviews/review-08.jpg", "/assets/reviews/review-09.jpg", "/assets/reviews/review-10.jpg", "/assets/reviews/review-11.jpg", "/assets/reviews/review-12.jpg", "/assets/reviews/review-13.jpg"]} />
       </section>
 
