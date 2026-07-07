@@ -128,7 +128,7 @@ export default function Home() {
             </div>
           </div>
           <div data-reveal="" className="road-callout">
-            <span className="road-callout-label">결론</span>
+            <span className="road-callout-quote" aria-hidden="true">“</span>
             <p className="road-callout-text">제 수강생들도 <span style={{color: '#E9B48E'}}>200~300명</span>의 적은 팔로워로 협찬과 원고료를 받았어요.{" "}<br className="bk" />비결은 처음부터 <span style={{color: '#ffffff', fontWeight: '600'}}>광고주가 원하는 계정으로 설계</span>하는 것!{" "}<br className="bk" />계정을 설계하는 단계에서부터 수익 모델까지 그리는 법만 알면{" "}<br className="bk" />저와 제 수강생처럼 <span style={{color: '#E9B48E'}}>작은 계정으로도 수익화 가능</span>해요.</p>
           </div>
         </div>

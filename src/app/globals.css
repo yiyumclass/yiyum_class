@@ -140,14 +140,14 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   padding: 46px 48px;
   text-align: center;
 }
-.road-callout-label {
-  display: inline-block;
-  font-size: 12px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+.road-callout-quote {
+  display: block;
+  font-family: "Noto Serif KR", serif;
+  font-weight: 700;
+  font-size: 60px;
+  line-height: 0.9;
   color: #D9825E;
-  font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .road-callout-text {
   font-size: 19px;
