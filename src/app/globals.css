@@ -1,49 +1,82 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* 폰트: Pretendard(jsdelivr) + Song Myung(Google Fonts) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Song+Myung&display=swap");
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  font-family: "Pretendard", sans-serif;
+  background: #F3EFE8;
+  color: #201C17;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: #E5C9B8; }
+a { text-decoration: none; color: inherit; }
+.serif { font-family: "Song Myung", serif; font-weight: 400; }
+body, h1, h2, h3, p, li, span, a, div { word-break: keep-all; }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+@media (max-width: 760px) { br.bk { display: none; } }
+
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.chev { transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+details[open] .chev { transform: rotate(45deg); }
+details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rise { from { transform: translateY(112%); } to { transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lineGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes wmDrift { 0%, 100% { transform: translateX(-1.4%); } 50% { transform: translateX(1.4%); } }
+
+.imghover { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.imghover:hover { transform: translateY(-4px) scale(1.012); }
+.ulink { position: relative; }
+.ulink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ulink:hover::after { transform: scaleX(1); transform-origin: left; }
+.cta-lift { will-change: transform; }
+.cta-lift:hover { transform: translateY(-2px); }
+
+/* 이미지 슬롯 플레이스홀더 — 실제 이미지 교체 전까지 표시 */
+.image-slot {
+  position: relative;
+  background: linear-gradient(135deg, #EDE6DB, #E3DACB);
+  border: 1px dashed #C9BCA6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.image-slot > span {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: #A79F92;
+  font-weight: 500;
+  padding: 8px;
+  text-align: center;
+}
+.image-slot > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+#curriculum, #reviews, #top { scroll-margin-top: 90px; }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
