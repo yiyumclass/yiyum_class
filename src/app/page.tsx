@@ -141,29 +141,28 @@ export default function Home() {
           <span style={{fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#938B7F', fontWeight: '600'}}>For You?</span>
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 64px', maxWidth: '18ch'}}>이 강의, 누구를 위한 걸까요</h2>
-        <div style={{display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '24px'}}>
-          {/* 강의 전 */}
-          <div data-reveal="" style={{background: '#ECE5D9', border: '1px solid #DCD4C6', borderRadius: '18px', padding: '32px 30px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.06em', color: '#938B7F', marginBottom: '22px'}}><span style={{fontSize: '18px'}}>😮‍💨</span> 강의 전</div>
-            <ul style={{listStyle: 'none', padding: '0', margin: '0', display: 'flex', flexDirection: 'column', gap: '16px'}}>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#9A917F'}}>강의·전자책 만들어 올려두고<br /><span style={{color: '#57514A', fontWeight: '600'}}>수익 날 때까지 무기한 대기</span></li>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#9A917F'}}>터지는 릴스로 비즈니스 키운다고<br /><span style={{color: '#57514A', fontWeight: '600'}}>1일 1릴스 제작</span></li>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#9A917F'}}>강의·전자책·오프라인 모임 다 만들고<br /><span style={{color: '#57514A', fontWeight: '600'}}>無수익</span></li>
-            </ul>
+        <div className="ba">
+          {/* 이런 분들께 권합니다 (hero) */}
+          <div data-reveal="" className="ba-card ba-yes">
+            <span className="ba-tag">이런 분들께 권합니다</span>
+            <span className="ba-face" aria-hidden="true">🙌</span>
+            <div className="ba-items">
+              <div className="ba-item">팔로워가 적어 협찬·수익화는 아직 멀었다고 생각하는 분</div>
+              <div className="ba-item">계정은 있는데 방향을 못 잡아 막막한 분</div>
+              <div className="ba-item">늘 무가·저단가 제안만 오는 분</div>
+            </div>
           </div>
-          {/* 화살표 */}
-          <div className="ba-arrow" style={{fontSize: '30px', color: '#B85C38', textAlign: 'center', lineHeight: '1'}}>→</div>
-          {/* 강의 후 */}
-          <div data-reveal="" data-reveal-delay="120" style={{background: '#201C17', borderRadius: '18px', padding: '32px 30px', boxShadow: '0 16px 44px rgba(32,28,23,0.18)'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', letterSpacing: '0.06em', color: '#E9B48E', marginBottom: '22px'}}><span style={{fontSize: '18px'}}>🎉</span> 강의 후</div>
-            <ul style={{listStyle: 'none', padding: '0', margin: '0', display: 'flex', flexDirection: 'column', gap: '16px'}}>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#B0A491'}}>내 인스타그램을 보고<br /><span style={{color: '#F6EFE4', fontWeight: '600'}}>기업·인플루언서가 협업 제안</span></li>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#B0A491'}}>터지는 릴스 없이도<br /><span style={{color: '#F6EFE4', fontWeight: '600'}}>상품이 알아서 팔리는 콘텐츠만 제작</span></li>
-              <li style={{fontSize: '15.5px', lineHeight: '1.6', color: '#B0A491'}}>지식 상품이 100% 완성되지 않아도<br /><span style={{color: '#F6EFE4', fontWeight: '600'}}>선주문 예약 판매</span></li>
-            </ul>
+          {/* 이런 분들껜 맞지 않아요 (muted) */}
+          <div data-reveal="" data-reveal-delay="140" className="ba-card ba-no">
+            <span className="ba-tag">이런 분들껜 맞지 않아요</span>
+            <span className="ba-face" aria-hidden="true">🙅</span>
+            <div className="ba-items">
+              <div className="ba-item">이미 원고료 협상을 능숙하게 하는 분</div>
+              <div className="ba-item">팔로워 규모와 무관하게 이미 안정적으로 수익화 중인 분</div>
+              <div className="ba-item">팔로워 폭증만 원하고 수익화엔 관심 없는 분</div>
+            </div>
           </div>
         </div>
-        <p data-reveal="" style={{fontSize: '14px', color: '#A79F92', lineHeight: '1.85', margin: '40px 0 0'}}><span style={{fontWeight: '700', color: '#938B7F'}}>이런 분들껜 맞지 않아요</span>  —  이미 원고료 협상을 능숙하게 하는 분 · 팔로워 규모와 무관하게 이미 안정적으로 수익화 중인 분 · 팔로워 폭증만 원하고 수익화엔 관심 없는 분</p>
       </section>
 
       {/* anchor:curriculum */}

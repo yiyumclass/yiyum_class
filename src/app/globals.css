@@ -127,9 +127,43 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   .about-img { height: auto; aspect-ratio: 4 / 5; }
 }
 
-/* Before→After 전환 블록: 모바일에선 카드가 세로로 쌓이므로 화살표를 아래로 */
+/* =========================================================
+   02 FOR YOU · 대상 Before/After 카드
+   - 스타일: 레퍼런스(큰 이모지 + pill 라벨 + 박스)를 우리 웜톤으로
+   - 텍스트: 대상 페르소나 (권합니다 / 맞지 않아요)
+   - 권합니다: 웜 그라데이션(강조·hero) / 맞지 않아요: muted 웜그레이
+   ========================================================= */
+.ba { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.ba-card {
+  border-radius: 26px; padding: 34px 30px 30px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.ba-yes {
+  background: linear-gradient(158deg, #D9825E 0%, #E3A06E 50%, #EFC594 100%);
+  box-shadow: 0 22px 50px rgba(217, 130, 94, 0.30);
+}
+.ba-no { background: #E9E2D5; border: 1px solid #DBD3C4; }
+/* 라벨 pill */
+.ba-tag {
+  font-family: "Noto Serif KR", serif; font-weight: 700; font-size: 17px; letter-spacing: 0.005em;
+  padding: 8px 22px; border-radius: 100px; margin-bottom: 22px;
+}
+.ba-yes .ba-tag { background: #FFFDF9; color: #C0693F; }
+.ba-no .ba-tag { background: #F6F2E9; color: #8A8071; }
+/* 큰 이모지(포컬) */
+.ba-face { font-size: 58px; line-height: 1; margin-bottom: 24px; }
+/* 항목 박스 */
+.ba-items { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.ba-item {
+  border-radius: 15px; padding: 15px 18px;
+  font-size: 14.5px; line-height: 1.5; font-weight: 500;
+}
+.ba-yes .ba-item { background: rgba(255, 253, 249, 0.94); color: #2A2419; }
+.ba-no .ba-item { background: #F2EDE3; color: #7E7568; }
 @media (max-width: 760px) {
-  .ba-arrow { transform: rotate(90deg); font-size: 26px !important; margin: 2px 0; }
+  .ba { grid-template-columns: 1fr; gap: 18px; }
+  .ba-card { padding: 30px 24px 26px; border-radius: 22px; }
+  .ba-face { font-size: 50px; }
 }
 
 /* 로드맵 결론 다크 콜아웃 (표 전체폭 정렬 + 가운데 정렬) */
