@@ -73,10 +73,13 @@ export default function Home() {
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
               <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
             </div>
-            <div style={{background: '#F5DCC7', border: '1px solid rgba(184,92,56,0.25)', borderRadius: '14px', padding: '24px 26px', margin: '0'}}>
-              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>진짜 차이는 계정을 설계하는 단계에서부터 수익 모델까지 함께 그렸는가에 있어요.</p>
-              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>콘텐츠 하나를 올릴 때도, 팔로워 한 명이 늘 때도,{" "}<br className="bk" />그게 어디로 연결되는지 이미 정해져 있었어요.{" "}<br className="bk" />이 플로우만 알면 작은 계정으로도 수익화 가능해요.</p>
-              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#201C17', fontWeight: '600', margin: '0'}}>팔로워가 수익으로 연결되는 구조를 계정에 심어두는 방법을 가르쳐드려요.</p>
+            <div style={{background: '#F5DCC7', border: '1px solid rgba(184,92,56,0.25)', borderRadius: '14px', padding: '24px 26px', margin: '0', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
+              <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>🎯</span>
+              <div>
+                <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>진짜 차이는 계정을 설계하는 단계에서부터 수익 모델까지 함께 그렸는가에 있어요.</p>
+                <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>콘텐츠 하나를 올릴 때도, 팔로워 한 명이 늘 때도,{" "}<br className="bk" />그게 어디로 연결되는지 이미 정해져 있었어요.{" "}<br className="bk" />이 플로우만 알면 작은 계정으로도 수익화 가능해요.</p>
+                <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#201C17', fontWeight: '600', margin: '0'}}>팔로워가 수익으로 연결되는 구조를 계정에 심어두는 방법을 가르쳐드려요.</p>
+              </div>
             </div>
           </div>
         </div>
