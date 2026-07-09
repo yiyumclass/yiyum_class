@@ -103,10 +103,24 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
 }
 @keyframes mq-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes mq-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
+/* 모바일 전체노출용 메이슨리 (기본 숨김, 모바일에서만 표시) */
+.mq-masonry { display: none; }
+.mq-masonry-img {
+  width: 100%;
+  display: block;
+  margin-bottom: 10px;
+  break-inside: avoid;
+  border-radius: 10px;
+  border: 1px solid #E6DFD2;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(32, 28, 23, 0.05);
+}
+
 @media (max-width: 760px) {
-  .mq-card img { height: 168px; border-radius: 10px; }
-  .mq-wall { gap: 12px; }
-  .mq-track { gap: 12px; }
+  /* 모바일: 마퀴 숨기고 전체 후기를 2단 메이슨리로 나열 */
+  .mq-desktop { display: none; }
+  .mq-masonry { display: block; columns: 2; column-gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mq-track { animation: none; }
