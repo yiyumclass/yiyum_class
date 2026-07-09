@@ -71,7 +71,7 @@ export default function Home() {
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
             <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 20px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
-              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
+              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
             </div>
             <div style={{background: '#F5DCC7', border: '1px solid rgba(184,92,56,0.25)', borderRadius: '14px', padding: '24px 26px', margin: '0', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>🎯</span>
@@ -140,7 +140,7 @@ export default function Home() {
           </div>
           <div data-reveal="" className="road-callout">
             <span className="road-callout-quote" aria-hidden="true">“</span>
-            <p className="road-callout-text">제 수강생들도 <span style={{color: '#E9B48E'}}>200~300명</span>의 적은 팔로워로 협찬과 원고료를 받았어요.{" "}<br className="bk" />비결은 처음부터 <span style={{color: '#ffffff', fontWeight: '600'}}>광고주가 원하는 계정으로 설계</span>하는 것!{" "}<br className="bk" />계정을 설계하는 단계에서부터 수익 모델까지 그리는 법만 알면{" "}<br className="bk" />저와 제 수강생처럼 <span style={{color: '#E9B48E'}}>작은 계정으로도 수익화 가능</span>해요.</p>
+            <p className="road-callout-text">제 수강생들도 <span style={{color: '#E9B48E'}}>200~300명</span>의 적은 팔로워로 협찬과 원고료를 받았어요.{" "}<br className="bk" />비결은 처음부터 <span style={{color: '#ffffff', fontWeight: '600'}}>광고주가 원하는 계정으로 설계</span>하는 것!{" "}<br className="bk" />계정을 설계하는 단계에서부터 수익 모델까지 그리는 법만 알면{" "}<br className="bk" />저와 제 수강생처럼 <span style={{color: '#E9B48E'}}>작은 계정으로도 수익화 가능</span>해요.</p>
           </div>
         </div>
       </section>
