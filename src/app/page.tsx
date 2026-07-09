@@ -65,15 +65,19 @@ export default function Home() {
         <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '0', alignItems: 'stretch'}}>
           <p data-reveal="" className="serif" style={{gridColumn: '1', fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
           <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '1 / span 2', margin: '0'}}>
-            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" style={{width: '100%', objectFit: 'cover', display: 'block'}} /></div>
+            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" /></div>
           </figure>
           <div data-reveal="" style={{gridColumn: '1'}}>
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
-            <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 28px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
+            <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 20px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
               <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
             </div>
-            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0'}}>진짜 차이는 계정을 설계하는 단계에서부터 수익 모델까지 함께 그렸는가에 있어요. 콘텐츠 하나를 올릴 때도, 팔로워 한 명이 늘 때도,{" "}<br className="bk" />그게 어디로 연결되는지 이미 정해져 있었어요.{" "}<br className="bk" />이 플로우만 알면 작은 계정으로도 수익화 가능해요.{" "}<br className="bk" /><span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조를 계정에 심어두는 방법을 가르쳐드려요.</span></p>
+            <div style={{background: '#F5DCC7', border: '1px solid rgba(184,92,56,0.25)', borderRadius: '14px', padding: '24px 26px', margin: '0'}}>
+              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>진짜 차이는 계정을 설계하는 단계에서부터 수익 모델까지 함께 그렸는가에 있어요.</p>
+              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#4A3324', margin: '0 0 16px'}}>콘텐츠 하나를 올릴 때도, 팔로워 한 명이 늘 때도,{" "}<br className="bk" />그게 어디로 연결되는지 이미 정해져 있었어요.{" "}<br className="bk" />이 플로우만 알면 작은 계정으로도 수익화 가능해요.</p>
+              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#201C17', fontWeight: '600', margin: '0'}}>팔로워가 수익으로 연결되는 구조를 계정에 심어두는 방법을 가르쳐드려요.</p>
+            </div>
           </div>
         </div>
 
@@ -342,7 +346,7 @@ export default function Home() {
         <div style={{display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '20px'}}>
           <span className="serif" style={{fontSize: '20px'}}>이윰 SNS 수익화 클래스</span>
         </div>
-        <p style={{fontSize: '12px', color: '#A79F92', lineHeight: '1.9', margin: '0', maxWidth: '820px'}}>히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562 · 통신판매업 신고번호 [신고 후 기재 예정]<br />경기도 화성시 효행로 1068, 603-J65호(병점동, 리더스프라자) · 070-7954-9050 · yiyum.home@gmail.com<br />업무시간 평일 10:00–17:00 (점심 12–13시), 주말·공휴일 제외</p>
+        <p style={{fontSize: '12px', color: '#A79F92', lineHeight: '1.9', margin: '0', maxWidth: '820px'}}>히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562<br />경기도 화성시 효행로 1068, 603-J65호(병점동, 리더스프라자) · 070-7954-9050 · yiyum.home@gmail.com<br />업무시간 평일 10:00–17:00 (점심 12–13시), 주말·공휴일 제외</p>
       </footer>
 
       {/* sticky buy bar */}
