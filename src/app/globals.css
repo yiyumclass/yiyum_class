@@ -121,8 +121,9 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
 .about-imgwrap { flex: 1 1 auto; min-height: 0; }
 .about-img { height: 100%; }
 @media (max-width: 760px) {
-  /* 모바일(1단 스택)에선 원래 4:5 비율로 복귀 */
-  .about-figure { height: auto; display: block; }
+  /* 모바일(1단 스택): 사진이 인트로 문단 바로 뒤로 오도록 grid 배치 해제 +
+     원래 4:5 비율로 복귀 */
+  .about-figure { grid-column: 1 !important; grid-row: auto !important; height: auto; display: block; }
   .about-imgwrap { flex: none; }
   .about-img { height: auto; aspect-ratio: 4 / 5; }
 }

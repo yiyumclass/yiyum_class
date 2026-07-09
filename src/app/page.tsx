@@ -62,15 +62,19 @@ export default function Home() {
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 64px', maxWidth: '18ch'}}>작은 계정이 수익이 되기까지</h2>
 
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', gap: '72px', alignItems: 'stretch'}}>
-          <div data-reveal="">
-            <p className="serif" style={{fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '0', alignItems: 'stretch'}}>
+          <p data-reveal="" className="serif" style={{gridColumn: '1', fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
+          <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '1 / span 2', margin: '0'}}>
+            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" style={{width: '100%', objectFit: 'cover', display: 'block'}} /></div>
+          </figure>
+          <div data-reveal="" style={{gridColumn: '1'}}>
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
-            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 40px'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
+            <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 28px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
+              <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
+              <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
+            </div>
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0'}}>진짜 차이는 계정을 설계하는 단계에서부터 수익 모델까지 함께 그렸는가에 있어요. 콘텐츠 하나를 올릴 때도, 팔로워 한 명이 늘 때도,{" "}<br className="bk" />그게 어디로 연결되는지 이미 정해져 있었어요.{" "}<br className="bk" />이 플로우만 알면 작은 계정으로도 수익화 가능해요.{" "}<br className="bk" /><span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조를 계정에 심어두는 방법을 가르쳐드려요.</span></p>
           </div>
-          <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{margin: '0'}}>
-            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" style={{width: '100%', objectFit: 'cover', display: 'block'}} /></div>          </figure>
         </div>
 
         {/* 서명 (본문 아래, 좌측 컬럼 폭에 맞춤) */}
@@ -182,11 +186,11 @@ export default function Home() {
 
           <details open style={{borderBottom: '1px solid #DDD5C8'}}>
             <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span className="serif" style={{fontSize: '30px', color: '#B85C38', flexShrink: '0', width: '44px'}}>01</span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#938B7F', display: 'block', marginBottom: '4px'}}>Chapter · 6강</span><span style={{fontSize: '22px', fontWeight: '600'}}>계정 세팅</span></span>
+              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>01</span></span>
+              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>6강</span><span style={{fontSize: '22px', fontWeight: '600'}}>계정 세팅</span></span>
               <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
             </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 68px'}}>
+            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
               <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>01</span> 크리에이터 카테고리 정복하기 — 진입장벽·시청자층·얼굴 노출</li>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>02</span> 계정 정체성 잡는 법 — 한 계정에 여러 주제 올려도 되나요?</li>
@@ -200,11 +204,11 @@ export default function Home() {
 
           <details style={{borderBottom: '1px solid #DDD5C8'}}>
             <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span className="serif" style={{fontSize: '30px', color: '#B85C38', flexShrink: '0', width: '44px'}}>02</span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#938B7F', display: 'block', marginBottom: '4px'}}>Chapter · 4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>콘텐츠 제작 기본기</span></span>
+              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>02</span></span>
+              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>콘텐츠 제작 기본기</span></span>
               <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
             </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 68px'}}>
+            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
               <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>07</span> 숏폼 &amp; 릴스 트렌드 분석</li>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>08</span> 촬영 전 기본 세팅값 — 카메라 화질, 촬영 비율</li>
@@ -216,11 +220,11 @@ export default function Home() {
 
           <details style={{borderBottom: '1px solid #DDD5C8'}}>
             <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span className="serif" style={{fontSize: '30px', color: '#B85C38', flexShrink: '0', width: '44px'}}>03</span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#938B7F', display: 'block', marginBottom: '4px'}}>Chapter · 10강</span><span style={{fontSize: '22px', fontWeight: '600'}}>알고리즘</span></span>
+              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>03</span></span>
+              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>10강</span><span style={{fontSize: '22px', fontWeight: '600'}}>알고리즘</span></span>
               <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
             </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 68px'}}>
+            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
               <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>11</span> 알고리즘 타는 릴스의 비밀</li>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>12</span> 카테고리별 내적 욕망 자극하는 법</li>
@@ -238,11 +242,11 @@ export default function Home() {
 
           <details style={{borderBottom: '1px solid #DDD5C8'}}>
             <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span className="serif" style={{fontSize: '30px', color: '#B85C38', flexShrink: '0', width: '44px'}}>04</span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#938B7F', display: 'block', marginBottom: '4px'}}>Chapter · 8강</span><span style={{fontSize: '22px', fontWeight: '600'}}>수익화 로드맵</span></span>
+              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>04</span></span>
+              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>8강</span><span style={{fontSize: '22px', fontWeight: '600'}}>수익화 로드맵</span></span>
               <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
             </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 68px'}}>
+            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
               <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>21</span> 수익화할 수 있는 10가지 루트</li>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>22</span> 팔로워 수 상관없이 100% 수익화 가능한 방법 (100명대도 가능)</li>
@@ -258,11 +262,11 @@ export default function Home() {
 
           <details style={{borderBottom: '1px solid #201C17'}}>
             <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span className="serif" style={{fontSize: '30px', color: '#B85C38', flexShrink: '0', width: '44px'}}>05</span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#938B7F', display: 'block', marginBottom: '4px'}}>Chapter · 4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>찐팬 · 브랜딩</span></span>
+              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>05</span></span>
+              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>찐팬 · 브랜딩</span></span>
               <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
             </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 68px'}}>
+            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
               <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>29</span> 정보성으로 모은 팔로워를 찐팬으로 전환시키는 테크트리</li>
                 <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>30</span> 얼굴 공개 없이 수익화 잘하는 크리에이터의 공통점</li>
@@ -337,7 +341,6 @@ export default function Home() {
       <footer style={{maxWidth: '1200px', margin: '0 auto', padding: '56px 40px 80px'}}>
         <div style={{display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '20px'}}>
           <span className="serif" style={{fontSize: '20px'}}>이윰 SNS 수익화 클래스</span>
-          <span style={{fontSize: '13px', color: '#938B7F'}}>신혼부부 · 살림 · 리빙 SNS 수익화</span>
         </div>
         <p style={{fontSize: '12px', color: '#A79F92', lineHeight: '1.9', margin: '0', maxWidth: '820px'}}>히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562 · 통신판매업 신고번호 [신고 후 기재 예정]<br />경기도 화성시 효행로 1068, 603-J65호(병점동, 리더스프라자) · 070-7954-9050 · yiyum.home@gmail.com<br />업무시간 평일 10:00–17:00 (점심 12–13시), 주말·공휴일 제외</p>
       </footer>
