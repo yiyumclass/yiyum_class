@@ -118,19 +118,19 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
 /* About 프로필 사진: 인트로+본문 텍스트 칸 높이에 맞춰 세로로 채운다.
    콜아웃(주황 박스)을 본문 밖 전체폭으로 빼서 이 칸 높이를 ~590px로 줄였기 때문에,
    정사각형 원본이라도 좌우 20%만 크롭될 뿐 과하게 확대되지 않는다. */
+/* 인트로는 전체폭, 사진은 아래 본문(많은분들~주황박스) 높이에 맞춰 세로로 채운다.
+   이 본문 블록 높이가 사진 폭 대비 ~4:5라, 정사각 원본이라도 좌우만 살짝 크롭될 뿐
+   과확대·여백 없이 자연스럽게 맞는다. */
 .about-figure { height: 100%; }
-/* 정사각형 원본이라 세로 칸을 꽉 채우면 과확대된다. 사진을 살짝만 키워(130%)
-   좌우를 조금만 크롭하고, 위아래 남는 칸은 페이지색 여백으로 채운다.
-   (여백↔크롭 균형은 .about-img 의 width 값으로 조절:
-    100% = 크롭 0·여백 최대 / 187% = 여백 0·크롭 최대) */
-.about-imgwrap { height: 100%; position: relative; overflow: hidden; background: #F3EFE8; }
-.about-img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 130%; height: 100%; object-fit: contain; display: block; }
+.about-imgwrap { height: 100%; }
+.about-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 @media (max-width: 760px) {
-  /* 모바일(1단 스택): 사진이 인트로 문단 바로 뒤로 오도록 grid 배치 해제.
-     좁은 화면에선 정사각 그대로 꽉 채워 여백 없이 보여준다. */
-  .about-figure { grid-column: 1 !important; grid-row: auto !important; height: auto; }
-  .about-imgwrap { height: auto; background: transparent; }
-  .about-img { position: static; transform: none; width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: cover; }
+  /* 모바일(1단 스택): 모든 grid 배치 해제 → DOM 순서(인트로 → 사진 → 본문)대로 세로 스택.
+     좁은 화면에선 사진을 정사각 그대로 보여준다. */
+  .about-grid > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+  .about-figure { height: auto; }
+  .about-imgwrap { height: auto; }
+  .about-img { height: auto; aspect-ratio: 1 / 1; }
 }
 
 /* =========================================================

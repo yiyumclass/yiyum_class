@@ -62,12 +62,12 @@ export default function Home() {
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 64px', maxWidth: '18ch'}}>작은 계정이 수익이 되기까지</h2>
 
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '0', alignItems: 'stretch'}}>
-          <p data-reveal="" className="serif" style={{gridColumn: '1', fontSize: 'clamp(21px,2.4vw,27px)', lineHeight: '1.65', letterSpacing: '-0.01em', margin: '0 0 32px', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명,{" "}<br className="bk" />12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
-          <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '1 / span 2', margin: '0'}}>
+        <div className="about-grid" style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '40px', alignItems: 'stretch'}}>
+          <p data-reveal="" className="serif" style={{gridColumn: '1 / -1', gridRow: '1', fontSize: 'clamp(22px,2.6vw,30px)', lineHeight: '1.6', letterSpacing: '-0.01em', margin: '0', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명, 12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
+          <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '2', margin: '0'}}>
             <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" /></div>
           </figure>
-          <div data-reveal="" style={{gridColumn: '1'}}>
+          <div data-reveal="" style={{gridColumn: '1', gridRow: '2'}}>
             <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
             <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 20px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
