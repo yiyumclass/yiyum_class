@@ -308,9 +308,6 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   /* 히어로 통계: 컬럼 간격 축소 */
   .hero-stats { gap: 20px !important; }
 
-  /* 네비: 로고 줄바꿈 방지 + 텍스트 링크 숨김(수강신청 CTA는 유지) */
-  #nav a.serif { white-space: nowrap; }
-  #nav .ulink { display: none !important; }
 }
 
 /* 반응형 (모바일) */

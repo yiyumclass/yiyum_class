@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import NextLink from "next/link";
+import SiteFooter from "@/components/layout/SiteFooter";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 export const metadata: Metadata = {
   title: "이윰 · SNS & 링크 모음",
@@ -24,9 +27,11 @@ const LINKS: Link[] = [
 
 export default function SnsPage() {
   return (
-    <main
+    <>
+      <SiteHeader active="sns" currentPath="/sns" />
+      <main
       style={{
-        minHeight: "100vh",
+        minHeight: "calc(100vh - 72px)",
         background: "#F3EFE8",
         color: "#201C17",
         display: "flex",
@@ -89,7 +94,7 @@ export default function SnsPage() {
 
         {/* 돌아가기 */}
         <div style={{ textAlign: "center", marginTop: "40px" }}>
-          <a
+          <NextLink
             href="/"
             style={{
               fontSize: "13px",
@@ -98,9 +103,11 @@ export default function SnsPage() {
             }}
           >
             ← 이윰 SNS 수익화 클래스로 돌아가기
-          </a>
+          </NextLink>
         </div>
       </div>
-    </main>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

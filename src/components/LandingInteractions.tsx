@@ -52,9 +52,12 @@ export default function LandingInteractions() {
 
     const onScroll = () => {
       const y = window.scrollY || document.documentElement.scrollTop;
+      // nav 배경: 스크롤 시작 직후 켜서 본문이 투명 nav 뒤로 지나가며 겹치는 것 방지
+      const navSolid = y > 8;
+      // buyBar: 히어로를 거의 다 지난 뒤에만 노출(기존 타이밍 유지)
       const past = hero ? y > hero.offsetHeight - 72 : y > 400;
       if (nav) {
-        if (past) {
+        if (navSolid) {
           nav.style.background = "rgba(243,239,232,0.85)";
           nav.style.backdropFilter = "blur(12px)";
           nav.style.setProperty("-webkit-backdrop-filter", "blur(12px)");

@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import SiteFooter from "@/components/layout/SiteFooter";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 export const metadata: Metadata = {
   title: "이윰 · 문의하기",
@@ -21,9 +24,11 @@ const CHANNELS: Channel[] = [
 
 export default function ContactPage() {
   return (
-    <main
+    <>
+      <SiteHeader active="contact" currentPath="/contact" />
+      <main
       style={{
-        minHeight: "100vh",
+        minHeight: "calc(100vh - 72px)",
         background: "#F3EFE8",
         color: "#201C17",
         display: "flex",
@@ -100,11 +105,13 @@ export default function ContactPage() {
 
         {/* 돌아가기 */}
         <div style={{ textAlign: "center", marginTop: "40px" }}>
-          <a href="/" style={{ fontSize: "13px", color: "#A79F92", letterSpacing: "0.02em" }}>
+          <Link href="/" style={{ fontSize: "13px", color: "#A79F92", letterSpacing: "0.02em" }}>
             ← 이윰 SNS 수익화 클래스로 돌아가기
-          </a>
+          </Link>
         </div>
       </div>
-    </main>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

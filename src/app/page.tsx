@@ -1,25 +1,15 @@
+import Image from "next/image";
 import LandingInteractions from "@/components/LandingInteractions";
 import ReviewMarquee from "@/components/ReviewMarquee";
+import SiteFooter from "@/components/layout/SiteFooter";
+import SiteHeader from "@/components/layout/SiteHeader";
 
 export default function Home() {
   return (
     <>
       <span id="top" />
 
-      {/* ===== NAV ===== */}
-      <nav id="nav" style={{position: 'fixed', top: '0', left: '0', right: '0', zIndex: '60', color: '#201C17', transition: 'background 0.4s ease,color 0.4s ease,border-color 0.4s ease', borderBottom: '1px solid transparent'}}>
-        <div style={{maxWidth: '1200px', margin: '0 auto', padding: '20px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-          <a href="#top" className="serif" style={{fontSize: '23px', letterSpacing: '0.01em'}}>이윰</a>
-          <div style={{display: 'flex', alignItems: 'center', gap: '34px', fontSize: '14px', fontWeight: '500'}}>
-            <a href="#curriculum" className="ulink">강의</a>
-            <a href="#apply" className="ulink">전자책</a>
-            <a href="#reviews" className="ulink">후기</a>
-            <a href="/sns" className="ulink">SNS</a>
-            <a href="/contact" className="ulink">문의</a>
-            <a href="#apply" style={{padding: '9px 20px', border: '1px solid currentColor', borderRadius: '100px', fontWeight: '600'}}>수강 신청</a>
-          </div>
-        </div>
-      </nav>
+      <SiteHeader variant="overlay" currentPath="/" />
 
       {/* ===== HERO ===== */}
       <header id="hero" style={{position: 'relative', background: '#F3EFE8', color: '#201C17', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '140px 40px 90px', overflow: 'hidden'}}>
@@ -45,7 +35,7 @@ export default function Home() {
             </div>
           </div>
 
-          <p style={{fontSize: '18px', lineHeight: '1.85', color: '#57514A', margin: '46px auto 0', maxWidth: '520px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1s both'}}>"일단 팔로워부터 늘려." 다들 이렇게 말하지만, 반대입니다.{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 설계해야 해요.</p>
+          <p style={{fontSize: '18px', lineHeight: '1.85', color: '#57514A', margin: '46px auto 0', maxWidth: '520px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1s both'}}>“일단 팔로워부터 늘려.” 다들 이렇게 말하지만, 반대입니다.{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 설계해야 해요.</p>
 
           <div style={{marginTop: '44px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1.15s both'}}>
             <a href="#apply" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: '#B85C38', color: '#F6F1E9', borderRadius: '100px', fontSize: '16px', fontWeight: '600', transition: 'transform 0.3s ease,box-shadow 0.3s ease', boxShadow: '0 8px 24px rgba(184,92,56,0.24)'}} className="cta-lift">32강 커리큘럼 보기<span style={{fontSize: '18px'}}>→</span></a>
@@ -65,10 +55,10 @@ export default function Home() {
         <div className="about-grid" style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '40px', alignItems: 'stretch'}}>
           <p data-reveal="" className="serif" style={{gridColumn: '1 / -1', gridRow: '1', fontSize: 'clamp(22px,2.6vw,30px)', lineHeight: '1.6', letterSpacing: '-0.01em', margin: '0', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명, 12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
           <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '2', margin: '0'}}>
-            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><img src="/assets/profile.jpg" loading="lazy" alt="리빙 크리에이터 이윰" className="about-img" /></div>
+            <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><Image src="/assets/profile.jpg" width={1646} height={1646} sizes="(max-width: 760px) 100vw, 45vw" alt="리빙 크리에이터 이윰" className="about-img" /></div>
           </figure>
           <div data-reveal="" style={{gridColumn: '1', gridRow: '2'}}>
-            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 '팔로워가 몇 만은 돼야 협찬이 들어온다'고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
+            <p style={{fontSize: '16.5px', lineHeight: '1.95', color: '#57514A', margin: '0 0 22px'}}>많은 분들이 ‘팔로워가 몇 만은 돼야 협찬이 들어온다’고 생각해요.{" "}<br className="bk" />하지만 저는 팔로워 1,000명대부터 가구 협찬(소파·식탁·거울·선반)과{" "}<br className="bk" />가전 협찬(식세기·냉장고·음쓰처리기)을 받았고,{" "}<br className="bk" />2,000명대부터는 원고료가 붙는 유가 광고를 받았습니다.</p>
             <div style={{background: '#201C17', borderRadius: '14px', padding: '24px 26px', margin: '0 0 20px', display: 'flex', gap: '14px', alignItems: 'flex-start'}}>
               <span aria-hidden="true" style={{fontSize: '20px', lineHeight: '1.9', flexShrink: '0'}}>💡</span>
               <p style={{fontSize: '16.5px', lineHeight: '1.9', color: '#EDE7DC', margin: '0'}}>비결은 팔로워를 먼저 모으고 수익화를 나중에 고민한 게 아니라,{" "}<br className="bk" />처음부터 <span style={{color: '#E9B48E', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 계정을 설계했다는 것.{" "}<br className="bk" />그 차이를 이 강의에 전부 담았어요.</p>
@@ -339,18 +329,12 @@ export default function Home() {
             <span className="serif" style={{fontSize: '32px', color: '#D9825E'}}>원</span>
           </div>
           <div style={{fontSize: '13px', color: '#7C7367', letterSpacing: '0.04em', marginBottom: '44px'}}>부가세 포함</div>
-          <a href="#apply" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">지금 수강 신청하기<span style={{fontSize: '18px'}}>→</span></a>
+          <a href="/checkout" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">지금 수강 신청하기<span style={{fontSize: '18px'}}>→</span></a>
           <p style={{fontSize: '13px', color: '#7C7367', lineHeight: '1.7', margin: '36px auto 0', maxWidth: '400px'}}>추후 1:1 밀착 피드백 등 프리미엄 옵션이 별도 상품으로 추가될 예정입니다.</p>
         </div>
       </section>
 
-      {/* ===== FOOTER ===== */}
-      <footer style={{maxWidth: '1200px', margin: '0 auto', padding: '56px 40px 80px'}}>
-        <div style={{display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '20px'}}>
-          <span className="serif" style={{fontSize: '20px'}}>이윰 SNS 수익화 클래스</span>
-        </div>
-        <p style={{fontSize: '12px', color: '#A79F92', lineHeight: '1.9', margin: '0', maxWidth: '820px'}}>히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562<br />경기도 화성시 효행로 1068, 603-J65호(병점동, 리더스프라자) · 070-7954-9050 · yiyum.home@gmail.com<br />업무시간 평일 10:00–17:00 (점심 12–13시), 주말·공휴일 제외</p>
-      </footer>
+      <SiteFooter />
 
       {/* sticky buy bar */}
       <div id="buyBar" style={{position: 'fixed', bottom: '0', left: '0', right: '0', zIndex: '70', background: 'rgba(27,24,21,0.94)', backdropFilter: 'blur(12px)', color: '#EDE7DC', transform: 'translateY(130%)', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)'}}>
@@ -359,7 +343,7 @@ export default function Home() {
             <span style={{fontSize: '14px', color: '#9A9082', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>이윰 SNS 수익화 클래스 · 32강</span>
             <span className="serif" style={{fontSize: '24px', color: '#EDE7DC', whiteSpace: 'nowrap'}}>300,000<span style={{fontSize: '15px', color: '#D9825E'}}> 원</span></span>
           </div>
-          <a href="#apply" style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</a>
+          <a href="/checkout" style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</a>
         </div>
       </div>
 
