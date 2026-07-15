@@ -1,4 +1,6 @@
-import { getCourseBySlug } from "@/lib/learning/catalog";
+import { hasActiveAdminAccess } from "@/lib/admin/access";
+import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
+import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 import { createClient } from "@/lib/supabase/server";
 
 type CompletionAction = "preserve" | "complete" | "incomplete";
@@ -38,10 +40,24 @@ export async function POST(request: Request) {
     return json({ error: "진도 정보가 올바르지 않습니다." }, 400);
   }
 
-  const course = getCourseBySlug(payload.courseSlug);
+  const [isAdmin, hasEntitlement] = await Promise.all([
+    hasActiveAdminAccess(supabase, user.id),
+    hasActiveProductEntitlement(supabase, payload.courseSlug),
+  ]);
+  if (!isAdmin && !hasEntitlement) {
+    return json({ error: "수강 신청이 필요한 강의입니다." }, 403);
+  }
+
+  const catalogItem = await loadPublicCourseBySlug(payload.courseSlug);
+  const course = catalogItem?.contentReady
+    ? catalogItem.classroomCourse ?? undefined
+    : undefined;
   const lesson = course?.sections
     .flatMap((section) => section.lessons)
-    .find((item) => item.id === payload.lessonId);
+    .find(
+      (item) =>
+        item.id === payload.lessonId && item.availability !== "coming-soon"
+    );
 
   if (!course || !lesson) {
     return json({ error: "존재하지 않는 강의 또는 차시입니다." }, 404);

@@ -2,19 +2,26 @@ import type { Course, CourseProgress } from "@/lib/learning/types";
 import {
   calculateCourseProgressPercent,
   calculateLessonProgressPercent,
+  getAvailableLessons,
 } from "@/lib/learning/progress";
-import type { LibraryItem } from "@/lib/my-class/types";
+import type { CourseLibraryItem, EbookLibraryItem } from "@/lib/my-class/types";
 
-export function buildMyClassItems(
+type CourseLibraryDetails = {
+  description?: string;
+  accessLabel?: string;
+};
+
+export function buildCourseLibraryItem(
   course: Course,
-  progress: CourseProgress
-): LibraryItem[] {
+  progress: CourseProgress,
+  details: CourseLibraryDetails = {}
+): CourseLibraryItem {
   const flatLessons = course.sections.flatMap((section, sectionIndex) =>
     section.lessons.map((lesson, lessonIndex) => ({
       ...lesson,
       sectionIndex,
       lessonIndex,
-    }))
+    })).filter((lesson) => lesson.availability !== "coming-soon")
   );
   const currentLesson =
     flatLessons.find((lesson) => lesson.id === progress.currentLessonId) ??
@@ -24,7 +31,7 @@ export function buildMyClassItems(
     completedSet.has(lesson.id)
   );
   const completedCount = completedLessons.length;
-  const totalLessons = flatLessons.length;
+  const totalLessons = getAvailableLessons(course).length;
   const percentage = calculateCourseProgressPercent(course, progress);
   const currentLessonProgress = currentLesson
     ? calculateLessonProgressPercent(
@@ -43,51 +50,52 @@ export function buildMyClassItems(
     (lesson) => lesson.id === progress.lastCompletedLessonId
   );
 
-  return [
-    {
-      id: `${course.slug}-course`,
-      kind: "course",
-      href: `/learn/${course.slug}`,
-      title: course.title,
-      description: "작은 계정도 수익으로 연결되는 구조를 설계하는 32강 VOD 클래스",
-      status,
-      statusLabel:
-        status === "completed"
-          ? "수강 완료"
-          : status === "in-progress"
-            ? "수강 중"
-            : "학습 전",
-      accessLabel: "2027.07.12까지",
-      lastActivity: formatLastActivity(progress.lastWatchedAt),
-      lastActivityAt: progress.lastWatchedAt,
-      ctaLabel:
-        status === "completed"
-          ? "다시 보기"
-          : status === "in-progress"
-            ? "이어보기"
-            : "VOD 강의실 입장",
-      progress: percentage,
-      completedLessons: completedCount,
-      totalLessons,
-      currentLessonLabel: currentLesson
-        ? `${currentLesson.sectionIndex + 1}장 ${currentLesson.lessonIndex + 1}강 · ${currentLesson.title}`
-        : "첫 강의를 준비 중입니다",
-      currentLessonProgress,
-      recentCompletedLessonLabel: recentCompletedLesson?.title ?? null,
-    },
-    {
-      id: "small-account-ebook",
-      kind: "ebook",
-      title: "작은 계정을 수익으로 연결하는 법",
-      description: "수익화 계정의 방향과 실행 순서를 한 권에 정리한 실전 워크북",
-      status: "available",
-      statusLabel: "보유 중",
-      accessLabel: "무기한",
-      lastActivity: "아직 열지 않음",
-      lastActivityAt: null,
-      ctaLabel: "전자책 보기",
-    },
-  ];
+  return {
+    id: `${course.slug}-course`,
+    kind: "course",
+    href: `/learn/${course.slug}`,
+    title: course.title,
+    description: details.description || course.description,
+    status,
+    statusLabel:
+      status === "completed"
+        ? "수강 완료"
+        : status === "in-progress"
+          ? "수강 중"
+          : "학습 전",
+    accessLabel: details.accessLabel || "이용 기간 확인 필요",
+    lastActivity: formatLastActivity(progress.lastWatchedAt),
+    lastActivityAt: progress.lastWatchedAt,
+    ctaLabel:
+      status === "completed"
+        ? "다시 보기"
+        : status === "in-progress"
+          ? "이어보기"
+          : "VOD 강의실 입장",
+    progress: percentage,
+    completedLessons: completedCount,
+    totalLessons,
+    currentLessonLabel: currentLesson
+      ? `${currentLesson.sectionIndex + 1}장 ${currentLesson.lessonIndex + 1}강 · ${currentLesson.title}`
+      : "첫 강의를 준비 중입니다",
+    currentLessonProgress,
+    recentCompletedLessonLabel: recentCompletedLesson?.title ?? null,
+  };
+}
+
+export function buildEbookLibraryItem(): EbookLibraryItem {
+  return {
+    id: "small-account-ebook",
+    kind: "ebook",
+    title: "작은 계정을 수익으로 연결하는 법",
+    description: "수익화 계정의 방향과 실행 순서를 한 권에 정리한 실전 워크북",
+    status: "available",
+    statusLabel: "보유 중",
+    accessLabel: "무기한",
+    lastActivity: "아직 열지 않음",
+    lastActivityAt: null,
+    ctaLabel: "전자책 보기",
+  };
 }
 
 function formatLastActivity(value: string | null) {

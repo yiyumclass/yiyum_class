@@ -1,0 +1,18 @@
+.page {
+  min-height: 100dvh;
+  background: #f3efe8;
+  color: #201c17;
+}
+
+.main {
+  width: min(1120px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 64px 0 112px;
+}
+
+@media (max-width: 720px) {
+  .main {
+    width: min(100% - 36px, 1120px);
+    padding: 42px 0 76px;
+  }
+}

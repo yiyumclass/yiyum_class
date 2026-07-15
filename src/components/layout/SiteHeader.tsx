@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./SiteHeader.module.css";
 
@@ -16,7 +17,11 @@ const navigationItems: Array<{
   href: string;
 }> = [
   { key: "courses", label: "강의", href: "/courses" },
-  { key: "ebook", label: "전자책", href: "/#apply" },
+  {
+    key: "ebook",
+    label: "전자책",
+    href: "/checkout?product=small-account-ebook",
+  },
   { key: "reviews", label: "후기", href: "/#reviews" },
   { key: "sns", label: "SNS", href: "/sns" },
   { key: "contact", label: "문의", href: "/contact" },
@@ -31,6 +36,9 @@ export default async function SiteHeader({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isAdmin = user
+    ? await hasActiveAdminAccess(supabase, user.id)
+    : false;
 
   const loginHref =
     currentPath === "/" ? "/login" : `/login?next=${encodeURIComponent(currentPath)}`;
@@ -59,7 +67,9 @@ export default async function SiteHeader({
           ))}
         </nav>
 
-        <div className={styles.actions}>
+        <div
+          className={`${styles.actions} ${isAdmin ? styles.adminActions : ""}`}
+        >
           {user ? (
             <Link href="/my" className={styles.myClassLink}>
               마이 클래스
@@ -69,9 +79,15 @@ export default async function SiteHeader({
               로그인
             </Link>
           )}
-          <Link href={enrollHref} className={styles.enrollLink}>
-            수강 신청
-          </Link>
+          {isAdmin ? (
+            <Link href="/admin" className={styles.adminLink}>
+              관리자
+            </Link>
+          ) : (
+            <Link href={enrollHref} className={styles.enrollLink}>
+              수강 신청
+            </Link>
+          )}
         </div>
       </div>
     </header>

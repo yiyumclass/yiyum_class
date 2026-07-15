@@ -3,6 +3,7 @@ export type CourseLesson = {
   title: string;
   durationSeconds: number;
   videoSrc?: string;
+  availability?: "available" | "coming-soon";
 };
 
 export type CourseSection = {

@@ -19,7 +19,7 @@ export const courseProducts: CourseProduct[] = [
     courseSlug: "sns-monetization",
     category: "SNS · MONETIZATION",
     tagline: "팔로워를 모으는 데서 끝나지 않고, 작은 계정을 실제 수익으로 연결하는 방법",
-    price: 300_000,
+    price: 0,
     accessLabel: "365일 VOD 수강",
     feedbackLabel: "1:1 피드백 포함",
     detailHref: "/#curriculum",

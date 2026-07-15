@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import AccountHeader from "@/components/account/AccountHeader";
 import MyClassLibrary from "@/components/my/MyClassLibrary";
 import SiteFooter from "@/components/layout/SiteFooter";
-import { courses, previewCourseProgress } from "@/lib/learning/catalog";
-import { loadCourseProgress } from "@/lib/learning/progress";
-import { buildMyClassItems } from "@/lib/my-class/library-data";
+import {
+  createEmptyCourseProgress,
+  loadCourseProgress,
+} from "@/lib/learning/progress";
+import {
+  buildEbookLibraryItem,
+  buildCourseLibraryItem,
+} from "@/lib/my-class/library-data";
+import type { LibraryItem } from "@/lib/my-class/types";
+import { loadMyActiveProductEntitlements } from "@/lib/store/entitlements";
+import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./my.module.css";
 
@@ -30,51 +38,41 @@ export default async function MyPage() {
     typeof rawDisplayName === "string" && rawDisplayName.trim()
       ? rawDisplayName.trim()
       : "회원";
-  const initial = displayName.slice(0, 1) || "회";
-  const course = courses[0];
-  const progressResult = await loadCourseProgress(supabase, course);
-  const progress = progressResult.available
-    ? progressResult.progress
-    : previewCourseProgress[course.slug];
-  const items = buildMyClassItems(course, progress);
+  const entitlements = await loadMyActiveProductEntitlements(supabase);
+  const entitlementSlugs = new Set(
+    entitlements.map((entitlement) => entitlement.productSlug)
+  );
+  const catalog = await loadPublicCourseCatalog();
+  const items: LibraryItem[] = [];
 
-  const signOut = async () => {
-    "use server";
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    redirect("/");
-  };
+  for (const catalogItem of catalog) {
+    if (
+      !entitlementSlugs.has(catalogItem.slug) ||
+      !catalogItem.contentReady ||
+      !catalogItem.classroomCourse
+    ) {
+      continue;
+    }
+    const course = catalogItem.classroomCourse;
+    const progressResult = await loadCourseProgress(supabase, course);
+    const progress = progressResult.available
+      ? progressResult.progress
+      : createEmptyCourseProgress(course);
+    items.push(
+      buildCourseLibraryItem(course, progress, {
+        description: catalogItem.summary,
+        accessLabel: catalogItem.accessLabel,
+      })
+    );
+  }
+
+  if (entitlementSlugs.has("small-account-ebook")) {
+    items.push(buildEbookLibraryItem());
+  }
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <Link href="/" className={`serif ${styles.brand}`}>
-            이윰
-          </Link>
-
-          <nav className={styles.accountNav} aria-label="회원 메뉴">
-            <Link href="/my" className={styles.navActive} aria-current="page">
-              마이 클래스
-            </Link>
-            <span className={styles.navSoon} aria-disabled="true">
-              주문 내역
-            </span>
-          </nav>
-
-          <div className={styles.userArea}>
-            <span className={styles.avatar} aria-hidden="true">
-              {initial}
-            </span>
-            <span className={styles.userName}>{displayName}님</span>
-            <form action={signOut}>
-              <button type="submit" className={styles.logoutButton} aria-label="로그아웃">
-                로그아웃
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <AccountHeader active="classes" displayName={displayName} />
 
       <main className={styles.main}>
         <MyClassLibrary displayName={displayName} items={items} />

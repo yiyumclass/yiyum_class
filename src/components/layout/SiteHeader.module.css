@@ -105,7 +105,8 @@
   color: #b85c38;
 }
 
-.enrollLink {
+.enrollLink,
+.adminLink {
   min-height: 38px;
   padding: 0 20px;
   display: inline-flex;
@@ -119,8 +120,18 @@
     transform 180ms ease;
 }
 
+.adminLink {
+  background: #29241f;
+  color: #f6f1e9;
+}
+
 .enrollLink:hover {
   background: #a65031;
+  transform: translateY(-1px);
+}
+
+.adminLink:hover {
+  background: #403830;
   transform: translateY(-1px);
 }
 
@@ -130,7 +141,8 @@
   outline-offset: 4px;
 }
 
-.enrollLink:focus-visible {
+.enrollLink:focus-visible,
+.adminLink:focus-visible {
   outline-color: #201c17 !important;
 }
 
@@ -147,7 +159,8 @@
     gap: 16px;
   }
 
-  .enrollLink {
+  .enrollLink,
+  .adminLink {
     padding: 0 16px;
   }
 }
@@ -184,6 +197,10 @@
   .actions {
     gap: 0;
     font-size: 13px;
+  }
+
+  .adminActions .myClassLink {
+    display: none;
   }
 }
 

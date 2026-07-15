@@ -44,8 +44,9 @@ export async function loadCourseProgress(
 }
 
 export function createEmptyCourseProgress(course: Course): CourseProgress {
+  const firstAvailableLesson = getAvailableLessons(course)[0];
   return {
-    currentLessonId: course.sections[0]?.lessons[0]?.id ?? "",
+    currentLessonId: firstAvailableLesson?.id ?? "",
     completedLessonIds: [],
     positionsByLessonId: {},
     lastWatchedAt: null,
@@ -61,7 +62,7 @@ export function calculateCourseProgressPercent(
   course: Course,
   progress: Pick<CourseProgress, "completedLessonIds" | "positionsByLessonId">
 ) {
-  const lessons = course.sections.flatMap((section) => section.lessons);
+  const lessons = getAvailableLessons(course);
   if (lessons.length === 0) return 0;
 
   const completedSet = new Set(progress.completedLessonIds);
@@ -105,7 +106,7 @@ export function deriveCourseProgress(
   course: Course,
   rows: LessonProgressRow[]
 ): CourseProgress {
-  const lessons = course.sections.flatMap((section) => section.lessons);
+  const lessons = getAvailableLessons(course);
   const validLessonIds = new Set(lessons.map((lesson) => lesson.id));
   const validRows = rows
     .filter((row) => validLessonIds.has(row.lesson_id))
@@ -150,4 +151,10 @@ export function deriveCourseProgress(
     lastCompletedLessonId:
       validRows.find((row) => row.completed_at !== null)?.lesson_id ?? null,
   };
+}
+
+export function getAvailableLessons(course: Course) {
+  return course.sections
+    .flatMap((section) => section.lessons)
+    .filter((lesson) => lesson.availability !== "coming-soon");
 }

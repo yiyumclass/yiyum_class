@@ -131,7 +131,7 @@ export default function MyClassLibrary({
               />
               <div className={styles.artworkCaption}>
                 <span>YIYUM CLASS</span>
-                <strong>32 LESSONS</strong>
+                <strong>{course.totalLessons} LESSONS</strong>
               </div>
             </div>
           </article>
@@ -222,12 +222,12 @@ function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => vo
           <>
             <Image
               src="/assets/profile.jpg"
-              alt="이윰 SNS 수익화 클래스"
+              alt={item.title}
               fill
               sizes="(max-width: 760px) 100vw, 45vw"
               className={styles.cardImage}
             />
-            <span className={styles.visualType}>VOD · 32강</span>
+            <span className={styles.visualType}>VOD · {item.totalLessons}강</span>
           </>
         ) : (
           <div className={styles.bookCover} aria-label="전자책 표지">

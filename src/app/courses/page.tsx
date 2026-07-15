@@ -3,8 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
-import { courses, getCourseBySlug } from "@/lib/learning/catalog";
-import { courseProducts, type CourseProduct } from "@/lib/store/course-products";
+import {
+  loadPublicCourseCatalog,
+  type PublicCourseCatalogItem,
+} from "@/lib/store/public-course-catalog";
 import styles from "./courses.module.css";
 
 export const metadata: Metadata = {
@@ -12,11 +14,8 @@ export const metadata: Metadata = {
   description: "이윰의 SNS 수익화 VOD 클래스를 살펴보고 나에게 맞는 강의를 선택하세요.",
 };
 
-export default function CoursesPage() {
-  const catalog = courseProducts.flatMap((product) => {
-    const course = getCourseBySlug(product.courseSlug);
-    return course ? [{ product, course }] : [];
-  });
+export default async function CoursesPage() {
+  const catalog = await loadPublicCourseCatalog();
 
   return (
     <div className={styles.page}>
@@ -25,20 +24,16 @@ export default function CoursesPage() {
       <main>
         <section className={styles.hero} aria-labelledby="courses-title">
           <div className={styles.heroInner}>
-            <div className={styles.heroCopy}>
+            <div>
               <span className={styles.eyebrow}>YIYUM COURSES</span>
               <h1 id="courses-title" className="serif">
-                이윰의 클래스
+                클래스 둘러보기
               </h1>
             </div>
-
-            <div className={styles.heroDescription}>
-              <p>
-                계정을 키우는 방법뿐 아니라,
-                <br />그 성장이 수익으로 이어지는 과정까지 다룹니다.
-              </p>
-              <span>현재 {catalog.length}개의 클래스를 만나볼 수 있어요.</span>
-            </div>
+            <p>
+              계정을 키우는 방법부터 그 성장을 수익으로 연결하는 과정까지,
+              필요한 클래스를 골라 시작해 보세요.
+            </p>
           </div>
         </section>
 
@@ -48,42 +43,34 @@ export default function CoursesPage() {
               <span className={`serif ${styles.sectionNumber}`}>01</span>
               <h2 id="catalog-title" className="serif">전체 강의</h2>
             </div>
-            <span className={styles.courseCount}>{String(catalog.length).padStart(2, "0")} COURSE</span>
+            <span className={styles.courseCount}>
+              {String(catalog.length).padStart(2, "0")} COURSE
+            </span>
           </div>
 
-          <div className={styles.courseList}>
-            {catalog.map(({ product, course }, index) => (
-              <CourseCard
-                key={product.courseSlug}
-                product={product}
-                course={course}
-                index={index}
-              />
-            ))}
-          </div>
+          {catalog.length > 0 ? (
+            <div className={styles.courseGrid}>
+              {catalog.map((item, index) => (
+                <CourseCard key={item.productId} item={item} priority={index < 3} />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <strong>현재 판매 중인 강의가 없습니다.</strong>
+              <p>새로운 클래스를 준비하고 있어요. 조금만 기다려 주세요.</p>
+            </div>
+          )}
         </section>
 
         <section className={styles.guide} aria-labelledby="guide-title">
           <div className={styles.guideHeading}>
-            <span>BEFORE YOU START</span>
-            <h2 id="guide-title" className="serif">수강 전에 확인해 주세요</h2>
+            <span>LEARNING GUIDE</span>
+            <h2 id="guide-title" className="serif">수강 방식</h2>
           </div>
           <div className={styles.guideItems}>
-            <GuideItem
-              number="01"
-              title="원하는 시간에 학습"
-              description="결제 후 마이 클래스에서 VOD를 재생하고 마지막 시청 위치부터 이어볼 수 있어요."
-            />
-            <GuideItem
-              number="02"
-              title="차시별 진도 저장"
-              description="시청 위치와 완료한 강의가 자동으로 기록되어 어디까지 들었는지 바로 확인할 수 있어요."
-            />
-            <GuideItem
-              number="03"
-              title="문의가 필요할 때"
-              description="수강과 결제에 관한 문의는 카카오톡 채널 또는 이메일로 남겨주세요."
-            />
+            <GuideItem number="01" title="원하는 시간에 재생" description="결제 후 마이 클래스에서 바로 시작할 수 있어요." />
+            <GuideItem number="02" title="진도 자동 저장" description="마지막으로 본 위치와 완료한 차시를 자동으로 기록해요." />
+            <GuideItem number="03" title="문의 지원" description="수강과 결제 문의는 카카오톡 채널 또는 이메일로 도와드려요." />
           </div>
         </section>
       </main>
@@ -94,15 +81,13 @@ export default function CoursesPage() {
 }
 
 function CourseCard({
-  product,
-  course,
-  index,
+  item,
+  priority,
 }: {
-  product: CourseProduct;
-  course: (typeof courses)[number];
-  index: number;
+  item: PublicCourseCatalogItem;
+  priority: boolean;
 }) {
-  const lessons = course.sections.flatMap((section) => section.lessons);
+  const lessons = item.course.sections.flatMap((section) => section.lessons);
   const totalDurationSeconds = lessons.reduce(
     (total, lesson) => total + lesson.durationSeconds,
     0
@@ -111,91 +96,63 @@ function CourseCard({
   return (
     <article className={styles.courseCard}>
       <Link
-        href={product.detailHref}
+        href={item.detailHref}
         className={styles.courseVisual}
-        aria-label={`${course.title} 자세히 보기`}
+        aria-label={`${item.title} 자세히 보기`}
       >
-        <Image
-          src={course.posterSrc}
-          alt={`${course.instructor}의 ${course.title}`}
-          fill
-          priority={index === 0}
-          sizes="(max-width: 820px) 100vw, 48vw"
-          className={styles.courseImage}
-        />
-        <div className={styles.imageShade} aria-hidden="true" />
-        <div className={styles.visualIndex} aria-hidden="true">
-          <span>YIYUM CLASS</span>
-          <strong className="serif">{String(index + 1).padStart(2, "0")}</strong>
-        </div>
-        <div className={styles.visualCaption}>
-          <span>{course.instructor}</span>
-          <strong>{product.category}</strong>
-        </div>
+        {item.thumbnailSrc ? (
+          <>
+            <Image
+              src={item.thumbnailSrc}
+              alt={`${item.course.instructor || "이윰"}의 ${item.title}`}
+              fill
+              priority={priority}
+              sizes="(max-width: 680px) 100vw, (max-width: 1020px) 50vw, 33vw"
+              className={styles.courseImage}
+            />
+            <div className={styles.imageShade} aria-hidden="true" />
+          </>
+        ) : (
+          <div className={styles.visualPlaceholder} aria-hidden="true">
+            <span>YIYUM CLASS</span>
+            <strong className="serif">{item.title.slice(0, 1)}</strong>
+          </div>
+        )}
+        <span className={styles.vodBadge}>VOD CLASS</span>
+        <span className={styles.instructor}>
+          {item.course.instructor || item.title}
+        </span>
       </Link>
 
       <div className={styles.courseBody}>
-        <div className={styles.courseTopline}>
-          <span>{product.category}</span>
-          <span>VOD CLASS</span>
+        <span className={styles.category}>SNS · MONETIZATION</span>
+        <h3 className="serif">
+          <Link href={item.detailHref}>{item.title}</Link>
+        </h3>
+        <p className={styles.summary}>{item.summary}</p>
+
+        <div className={styles.courseMeta} aria-label="강의 정보">
+          {item.outlineReady ? (
+            <>
+              <span>{lessons.length}강</span>
+              <span>{formatCourseDuration(totalDurationSeconds)}</span>
+            </>
+          ) : (
+            <span>커리큘럼 준비 중</span>
+          )}
+          <span>{item.accessLabel}</span>
         </div>
 
-        <div>
-          <h3 className="serif">
-            <Link href={product.detailHref}>{course.title}</Link>
-          </h3>
-          <p className={styles.tagline}>{product.tagline}</p>
-        </div>
-
-        <div className={styles.topicList} aria-label="주요 학습 주제">
-          {product.topics.map((topic) => <span key={topic}>{topic}</span>)}
-        </div>
-
-        <dl className={styles.courseFacts}>
-          <div>
-            <dt>커리큘럼</dt>
-            <dd>{course.sections.length}개 챕터 · {lessons.length}강</dd>
-          </div>
-          <div>
-            <dt>총 재생 시간</dt>
-            <dd>{formatCourseDuration(totalDurationSeconds)}</dd>
-          </div>
-          <div>
-            <dt>수강 기간</dt>
-            <dd>{product.accessLabel}</dd>
-          </div>
-          <div>
-            <dt>학습 지원</dt>
-            <dd>{product.feedbackLabel}</dd>
-          </div>
-        </dl>
-
-        <div className={styles.curriculumPreview}>
-          <span>CURRICULUM</span>
-          <ol>
-            {course.sections.map((section, sectionIndex) => (
-              <li key={section.id}>
-                <span>{String(sectionIndex + 1).padStart(2, "0")}</span>
-                <strong>{section.title}</strong>
-                <small>{section.lessons.length}강</small>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <div className={styles.purchaseArea}>
+        <div className={styles.cardFooter}>
           <div className={styles.price}>
-            <span>수강료 · 부가세 포함</span>
-            <strong className="serif">{formatPrice(product.price)}<small>원</small></strong>
+            <span>부가세 포함</span>
+            <strong className="serif">
+              {formatPrice(item.priceKrw)}<small>원</small>
+            </strong>
           </div>
-          <div className={styles.courseActions}>
-            <Link href={product.detailHref} className={styles.secondaryAction}>
-              강의 자세히 보기
-            </Link>
-            <Link href={product.checkoutHref} className={styles.primaryAction}>
-              수강 신청 <ArrowIcon />
-            </Link>
-          </div>
+          <Link href={item.detailHref} className={styles.detailAction}>
+            강의 보기 <ArrowIcon />
+          </Link>
         </div>
       </div>
     </article>
@@ -214,17 +171,20 @@ function GuideItem({
   return (
     <article>
       <span className={`serif ${styles.guideNumber}`}>{number}</span>
-      <h3>{title}</h3>
-      <p>{description}</p>
+      <div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
     </article>
   );
 }
 
 function formatCourseDuration(seconds: number) {
+  if (seconds <= 0) return "재생 시간 안내 예정";
   const totalMinutes = Math.round(seconds / 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return `${hours}시간 ${minutes}분`;
+  return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
 function formatPrice(price: number) {

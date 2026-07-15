@@ -3,8 +3,23 @@ import LandingInteractions from "@/components/LandingInteractions";
 import ReviewMarquee from "@/components/ReviewMarquee";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
+import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 
-export default function Home() {
+const featuredCourseSlug = "sns-monetization";
+
+export default async function Home() {
+  const featuredItem = await loadPublicCourseBySlug(featuredCourseSlug);
+  const sections = featuredItem?.course.sections ?? [];
+  const lessonCount = sections.reduce(
+    (total, section) => total + section.lessons.length,
+    0
+  );
+  const courseTitle = featuredItem?.title ?? "이윰 SNS 수익화 클래스";
+  const checkoutHref = featuredItem?.checkoutHref ?? "/courses";
+  const priceLabel = featuredItem
+    ? new Intl.NumberFormat("ko-KR").format(featuredItem.priceKrw)
+    : null;
+
   return (
     <>
       <span id="top" />
@@ -16,7 +31,7 @@ export default function Home() {
         <div style={{position: 'absolute', inset: '0', pointerEvents: 'none', overflow: 'hidden'}}><div style={{position: 'absolute', top: '-8%', left: '50%', transform: 'translateX(-50%)', width: '76vw', height: '66vh', background: 'radial-gradient(58% 58% at 50% 32%,rgba(217,130,94,0.18),rgba(217,130,94,0) 70%)', filter: 'blur(8px)'}}></div></div>
         <div style={{position: 'absolute', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', overflow: 'hidden'}}><div className="serif" style={{fontSize: '34vw', lineHeight: '1', letterSpacing: '-0.04em', color: 'rgba(32,28,23,0.045)', whiteSpace: 'nowrap', animation: 'wmDrift 26s ease-in-out infinite'}}>yiyum</div></div>
         <div style={{position: 'relative', zIndex: '1', maxWidth: '900px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-          <div style={{overflow: 'hidden', marginBottom: '22px'}}><div style={{animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s both', fontSize: '17px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#B85C38', fontWeight: '600'}}>이윰 SNS 수익화 클래스</div></div>
+          <div style={{overflow: 'hidden', marginBottom: '22px'}}><div style={{animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s both', fontSize: '17px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#B85C38', fontWeight: '600'}}>{courseTitle}</div></div>
 
           <h1 className="serif" style={{fontSize: 'clamp(40px,7vw,88px)', lineHeight: '1.12', letterSpacing: '-0.01em', margin: '0', maxWidth: '14ch'}}>
             <span style={{display: 'block', overflow: 'hidden', paddingBottom: '6px'}}><span style={{display: 'block', animation: 'rise 1s cubic-bezier(0.16,1,0.3,1) 0.25s both'}}>차이는 팔로워</span></span>
@@ -38,7 +53,7 @@ export default function Home() {
           <p style={{fontSize: '18px', lineHeight: '1.85', color: '#57514A', margin: '46px auto 0', maxWidth: '520px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1s both'}}>“일단 팔로워부터 늘려.” 다들 이렇게 말하지만, 반대입니다.{" "}<br className="bk" />처음부터 <span style={{color: '#201C17', fontWeight: '600'}}>팔로워가 수익으로 연결되는 구조</span>로 설계해야 해요.</p>
 
           <div style={{marginTop: '44px', animation: 'fadeUp 0.9s cubic-bezier(0.16,1,0.3,1) 1.15s both'}}>
-            <a href="#apply" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: '#B85C38', color: '#F6F1E9', borderRadius: '100px', fontSize: '16px', fontWeight: '600', transition: 'transform 0.3s ease,box-shadow 0.3s ease', boxShadow: '0 8px 24px rgba(184,92,56,0.24)'}} className="cta-lift">32강 커리큘럼 보기<span style={{fontSize: '18px'}}>→</span></a>
+            <a href="#curriculum" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '16px 32px', background: '#B85C38', color: '#F6F1E9', borderRadius: '100px', fontSize: '16px', fontWeight: '600', transition: 'transform 0.3s ease,box-shadow 0.3s ease', boxShadow: '0 8px 24px rgba(184,92,56,0.24)'}} className="cta-lift">{lessonCount > 0 ? `${lessonCount}강 커리큘럼 보기` : "커리큘럼 확인하기"}<span style={{fontSize: '18px'}}>→</span></a>
           </div>
         </div>
         <div style={{position: 'absolute', bottom: '34px', left: '0', right: '0', textAlign: 'center', fontSize: '11px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#A79F92', animation: 'fadeUp 1s ease 1.5s both'}}>Scroll</div>
@@ -175,104 +190,56 @@ export default function Home() {
             <span className="serif" style={{fontSize: '15px', color: '#B85C38'}}>03</span>
             <span style={{fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#938B7F', fontWeight: '600'}}>Curriculum</span>
           </div>
-          <div style={{fontSize: '14px', color: '#57514A'}}>5개 챕터 · 총 <span className="serif" style={{fontSize: '20px', color: '#201C17'}}>32</span>강</div>
+          <div style={{fontSize: '14px', color: '#57514A'}}>{sections.length}개 챕터 · 총 <span className="serif" style={{fontSize: '20px', color: '#201C17'}}>{lessonCount}</span>강</div>
         </div>
-        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '18ch'}}>계정 세팅부터 세금까지, 수익화의 처음과 끝</h2>
+        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '18ch'}}>{featuredItem?.course.description || "공개된 커리큘럼을 확인해 보세요."}</h2>
 
         <div style={{borderTop: '1px solid #201C17'}}>
-
-          <details open style={{borderBottom: '1px solid #DDD5C8'}}>
-            <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>01</span></span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>6강</span><span style={{fontSize: '22px', fontWeight: '600'}}>계정 세팅</span></span>
-              <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
-            </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-              <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>01</span> 크리에이터 카테고리 정복하기 — 진입장벽·시청자층·얼굴 노출</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>02</span> 계정 정체성 잡는 법 — 한 계정에 여러 주제 올려도 되나요?</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>03</span> 수익화를 위한 프로필 4줄 세팅법</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>04</span> 수익화 필수 랜딩페이지 만드는 법 · 올바른 사용법</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>05</span> 계정 날아가지 않게 취해야 하는 조치 6가지</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>06</span> SNS에서 마음껏 활동하려면 무조건 해야 하는 것</li>
-              </ol>
+          {sections.length > 0 ? (
+            sections.map((section, sectionIndex) => (
+              <details
+                key={section.id}
+                open={sectionIndex === 0}
+                style={{
+                  borderBottom:
+                    sectionIndex === sections.length - 1
+                      ? '1px solid #201C17'
+                      : '1px solid #DDD5C8',
+                }}
+              >
+                <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
+                  <span style={{flexShrink: '0', width: '58px'}}>
+                    <span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span>
+                    <span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>{String(sectionIndex + 1).padStart(2, "0")}</span>
+                  </span>
+                  <span style={{flex: '1'}}>
+                    <span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>{section.lessons.length}강</span>
+                    <span style={{fontSize: '22px', fontWeight: '600'}}>{section.title}</span>
+                  </span>
+                  <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
+                </summary>
+                <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
+                  {section.description && (
+                    <p style={{margin: '0 0 10px', color: '#7C7367', fontSize: '14px', lineHeight: '1.7'}}>
+                      {section.description}
+                    </p>
+                  )}
+                  <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
+                    {section.lessons.map((lesson, lessonIndex) => (
+                      <li key={lesson.id} style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}>
+                        <span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>{String(lessonIndex + 1).padStart(2, "0")}</span>
+                        {lesson.title}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </details>
+            ))
+          ) : (
+            <div style={{padding: '48px 4px', borderBottom: '1px solid #201C17', color: '#938B7F', fontSize: '15px'}}>
+              현재 공개된 커리큘럼을 준비하고 있습니다.
             </div>
-          </details>
-
-          <details style={{borderBottom: '1px solid #DDD5C8'}}>
-            <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>02</span></span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>콘텐츠 제작 기본기</span></span>
-              <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
-            </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-              <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>07</span> 숏폼 &amp; 릴스 트렌드 분석</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>08</span> 촬영 전 기본 세팅값 — 카메라 화질, 촬영 비율</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>09</span> 촬영 장비 소개 — 삼각대, 마이크</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>10</span> 편집 프로그램 — 자막·효과음·목소리 넣는 법</li>
-              </ol>
-            </div>
-          </details>
-
-          <details style={{borderBottom: '1px solid #DDD5C8'}}>
-            <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>03</span></span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>10강</span><span style={{fontSize: '22px', fontWeight: '600'}}>알고리즘</span></span>
-              <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
-            </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-              <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>11</span> 알고리즘 타는 릴스의 비밀</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>12</span> 카테고리별 내적 욕망 자극하는 법</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>13</span> 떡상하는 릴스의 공통점</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>14</span> 빠르게 팔로워 늘리는 법</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>15</span> 알고리즘 부스터 켜는 사후 전략 7개</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>16</span> 초반 3초 후킹 생각하는 팁</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>17</span> 해시태그, 이렇게 쓰면 10년 뒤처진 겁니다</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>18</span> 콘텐츠 소재 무한대로 얻는 법</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>19</span> 광고 릴스 대본 써주는 최적화 프롬프트</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>20</span> 댓글 품앗이, 이렇게 하면 계정 나락 갑니다</li>
-              </ol>
-            </div>
-          </details>
-
-          <details style={{borderBottom: '1px solid #DDD5C8'}}>
-            <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>04</span></span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>8강</span><span style={{fontSize: '22px', fontWeight: '600'}}>수익화 로드맵</span></span>
-              <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
-            </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-              <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>21</span> 수익화할 수 있는 10가지 루트</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>22</span> 팔로워 수 상관없이 100% 수익화 가능한 방법 (100명대도 가능)</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>23</span> 구간별 협찬 로드맵 — 팔로워 몇 명부터 협찬이 들어올까?</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>24</span> 단가 협상 실전편 — 원고료 얼마 받을 수 있을까?</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>25</span> 광고 단가 10배 올리는 치트키 5가지</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>26</span> 브랜드가 무조건 답장하는 이메일·DM 템플릿</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>27</span> 체험단 사이트</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>28</span> 협찬 받는 루트</li>
-              </ol>
-            </div>
-          </details>
-
-          <details style={{borderBottom: '1px solid #201C17'}}>
-            <summary style={{display: 'flex', alignItems: 'center', gap: '24px', padding: '28px 4px'}}>
-              <span style={{flexShrink: '0', width: '58px'}}><span className="serif" style={{display: 'block', fontSize: '13px', fontStyle: 'italic', color: '#B49F8C', lineHeight: '1', marginBottom: '3px'}}>Chapter</span><span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>05</span></span>
-              <span style={{flex: '1'}}><span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>4강</span><span style={{fontSize: '22px', fontWeight: '600'}}>찐팬 · 브랜딩</span></span>
-              <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
-            </summary>
-            <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-              <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>29</span> 정보성으로 모은 팔로워를 찐팬으로 전환시키는 테크트리</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>30</span> 얼굴 공개 없이 수익화 잘하는 크리에이터의 공통점</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>31</span> 세금 관리 · 세무사 추천</li>
-                <li style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}><span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>32</span> 멘탈 관리</li>
-              </ol>
-            </div>
-          </details>
-
+          )}
         </div>
       </section>
 
@@ -322,14 +289,22 @@ export default function Home() {
       <section id="apply" style={{background: '#1B1815', color: '#EDE7DC', marginTop: '150px', padding: '130px 40px', scrollMarginTop: '0'}}>
         <div data-reveal="" style={{maxWidth: '820px', margin: '0 auto', textAlign: 'center'}}>
           <div style={{fontSize: '13px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#B7A995', marginBottom: '28px'}}>Enroll</div>
-          <h2 className="serif" style={{fontSize: 'clamp(32px,4.6vw,56px)', lineHeight: '1.2', letterSpacing: '-0.01em', margin: '0 0 20px'}}>이윰 SNS 수익화 클래스</h2>
-          <p style={{fontSize: '16px', color: '#9A9082', margin: '0 0 56px'}}>5개 챕터 · 총 32강 · 1:1 피드백 포함 · 오픈카톡방 인사이트 포함 · 365일 VOD 소장</p>
-          <div style={{display: 'inline-flex', alignItems: 'baseline', gap: '10px', paddingBottom: '30px'}}>
-            <span className="serif" style={{fontSize: 'clamp(56px,9vw,96px)', lineHeight: '1', color: '#EDE7DC'}}>300,000</span>
-            <span className="serif" style={{fontSize: '32px', color: '#D9825E'}}>원</span>
-          </div>
-          <div style={{fontSize: '13px', color: '#7C7367', letterSpacing: '0.04em', marginBottom: '44px'}}>부가세 포함</div>
-          <a href="/checkout" style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">지금 수강 신청하기<span style={{fontSize: '18px'}}>→</span></a>
+          <h2 className="serif" style={{fontSize: 'clamp(32px,4.6vw,56px)', lineHeight: '1.2', letterSpacing: '-0.01em', margin: '0 0 20px'}}>{courseTitle}</h2>
+          <p style={{fontSize: '16px', color: '#9A9082', margin: '0 0 56px'}}>
+            {featuredItem
+              ? `${sections.length}개 챕터 · 총 ${lessonCount}강 · ${featuredItem.accessLabel}`
+              : "현재 수강 신청을 준비하고 있습니다."}
+          </p>
+          {featuredItem && priceLabel ? (
+            <>
+              <div style={{display: 'inline-flex', alignItems: 'baseline', gap: '10px', paddingBottom: '30px'}}>
+                <span className="serif" style={{fontSize: 'clamp(56px,9vw,96px)', lineHeight: '1', color: '#EDE7DC'}}>{priceLabel}</span>
+                <span className="serif" style={{fontSize: '32px', color: '#D9825E'}}>원</span>
+              </div>
+              <div style={{fontSize: '13px', color: '#7C7367', letterSpacing: '0.04em', marginBottom: '44px'}}>부가세 포함</div>
+            </>
+          ) : null}
+          <a href={checkoutHref} style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">{featuredItem ? "지금 수강 신청하기" : "강의 둘러보기"}<span style={{fontSize: '18px'}}>→</span></a>
           <p style={{fontSize: '13px', color: '#7C7367', lineHeight: '1.7', margin: '36px auto 0', maxWidth: '400px'}}>추후 1:1 밀착 피드백 등 프리미엄 옵션이 별도 상품으로 추가될 예정입니다.</p>
         </div>
       </section>
@@ -337,15 +312,17 @@ export default function Home() {
       <SiteFooter />
 
       {/* sticky buy bar */}
-      <div id="buyBar" style={{position: 'fixed', bottom: '0', left: '0', right: '0', zIndex: '70', background: 'rgba(27,24,21,0.94)', backdropFilter: 'blur(12px)', color: '#EDE7DC', transform: 'translateY(130%)', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)'}}>
-        <div style={{maxWidth: '1200px', margin: '0 auto', padding: '16px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px'}}>
-          <div style={{display: 'flex', alignItems: 'baseline', gap: '14px', minWidth: '0'}}>
-            <span style={{fontSize: '14px', color: '#9A9082', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>이윰 SNS 수익화 클래스 · 32강</span>
-            <span className="serif" style={{fontSize: '24px', color: '#EDE7DC', whiteSpace: 'nowrap'}}>300,000<span style={{fontSize: '15px', color: '#D9825E'}}> 원</span></span>
+      {featuredItem && priceLabel && (
+        <div id="buyBar" style={{position: 'fixed', bottom: '0', left: '0', right: '0', zIndex: '70', background: 'rgba(27,24,21,0.94)', backdropFilter: 'blur(12px)', color: '#EDE7DC', transform: 'translateY(130%)', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)'}}>
+          <div style={{maxWidth: '1200px', margin: '0 auto', padding: '16px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px'}}>
+            <div style={{display: 'flex', alignItems: 'baseline', gap: '14px', minWidth: '0'}}>
+              <span style={{fontSize: '14px', color: '#9A9082', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{courseTitle} · {lessonCount}강</span>
+              <span className="serif" style={{fontSize: '24px', color: '#EDE7DC', whiteSpace: 'nowrap'}}>{priceLabel}<span style={{fontSize: '15px', color: '#D9825E'}}> 원</span></span>
+            </div>
+            <a href={checkoutHref} style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</a>
           </div>
-          <a href="/checkout" style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</a>
         </div>
-      </div>
+      )}
 
       <LandingInteractions />
     </>

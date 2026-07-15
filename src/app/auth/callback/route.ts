@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
 
 // 카카오(및 모든 OAuth) 로그인 후 Supabase가 이 주소로 code를 붙여 리다이렉트한다.
@@ -6,13 +7,23 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/account";
+  const requestedNext = searchParams.get("next");
+  const next =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/";
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const isAdmin = user
+        ? await hasActiveAdminAccess(supabase, user.id)
+        : false;
+      return NextResponse.redirect(`${origin}${isAdmin ? "/admin" : next}`);
     }
   }
 

@@ -8,6 +8,9 @@
 |---|---|---|
 | [payment-membership-design.md](./payment-membership-design.md) | 결제·회원 시스템 전체 설계 (아키텍처, DB 스키마, 결제 플로우, 보안, 마일스톤) | 📐 설계 |
 | [auth-kakao-setup.md](./auth-kakao-setup.md) | 카카오 로그인 연동 진행 상황 & 재개 가이드 | ⏸ 보류 |
+| [admin-setup.md](./admin-setup.md) | 관리자 권한·RLS·최초 owner 설정 | 🧱 1단계 |
+| [admin-products-setup.md](./admin-products-setup.md) | 관리자 상품 등록·가격·이용 기간·상태 수정과 상품 DB 설정 | 🧱 2단계 |
+| [admin-courses-setup.md](./admin-courses-setup.md) | 관리자 강의·챕터·차시·영상 연결 관리 | 🧱 3단계 |
 
 ## 전체 진행 상황
 
@@ -18,8 +21,12 @@
   ├─ 카카오 로그인 ─────────────────────────── ⏸ 비즈앱 전환 대기 (KOE205)
   └─ 전화번호 본인인증 ────────────────────── ⬜ 미착수
 [상품/스키마]
-  ├─ products/orders/entitlements 테이블 ───── ⬜ 미착수
-  └─ RLS 정책 ──────────────────────────────── ⬜ 미착수
+  ├─ products 테이블·관리 화면 ──────────────── 🟨 코드 완료 / SQL 실행 필요
+  ├─ products RLS·감사 로그 ─────────────────── 🟨 코드 완료 / SQL 실행 필요
+  ├─ courses/sections/lessons 관리 화면 ───────── 🟨 코드 완료 / SQL 실행 필요
+  ├─ 강의 콘텐츠 RLS·감사 로그 ───────────────── 🟨 코드 완료 / SQL 실행 필요
+  ├─ 비공개 영상 업로드·signed 재생 ───────────── 🟨 코드 완료 / SQL 실행 필요
+  └─ orders/entitlements 테이블 ─────────────── ⬜ 미착수
 [결제]
   ├─ 토스 결제위젯 (테스트 키) ──────────────── ⬜ 미착수
   ├─ 주문 생성 API ─────────────────────────── ⬜ 미착수

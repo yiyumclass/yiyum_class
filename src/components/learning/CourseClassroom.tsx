@@ -36,11 +36,13 @@ export default function CourseClassroom({
   initialProgress,
   displayName,
   progressPersistenceEnabled,
+  isAdminPreview = false,
 }: {
   course: Course;
   initialProgress: CourseProgress;
   displayName: string;
   progressPersistenceEnabled: boolean;
+  isAdminPreview?: boolean;
 }) {
   const flatLessons: FlatLesson[] = course.sections.flatMap((section, sectionIndex) =>
     section.lessons.map((item, lessonIndex) => ({
@@ -54,8 +56,11 @@ export default function CourseClassroom({
         .reduce((total, current) => total + current.lessons.length, 0) + lessonIndex,
     }))
   );
-  const fallbackLesson = flatLessons[0];
-  const progressLesson = flatLessons.find(
+  const availableFlatLessons = flatLessons.filter(
+    (lesson) => lesson.availability !== "coming-soon"
+  );
+  const fallbackLesson = availableFlatLessons[0];
+  const progressLesson = availableFlatLessons.find(
     (item) => item.id === initialProgress.currentLessonId
   );
   const [activeLessonId, setActiveLessonId] = useState(
@@ -82,7 +87,8 @@ export default function CourseClassroom({
   );
 
   const activeLesson =
-    flatLessons.find((item) => item.id === activeLessonId) ?? flatLessons[0]!;
+    availableFlatLessons.find((item) => item.id === activeLessonId) ??
+    availableFlatLessons[0]!;
 
   const completedCount = completedLessonIds.length;
   const progress = calculateCourseProgressPercent(course, {
@@ -95,8 +101,11 @@ export default function CourseClassroom({
     positionsByLessonId[activeLesson.id] ?? 0,
     isCurrentComplete
   );
-  const previousLesson = flatLessons[activeLesson.globalIndex - 1];
-  const nextLesson = flatLessons[activeLesson.globalIndex + 1];
+  const activeAvailableIndex = availableFlatLessons.findIndex(
+    (lesson) => lesson.id === activeLesson.id
+  );
+  const previousLesson = availableFlatLessons[activeAvailableIndex - 1];
+  const nextLesson = availableFlatLessons[activeAvailableIndex + 1];
 
   const queueProgressSave = useCallback(
     (
@@ -215,6 +224,7 @@ export default function CourseClassroom({
   }, [activeLessonId, completedLessonIds, positionsByLessonId]);
 
   const openLesson = (item: FlatLesson) => {
+    if (item.availability === "coming-soon") return;
     persistActiveVideo();
     setActiveLessonId(item.id);
     setOpenSectionIds((current) =>
@@ -315,16 +325,22 @@ export default function CourseClassroom({
 
   return (
     <div className={styles.page}>
+      {isAdminPreview && (
+        <div className={styles.adminPreviewBanner} role="status">
+          <strong>관리자 미리보기</strong>
+          <span>작성 중 콘텐츠까지 포함한 검수 화면입니다. 진도 변경은 저장되지 않습니다.</span>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link
-            href="/my"
+            href={isAdminPreview ? "/admin/courses" : "/my"}
             prefetch={false}
             className={styles.backLink}
-            onClick={returnToMyClass}
+            onClick={isAdminPreview ? undefined : returnToMyClass}
           >
             <BackIcon />
-            <span>마이 클래스</span>
+            <span>{isAdminPreview ? "강의 관리" : "마이 클래스"}</span>
           </Link>
 
           <Link href="/" className={`serif ${styles.brand}`} aria-label="이윰 클래스 홈">
@@ -332,9 +348,13 @@ export default function CourseClassroom({
           </Link>
 
           <div className={styles.headerProgress}>
-            <span className={styles.userName}>{displayName}님</span>
+            <span className={styles.userName}>{isAdminPreview ? "ADMIN PREVIEW" : `${displayName}님`}</span>
             <span className={styles.progressCopy}>
-              <strong>{formatProgressPercent(progress)}%</strong> · {completedCount} / {flatLessons.length}강
+              {isAdminPreview ? (
+                <>작성 중 포함 · 총 {availableFlatLessons.length}강</>
+              ) : (
+                <><strong>{formatProgressPercent(progress)}%</strong> · {completedCount} / {availableFlatLessons.length}강</>
+              )}
             </span>
             <div
               className={styles.headerProgressTrack}
@@ -486,7 +506,9 @@ export default function CourseClassroom({
           <div className={styles.curriculumHeader}>
             <span className={styles.curriculumEyebrow}>CURRICULUM</span>
             <h2 className="serif">{course.shortTitle}</h2>
-            <p>{course.instructor} · {flatLessons.length}강</p>
+            <p>
+              {course.instructor} · 전체 {flatLessons.length}강 · 공개 {availableFlatLessons.length}강
+            </p>
             <div className={styles.curriculumProgressRow}>
               <span>{completedCount}강 완료</span>
               <strong>{formatProgressPercent(progress)}%</strong>
@@ -501,6 +523,9 @@ export default function CourseClassroom({
               const isOpen = openSectionIds.includes(section.id);
               const sectionCompletedCount = section.lessons.filter((item) =>
                 completedLessonIds.includes(item.id)
+              ).length;
+              const sectionAvailableCount = section.lessons.filter(
+                (item) => item.availability !== "coming-soon"
               ).length;
 
               return (
@@ -518,7 +543,9 @@ export default function CourseClassroom({
                     <span className={styles.sectionHeading}>
                       <strong>{section.title}</strong>
                       <small>
-                        {sectionCompletedCount}/{section.lessons.length}강 완료
+                        {sectionAvailableCount > 0
+                          ? `${sectionCompletedCount}/${sectionAvailableCount}강 완료 · 총 ${section.lessons.length}강`
+                          : `총 ${section.lessons.length}강 · 추후 공개`}
                       </small>
                     </span>
                     <ChevronIcon />
@@ -531,6 +558,7 @@ export default function CourseClassroom({
                           .slice(0, sectionIndex)
                           .reduce((total, current) => total + current.lessons.length, 0) + lessonIndex;
                         const flatItem = flatLessons[itemGlobalIndex];
+                        const isComingSoon = item.availability === "coming-soon";
                         const isActive = item.id === activeLesson.id;
                         const isComplete = completedLessonIds.includes(item.id);
                         const lessonProgress = calculateLessonProgressPercent(
@@ -540,6 +568,8 @@ export default function CourseClassroom({
                         );
                         const lessonProgressLabel = isComplete
                           ? "학습 완료"
+                          : isComingSoon
+                            ? "추후 공개"
                           : lessonProgress > 0
                             ? `${lessonProgress}% 시청`
                             : "미완료";
@@ -548,7 +578,14 @@ export default function CourseClassroom({
                           <li key={item.id}>
                             <button
                               type="button"
-                              className={isActive ? styles.lessonRowActive : styles.lessonRow}
+                              className={
+                                isComingSoon
+                                  ? styles.lessonRowComingSoon
+                                  : isActive
+                                    ? styles.lessonRowActive
+                                    : styles.lessonRow
+                              }
+                              disabled={isComingSoon}
                               aria-current={isActive ? "step" : undefined}
                               aria-label={`${itemGlobalIndex + 1}강 ${item.title}, ${lessonProgressLabel}`}
                               onClick={() => openLesson(flatItem)}
@@ -559,7 +596,9 @@ export default function CourseClassroom({
                               <span className={styles.lessonRowCopy}>
                                 <strong>{item.title}</strong>
                                 <small>
-                                  {formatDuration(item.durationSeconds)} · {isComplete
+                                  {formatDuration(item.durationSeconds)} · {isComingSoon
+                                    ? "추후 공개"
+                                    : isComplete
                                     ? "완료"
                                     : lessonProgress > 0
                                       ? `${lessonProgress}% 시청`
@@ -568,7 +607,11 @@ export default function CourseClassroom({
                                       : "미완료"}
                                 </small>
                               </span>
-                              {isActive && <span className={styles.nowPlaying}>재생 중</span>}
+                              {isComingSoon ? (
+                                <span className={styles.comingSoon}>추후 공개</span>
+                              ) : isActive ? (
+                                <span className={styles.nowPlaying}>재생 중</span>
+                              ) : null}
                             </button>
                           </li>
                         );

@@ -2,8 +2,8 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-07-13
-- Primary product surfaces: 공개 랜딩, 인증, 마이 클래스, VOD 강의실, 전자책 열람, 주문/계정 관리
+- Last refreshed: 2026-07-14
+- Primary product surfaces: 공개 랜딩, 인증, 마이 클래스, VOD 강의실, 전자책 열람, 주문/계정 관리, 관리자 운영 도구
 - Evidence reviewed:
   - `src/app/page.tsx`
   - `src/app/globals.css`
@@ -15,6 +15,10 @@
   - `src/components/layout/SiteHeader.tsx`, `src/components/layout/SiteHeader.module.css`
   - `src/components/my/MyClassLibrary.tsx`
   - `src/components/auth/AuthForm.tsx`
+  - `src/app/admin/layout.tsx`, `src/app/admin/page.tsx`, `src/app/admin/admin.module.css`
+  - `src/app/admin/products/page.tsx`, `src/components/admin/AdminProductManager.tsx`
+  - `src/app/admin/courses/page.tsx`, `src/components/admin/AdminCourseManager.tsx`
+  - `src/lib/admin/auth.ts`
   - `docs/payment-membership-design.md`
   - `docs/auth-kakao-setup.md`
   - `mobile-fixed-430.png`, `signup-page.png`, `yiyume-signup.png`
@@ -23,7 +27,7 @@
 ## Brand
 - Personality: 따뜻함, 신뢰감, 차분한 전문성, 수강생에게 말을 거는 친근함.
 - Trust signals: 명확한 수강 진도, 구매 상태, 이용 기간, 최근 학습 위치, 결제/문의 접근성.
-- Avoid: 학습·구매·계정 용어가 섞이는 구조, 과도한 관리자 화면 느낌, 원본 사용자 ID/메타데이터 노출.
+- Avoid: 학습·구매·계정 용어가 섞이는 구조, 고객 화면의 과도한 관리자 화면 느낌, 원본 사용자 ID/메타데이터 노출, 장식 위주 통계 대시보드.
 
 ## Product goals
 - Goals:
@@ -31,6 +35,7 @@
   - 강의별 완료 차시와 전체 진도를 한눈에 확인한다.
   - VOD와 전자책을 같은 라이브러리에서 관리하되 각 콘텐츠에 맞는 행동을 제공한다.
   - 상품이 늘어나도 구매 권한과 학습 기록이 독립적으로 확장된다.
+  - 운영자가 코드 수정 없이 상품·콘텐츠·수강권을 안전하게 관리한다.
 - Non-goals:
   - 마이 클래스에 미구매 상품을 구매 상품과 섞지 않는다.
   - 주문 성공만으로 콘텐츠를 노출하지 않는다. 유효한 이용권을 기준으로 한다.
@@ -46,17 +51,20 @@
   - 결제 후 처음 강의를 시작하는 신규 수강생.
   - 며칠 뒤 돌아와 마지막 위치부터 이어보려는 수강생.
   - 여러 강의와 전자책을 보유한 반복 구매 고객.
+  - 상품 등록, 회원 지원, 결제 확인을 담당하는 사이트 owner/operator.
 - User jobs:
   - 내가 구매한 콘텐츠인지 확인한다.
   - 마지막으로 본 강의와 다음 강의를 찾는다.
   - 완료한 차시를 체크하고 전체 진도를 파악한다.
   - 전자책을 다시 열거나 내려받는다.
 - Key contexts of use: 모바일 우선, 짧은 시간에 재접속, 이동 중 재생, 느린 네트워크.
+- Admin context: 데스크톱 중심의 반복 운영 업무. 모바일에서는 긴급 조회와 간단한 상태 확인을 지원한다.
 
 ## Information architecture
 - Primary navigation:
   - 비로그인: `강의 · 전자책 · 후기 · 문의 · 로그인 · 수강 신청`
   - 로그인: `강의 · 전자책 · 후기 · 문의 · 마이 클래스 · 수강 신청`
+  - 관리자 로그인: 일반 회원 CTA 대신 공통 공개 헤더에 `마이 클래스 · 관리자`를 표시하고, `관리자`는 `/admin`으로 이동한다.
   - `마이 클래스`는 갈색 텍스트와 활성 밑줄로 표시한다. 판매 CTA인 `수강 신청`과 같은 채움 버튼을 사용하지 않는다.
   - `수강 신청` 노출은 로그인 여부가 아니라 현재 상품의 이용권 보유 여부로 결정한다. 미보유 회원에게는 유지하고, 보유 회원에게는 `이어보기` 또는 `강의실 입장`으로 교체한다.
   - 홈·강의·SNS·문의·법정문서 등 공개 페이지는 동일한 `SiteHeader`의 72px 높이, 1200px 컨테이너, 메뉴 순서와 좌표를 공유한다.
@@ -70,13 +78,24 @@
   - `강의실`: 영상, 커리큘럼, 차시 진도가 표시되는 실제 학습 화면.
   - `마이페이지`: 주문/결제 내역과 계정 설정을 포함하는 상위 계정 영역. 전역 핵심 CTA로는 사용하지 않는다.
 - Core routes/screens:
-  - `/courses`: 구매 가능한 공개 강의 목록. 강의가 1개일 때는 대표 강의를 넓게 설명하고, 추가되면 동일한 카드 구조를 반복한다.
+  - `/courses`: 구매 가능한 공개 강의 목록. 상품 수와 무관하게 비교 가능한 동일 크기의 카드 그리드를 사용한다.
+  - `/courses/[slug]`: 강의별 판매 상세. 전체 커리큘럼, 수강 정보, 가격과 구매 CTA를 제공한다.
   - `/my`: 마이 클래스 기본 화면.
   - `/learn/[courseSlug]`: VOD 강의실.
   - `/read/[ebookSlug]`: 인앱 전자책 리더가 있을 때의 열람 화면.
   - `/account/orders`: 주문/결제 내역.
   - `/account/settings`: 프로필·계정 설정.
-  - 기존 `/account`는 완성 시 `/my` 또는 계정 개요로 리다이렉트한다.
+  - `/account`는 `/account/settings`로 리다이렉트해 계정 관리 진입점을 하나로 유지한다.
+  - `/admin`: 관리자 운영 현황과 처리할 작업의 시작점. 서버에서 활성 관리자 역할을 확인한다.
+  - `/admin/products`: 강의·전자책 공통 판매 상품 관리.
+  - `/admin/courses`: 챕터·차시·영상·공개 상태 관리.
+  - `/admin/ebooks`: 전자책 파일·버전·배포 상태 관리.
+  - `/admin/orders`, `/admin/members`: 주문·환불과 회원별 수강권 운영.
+- Admin navigation:
+  - `대시보드 · 상품 관리 · 강의 관리 · 전자책 관리 · 주문/결제 · 회원/수강권 · 학습 현황 · 운영 설정` 순서를 유지한다.
+  - 아직 구현하지 않은 메뉴는 잘못된 빈 페이지로 연결하지 않고 `준비 중` 상태로 명확히 비활성화한다.
+  - 대시보드는 허위 매출 수치 대신 실제 연결된 데이터와 처리 가능한 운영 상태만 표시한다.
+  - 활성 관리자 계정은 이메일·카카오 로그인 완료 후 일반 `next` 경로보다 `/admin` 이동을 우선한다.
 - Global footer:
   - 홈, 강의 목록, SNS·문의, 개인정보처리방침·이용약관 등 공개/판매 페이지에는 사업자 정보 전체형을 공통 사용한다.
   - 로그인·회원가입·결제·마이 클래스에는 법정 링크와 판매자 식별 정보만 남긴 간결형을 사용한다.
@@ -88,8 +107,12 @@
   4. 별도 구역의 추천 콘텐츠. 반드시 `미구매`로 표시하고 보유 콘텐츠와 시각적으로 분리한다.
 - Content hierarchy for `/courses`:
   1. 페이지 목적과 공개된 강의 수를 알리는 간결한 인트로.
-  2. 이미지, 강의명, 핵심 주제, 수강 정보, 가격, 상세/신청 CTA를 포함한 강의 카드.
-  3. VOD 학습과 진도 저장, 문의 방법을 설명하는 구매 전 안내.
+  2. 이미지, 강의명, 한 줄 설명, 강의 수·재생 시간·수강 기간, 가격과 상세 CTA를 포함한 카드 그리드.
+  3. VOD 재생, 진도 저장, 문의 방법만 간결하게 설명하는 구매 전 안내.
+- Public course catalog card:
+  - 데스크톱 3열, 태블릿 2열, 모바일 1열의 동일한 정보 순서와 크기를 유지한다.
+  - 전체 커리큘럼, 4개 이상의 주제 태그, 반복되는 지원 문구와 중복 CTA는 목록에 표시하지 않는다.
+  - 상품명·설명·가격·수강 기간은 `products`, 챕터·차시·재생 시간은 공개된 강의 콘텐츠를 기준으로 한다.
 - Course card:
   - 썸네일, 강의명, 상태 배지, 완료 차시/전체 차시, 진도 막대, 마지막 학습 차시, 이용 기간.
   - 미시작 CTA: `VOD 강의실 입장`.
@@ -105,6 +128,9 @@
 - One term, one role: `마이 클래스`, `강의실`, `이어보기`의 역할을 섞지 않는다.
 - Honest progress: 측정 가능한 데이터만 진도로 표현한다.
 - Progressive complexity: 강의가 1개일 때도 간결하고 20개가 되어도 필터와 카드 구조가 유지되어야 한다.
+- Operational clarity: 어드민은 상태, 다음 조치, 변경 결과를 우선하고 홍보성 문구와 장식은 최소화한다.
+- Non-technical operations: 운영 관리자 화면에는 SQL, 테이블, DB 연결 같은 개발 용어와 마이그레이션 파일명을 노출하지 않는다. 배포·스키마 관리는 개발자 문서와 배포 절차에서만 다룬다.
+- Defense in depth: 관리자 메뉴를 숨기는 것과 실제 서버·DB 권한 검사를 별개로 적용한다.
 - Tradeoffs:
   - 홈에서 사용자 이름까지 조회하기보다 로그인 여부만 확실히 표시해 속도와 단순성을 우선한다.
   - 완료 차시 수는 체크 기준으로 별도 표시하고, 강의 전체 진도율은 각 차시를 동일 비중으로 두어 완료 차시는 100%, 미완료 차시는 마지막 재생 위치만큼 합산한다.
@@ -119,6 +145,8 @@
 - Typography: Pretendard 본문, Noto Serif KR 제목. 기존 `serif` 클래스를 재사용한다.
 - Spacing/layout rhythm: 데스크톱 최대 1200px, 24–40px 여백, 카드 간격 16–24px.
 - Shape/radius/elevation: 10–16px 라운드, 얕은 테두리, 필요한 카드만 약한 그림자.
+- Admin visual language: 웜 아이보리 작업면과 짙은 차콜 사이드바를 사용한다. 7–11px 라운드와 얇은 구분선으로 고객용 카드보다 더 조밀하고 업무적인 밀도를 유지하되, 본문·입력·버튼은 13–16px, 보조 정보는 최소 11px를 기본으로 해 반복 업무에서도 읽기 쉽게 한다.
+- Admin density contract: 데스크톱 기본 컨트롤은 40–44px, 목록의 소형 작업 버튼은 32px, 상태 배지는 26–28px, 강의 차시 행은 62px를 기준으로 한다. 글자만 키우면서 박스를 비례 확대하지 않고, 같은 목록 안의 상태·영상·작업 열은 모든 행에서 동일한 좌표를 공유한다.
 - Motion: 진도 업데이트와 탭 전환은 150–250ms. 과도한 축하 애니메이션은 피한다.
 - Imagery/iconography: 강의 썸네일과 전자책 표지를 4:3/3:4로 구분. 체크 아이콘에는 텍스트 상태를 함께 제공한다.
 
@@ -137,15 +165,25 @@
   - `EntitlementBadge`: 수강 중/완료/만료 예정/만료 상태.
   - `SiteFooter`: 공개 페이지용 `full`, 인증·회원 영역용 `compact`, 어두운 결제 화면용 `dark` 변형.
   - `SiteHeader`: 공개 페이지용 공통 내비게이션. `solid | overlay` 배경과 페이지별 활성 메뉴 상태를 지원하며 서버에서 로그인 여부를 확인한다.
+  - `AccountHeader`: 마이 클래스·주문 내역·계정 설정에서 브랜드, 회원 탭, 사용자 정보와 로그아웃 위치를 동일하게 유지한다.
+  - `AccountSettings`: 카카오 로그인을 주 인증 수단으로 가정한 프로필·연결 계정·알림·탈퇴 화면. 실제 연동 전에는 `PREVIEW` 상태와 비저장 안내를 명확히 표시한다.
+    - 회원 탈퇴 확인에서는 콘텐츠·학습 기록 이용 종료, 개인정보 파기 원칙, 전자상거래법상 거래 기록 보관 기간, 진행 중 환불·문의와 개인정보처리방침 경로를 짧은 문단으로 구분해 안내한다.
+  - `AdminShell`: 관리자 전용 사이드 내비게이션, 현재 계정, 로그아웃, 작업면을 제공한다.
+  - `AdminSummary`: 실제 카탈로그·주문·회원 데이터를 요약하되 데이터 출처와 기준을 표시한다.
+  - `AdminProductManager`: 강의·전자책 공통 판매 단위를 검색·필터링하고 상품명, 설명, 가격, 이용 기간, 공개 상태를 등록·수정한다. 상품 유형과 slug는 생성 후 잠가 주문·콘텐츠 연결을 보호하며, 상품과 실제 콘텐츠 편집은 분리한다.
+  - `AdminCourseManager`: 강의 상품과 학습 콘텐츠를 연결하고 챕터·차시 등록, 수정, 순서 변경, 영상 연결과 공개 준비 상태를 관리한다. 새 VOD 상품은 `강의 연결 대기`로 먼저 보여 상품과 콘텐츠의 관계를 명확히 하며, 전체 32개 차시는 챕터 단위로 접어 운영 밀도를 유지한다.
 - Variants and states:
   - course: not-started, in-progress, completed, expiring, expired.
   - ebook: available, opened, expiring, expired.
   - access: entitled, not-entitled, pending, revoked.
+  - admin product: draft, active, paused, archived.
+  - admin course/section/lesson: draft, published, archived. 영상이 없는 lesson은 published로 변경할 수 없다.
 - Token/component ownership: 기존 전역 색상과 타이포그래피를 우선하고 마이 클래스 전용 임의 색상 체계를 만들지 않는다.
 
 ## Accessibility
 - Target standard: WCAG 2.2 AA 수준을 목표로 한다.
 - Keyboard/focus behavior: 탭, 커리큘럼 차시, CTA, 완료 토글 모두 키보드로 접근 가능해야 한다.
+- Admin keyboard behavior: 사이드 내비게이션, 테이블 행 동작, 필터, 저장/취소가 논리적인 탭 순서를 유지해야 한다.
 - Contrast/readability: 갈색 활성 탭은 밝은 배경/텍스트와 4.5:1 이상 대비를 확보한다.
 - Screen-reader semantics:
   - 필터는 실제 tab 또는 명확한 버튼 그룹으로 구현한다.
@@ -160,6 +198,9 @@
   - 모바일: 상단 `마이 클래스` 제목, 가로 스크롤 필터, 1열 카드.
   - VOD 강의실 모바일: 영상 위, 커리큘럼 아래. 현재/다음 차시 CTA는 접근하기 쉽게 고정할 수 있다.
   - 차시 이동 버튼은 강의 제목을 반복하지 않고 `이전 강의`·`다음 강의`만 표시한다. 데스크톱에서는 양끝의 짧은 버튼으로, 모바일에서는 동일 행의 2열로 배치한다.
+  - 어드민은 900px 이상에서 고정 사이드바와 작업면을 사용하고, 그 이하는 상단 가로 스크롤 메뉴로 전환한다.
+  - 강의 관리의 좌우 패널은 작업면이 좁아지는 1200px 이하에서 상하 구조로 전환한다. 차시 작업 버튼은 데스크톱에서 고정 작업 열을 공유하고, 좁은 화면에서는 제목·상태 아래의 별도 행으로 내려 열 흔들림과 가로 넘침을 막는다.
+  - 상품의 7열 테이블은 작업면이 좁은 구간에서 행별 정보 카드로 전환해 가격·상태·작업 버튼이 압축되지 않게 한다.
 - Touch/hover differences: 체크/CTA 터치 영역 최소 44px. hover에만 정보를 숨기지 않는다.
 
 ## Interaction states
@@ -167,9 +208,12 @@
 - Empty:
   - `아직 보유한 클래스가 없어요.`
   - 보조 CTA `클래스 둘러보기`, `전자책 둘러보기`.
-- Error: 진도 저장 실패 시 재생을 막지 않고 `진도 저장을 다시 시도하고 있어요`를 표시한다.
-- Success: 차시 완료 시 체크와 다음 차시 CTA를 즉시 갱신한다.
+- Error: 진도 저장 실패가 재생을 막지 않게 하며, 강의 제목 아래에 저장·이어보기 안내 문구를 상시 노출하지 않는다.
+- Admin error: 저장 실패 시 입력값을 유지하고 재시도 경로와 실패 항목을 명확히 표시한다. 권한 없음은 일반 오류와 구분한다.
+- Admin infrastructure error: 운영 데이터 계층이 준비되지 않았거나 일시 실패해도 SQL 실행을 요구하지 않고 `현재 수정할 수 없음 · 잠시 후 재시도`처럼 운영자 관점으로 안내한다.
+- Success: 차시 완료 시 별도 설명 문구 없이 체크와 다음 차시 CTA를 즉시 갱신한다.
 - Disabled: 만료 콘텐츠는 CTA를 비활성화하고 재구매/문의 경로를 제공한다.
+- Account preview: 프로필 저장, 다른 기기 로그아웃, 알림 변경, 회원 탈퇴는 목업 단계에서 실제 데이터나 세션을 변경하지 않고 화면 내 안내로만 결과를 확인시킨다.
 - Offline/slow network: 마지막 저장 시각을 표시하고 재연결 시 진도를 재전송한다.
 
 ## Content voice
@@ -185,6 +229,7 @@
 ## Implementation constraints
 - Framework/styling system: Next.js 16 App Router, React 19.2, 현재 인라인 스타일 + `globals.css` 구조.
 - Authentication: Supabase Auth 쿠키를 서버에서 `auth.getUser()`로 검증한다.
+- Account provider behavior: 현재 이메일 로그인·회원가입은 유지한다. 향후 카카오 회원은 비밀번호 변경 대신 카카오 연결 계정과 세션 관리를 제공하고, 이메일 회원용 비밀번호 변경은 provider 기반 분기 구현 시에만 노출한다.
 - Authorization source of truth: `entitlements`. 주문 상태나 로그인 여부만으로 접근을 허용하지 않는다.
 - Recommended domain model:
   - `products`: 판매 단위. `course | ebook` 유형과 가격/활성 상태.
@@ -205,6 +250,14 @@
   - 강의실과 전자책은 서버에서 이용권을 확인한 뒤 접근시킨다.
   - 영상/파일 원본의 공개 URL을 DB나 HTML에 노출하지 않고 만료되는 signed URL을 사용한다.
   - 사용자는 RLS를 통해 본인 진도만 조회/수정할 수 있다.
+  - 관리자 여부는 이메일이나 수정 가능한 `user_metadata`가 아니라 `admin_users`와 서버 DAL에서 확인한다.
+  - 역할은 `owner | operator`로 시작하고 관리자 변경과 민감한 운영 작업은 `admin_audit_logs`에 기록한다.
+  - 어드민 페이지·Server Action·Route Handler·DB RLS 각각에서 필요한 권한을 재검증한다.
+  - 상품은 실제 삭제하지 않고 `archived`로 보관하며, 등록·가격·이용 기간·상태 등 변경 필드와 변경 전후 값은 DB 트리거로 감사 로그를 남긴다.
+  - 강의·챕터·차시는 관리자만 직접 조회·수정할 수 있다. 수강생에게는 이용권 확인 후 공개 상태 콘텐츠만 별도 DAL로 제공하고, `video_path`를 그대로 노출하지 않는다.
+  - 강의를 공개할 때 비보관 차시가 하나 이상 존재하고 모든 차시에 영상 식별자가 연결되어 있어야 한다. 차시 단위 공개도 영상 식별자 없이는 거부한다.
+  - 관리자 강의 DB와 현재 코드 카탈로그는 이용권·signed URL 계층이 준비될 때까지 분리한다. 어드민 저장이 즉시 수강생 화면의 원본 영상 경로 노출로 이어지지 않게 한다.
+  - 관리자 상품 DB와 현재 공개 `/courses` 코드 카탈로그도 주문 금액 서버 검증을 도입할 때까지 분리되어 있다. 관리자 CRUD 완료를 실제 구매 화면·결제 금액 반영 완료로 표현하지 않는다.
 - Performance constraints: 마이 클래스 첫 화면은 최근 학습 1건과 보유 콘텐츠 목록에 필요한 데이터만 조회한다.
 - Compatibility constraints: 로그인 후 홈과 마이 클래스는 동일 호스트의 Supabase 쿠키를 사용한다.
 - Test/screenshot expectations:

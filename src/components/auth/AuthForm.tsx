@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/client";
 import ConsentBlock from "./ConsentBlock";
 
@@ -103,13 +104,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) {
       setError(translate(error.message));
       setLoading(false);
       return;
     }
-    router.push(getNext());
+    const isAdmin = data.user
+      ? await hasActiveAdminAccess(supabase, data.user.id)
+      : false;
+    router.push(isAdmin ? "/admin" : getNext());
     router.refresh();
   };
 

@@ -1,0 +1,1008 @@
+.pageHeading {
+  margin-bottom: 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 13px;
+  color: #b85c38;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.2em;
+}
+
+.pageHeading h1 {
+  margin: 0;
+  color: #201c17;
+  font-size: clamp(34px, 4vw, 48px);
+  line-height: 1.2;
+}
+
+.pageHeading p {
+  margin: 12px 0 0;
+  color: #786f64;
+  font-size: 15px;
+}
+
+.joinedAt {
+  margin-bottom: 4px;
+  color: #978e82;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.previewBanner {
+  min-height: 72px;
+  margin-bottom: 16px;
+  padding: 15px 18px;
+  border: 1px solid #dfd1a2;
+  border-radius: 11px;
+  background: #fbf4d5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+}
+
+.kakaoMiniMark,
+.kakaoMark {
+  border-radius: 9px;
+  background: #fee500;
+  color: #181600;
+  display: grid;
+  place-items: center;
+}
+
+.kakaoMiniMark svg,
+.kakaoMark svg {
+  width: 64%;
+  height: 64%;
+  fill: #181600;
+}
+
+.kakaoMiniMark {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+}
+
+.previewBanner strong {
+  color: #4d4530;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.previewBanner p {
+  margin: 3px 0 0;
+  color: #82775a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.previewBadge {
+  padding: 5px 8px;
+  border: 1px solid #d9c780;
+  border-radius: 99px;
+  color: #8f7c36;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.previewNotice {
+  min-height: 48px;
+  margin-bottom: 16px;
+  padding: 10px 13px;
+  border: 1px solid #d8c9bc;
+  border-radius: 8px;
+  background: #f8eee7;
+  color: #7d5140;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.previewNotice > svg,
+.previewNotice button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.previewNotice button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9a7565;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.settingsLayout {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  align-items: start;
+  gap: 26px;
+}
+
+.localNavigation {
+  position: sticky;
+  top: 106px;
+  padding: 18px 0;
+}
+
+.localNavigation > p {
+  margin: 0 0 14px;
+  color: #a1988c;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+}
+
+.localNavigation nav {
+  display: grid;
+  gap: 2px;
+}
+
+.localNavigation a {
+  min-height: 39px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: #776f64;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.localNavigation a:hover {
+  background: #eae2d7;
+  color: #9e5033;
+}
+
+.localNavigation a span {
+  color: #b1a89d;
+  font-size: 9px;
+}
+
+.settingsContent {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.settingsCard,
+.dangerCard {
+  scroll-margin-top: 104px;
+  border: 1px solid #ddd5c9;
+  border-radius: 13px;
+  background: #fbf8f2;
+}
+
+.settingsCard {
+  padding: 27px 29px 29px;
+}
+
+.cardHeading,
+.cardHeadingSimple {
+  min-height: 62px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5ded3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.cardIndex {
+  display: block;
+  margin-bottom: 7px;
+  color: #b85c38;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.cardHeading h2,
+.cardHeadingSimple h2,
+.dangerCard h2 {
+  margin: 0;
+  color: #302b25;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.cardHeading p,
+.cardHeadingSimple p,
+.dangerCard p {
+  margin: 7px 0 0;
+  color: #91887d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.profileAvatar {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #e7d8c8;
+  color: #7f3f29;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.profileForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 19px 16px;
+}
+
+.profileForm label {
+  min-width: 0;
+  align-self: start;
+  align-content: start;
+  display: grid;
+  gap: 8px;
+}
+
+.profileForm label > span:first-child,
+.confirmLabel {
+  color: #5e574e;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.profileForm input,
+.readonlyField,
+.confirmLabel input {
+  width: 100%;
+  height: 45px;
+  min-height: 45px;
+  padding: 0 13px;
+  border: 1px solid #d9d1c5;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #302b25;
+  font: inherit;
+  font-size: 13px;
+}
+
+.profileForm input::placeholder,
+.confirmLabel input::placeholder {
+  color: #b7aea2;
+}
+
+.profileForm input:focus,
+.confirmLabel input:focus {
+  border-color: #b85c38;
+  outline: 2px solid rgba(184, 92, 56, 0.13);
+}
+
+.readonlyField {
+  background: #f1ece4;
+  color: #837a6f;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileForm small {
+  color: #aaa195;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  padding-top: 3px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primaryButton,
+.secondaryButton,
+.withdrawalButton,
+.dialogCancel,
+.dialogConfirm {
+  min-height: 40px;
+  padding: 0 15px;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: 1px solid #b85c38;
+  background: #b85c38;
+  color: #fffaf3;
+}
+
+.primaryButton:hover {
+  border-color: #a55032;
+  background: #a55032;
+}
+
+.connectedAccount {
+  min-height: 74px;
+  padding: 14px 16px;
+  border: 1px solid #e1d9ce;
+  border-radius: 9px;
+  background: #f8f4ed;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+}
+
+.kakaoMark {
+  width: 42px;
+  height: 42px;
+  font-size: 14px;
+}
+
+.connectionCopy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.connectionCopy strong {
+  color: #39332d;
+  font-size: 13px;
+}
+
+.connectionCopy > span {
+  overflow: hidden;
+  color: #8e857a;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connectedBadge {
+  padding: 5px 8px;
+  border-radius: 99px;
+  background: #e8ede2;
+  color: #66725a;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.connectedBadge svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.securityNote {
+  min-height: 67px;
+  margin-top: 12px;
+  padding: 13px 15px;
+  border-radius: 8px;
+  background: #efeee7;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.securityNote > svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #737963;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.securityNote strong {
+  color: #555b4c;
+  font-size: 12px;
+}
+
+.securityNote p {
+  margin: 4px 0 0;
+  color: #858b7b;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.sessionList {
+  margin-top: 20px;
+  border-top: 1px solid #e5ded3;
+}
+
+.sessionRow,
+.preferenceRow {
+  min-height: 71px;
+  padding: 14px 2px;
+  border-bottom: 1px solid #e8e1d7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.sessionRow > span:first-child,
+.preferenceRow > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.sessionRow strong,
+.preferenceRow strong {
+  color: #4c453d;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.sessionRow > span:first-child > span,
+.preferenceRow > span:first-child > span {
+  color: #958c80;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.currentSession {
+  color: #788069;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.secondaryButton {
+  min-height: 34px;
+  border: 1px solid #d7cec2;
+  background: transparent;
+  color: #71685e;
+  white-space: nowrap;
+}
+
+.secondaryButton:hover {
+  border-color: #b8aa9a;
+  color: #3e3831;
+}
+
+.preferenceList {
+  border-top: 1px solid #e5ded3;
+}
+
+.switchOn,
+.switchOff {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.switchOn {
+  background: #b85c38;
+}
+
+.switchOff {
+  background: #cec6bb;
+}
+
+.switchOn span,
+.switchOff span {
+  position: absolute;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow: 0 1px 4px rgba(47, 39, 31, 0.22);
+  transition: left 160ms ease;
+}
+
+.switchOn span {
+  left: 21px;
+}
+
+.switchOff span {
+  left: 3px;
+}
+
+.switchOn:disabled {
+  background: #a5aa98;
+  cursor: default;
+  opacity: 0.72;
+}
+
+.dangerCard {
+  padding: 24px 29px;
+  border-color: #dfcbc4;
+  background: #fbf5f1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.dangerCard .cardIndex {
+  color: #a65a47;
+}
+
+.dangerCard p {
+  color: #997d72;
+}
+
+.withdrawalButton {
+  flex: 0 0 auto;
+  border: 1px solid #c89b8d;
+  background: transparent;
+  color: #a34d39;
+}
+
+.withdrawalButton:hover {
+  border-color: #a84f39;
+  background: #a84f39;
+  color: #fff8f4;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: 22px;
+  background: rgba(31, 27, 23, 0.58);
+  display: grid;
+  place-items: center;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: calc(100dvh - 44px);
+  overflow-y: auto;
+  padding: 31px;
+  border: 1px solid #e0d6ca;
+  border-radius: 13px;
+  background: #fffaf4;
+  box-shadow: 0 26px 70px rgba(31, 25, 20, 0.25);
+}
+
+.dialogClose {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #81776b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.dialogClose:hover {
+  background: #eee6dc;
+}
+
+.dialogClose svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.dialogIcon {
+  width: 39px;
+  height: 39px;
+  margin-bottom: 17px;
+  border-radius: 50%;
+  background: #f0dcd4;
+  color: #a84f39;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.dialog h2 {
+  margin: 0;
+  color: #2d2823;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+}
+
+.dialogLead {
+  margin: 11px 0 16px;
+  color: #81776c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.withdrawalEffects {
+  overflow: hidden;
+  border: 1px solid #e3d9ce;
+  border-radius: 9px;
+  background: #f8f3ec;
+}
+
+.withdrawalEffects > div {
+  padding: 14px 15px;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 12px;
+}
+
+.withdrawalEffects > div + div {
+  border-top: 1px solid #e5dcd1;
+}
+
+.withdrawalEffects > div > span {
+  grid-row: 1 / 3;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 99px;
+  background: #eadbd1;
+  color: #92523e;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.withdrawalEffects strong {
+  color: #4d453d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.withdrawalEffects p {
+  margin: 0;
+  color: #8a8176;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.retentionBox {
+  margin-top: 12px;
+  padding: 15px;
+  border-radius: 9px;
+  background: #efeee7;
+}
+
+.retentionHeading {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.retentionHeading strong {
+  color: #55594d;
+  font-size: 11px;
+}
+
+.retentionHeading span {
+  color: #858a7b;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.retentionBox dl {
+  margin: 0;
+  border-top: 1px solid #dcddd3;
+}
+
+.retentionBox dl > div {
+  min-height: 31px;
+  border-bottom: 1px solid #dcddd3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.retentionBox dt,
+.retentionBox dd {
+  margin: 0;
+  font-size: 10px;
+}
+
+.retentionBox dt {
+  color: #73786a;
+}
+
+.retentionBox dd {
+  color: #555a4d;
+  font-weight: 700;
+}
+
+.retentionBox > p {
+  margin: 10px 0 0;
+  color: #919588;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.pendingNotice {
+  margin-top: 12px;
+  padding: 12px 13px;
+  border: 1px solid #ead6cb;
+  border-radius: 8px;
+  background: #fcf4ef;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pendingNotice > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #a45b43;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.pendingNotice p {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.pendingNotice strong {
+  color: #7e4b3a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.pendingNotice span {
+  color: #99786b;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.privacyLink {
+  width: fit-content;
+  margin-top: 11px;
+  color: #776e63;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  text-decoration: underline;
+  text-decoration-color: #b9afa3;
+  text-underline-offset: 3px;
+}
+
+.privacyLink:hover {
+  color: #a84f39;
+}
+
+.confirmLabel {
+  margin-top: 19px;
+  padding-top: 18px;
+  border-top: 1px solid #e2d9ce;
+  display: grid;
+  gap: 8px;
+}
+
+.confirmLabel strong {
+  color: #a84f39;
+}
+
+.confirmInstruction {
+  line-height: 1.6;
+}
+
+.confirmLabel input {
+  margin-top: 2px;
+}
+
+.dialogActions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.dialogCancel {
+  border: 1px solid #d8cfc3;
+  background: transparent;
+  color: #6f665b;
+}
+
+.dialogConfirm {
+  border: 1px solid #a84f39;
+  background: #a84f39;
+  color: #fff9f5;
+}
+
+.dialogConfirm:disabled {
+  border-color: #d9d0c5;
+  background: #ded7ce;
+  color: #a79e93;
+  cursor: default;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.withdrawalButton:focus-visible,
+.switchOn:focus-visible,
+.switchOff:focus-visible,
+.localNavigation a:focus-visible,
+.dialog button:focus-visible,
+.privacyLink:focus-visible,
+.previewNotice button:focus-visible {
+  outline: 2px solid #b85c38;
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .settingsLayout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .localNavigation {
+    position: static;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .localNavigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .localNavigation > p {
+    display: none;
+  }
+
+  .localNavigation nav {
+    min-width: max-content;
+    display: flex;
+    gap: 5px;
+  }
+
+  .localNavigation a {
+    min-height: 36px;
+    padding-inline: 11px;
+    border: 1px solid #ded5c8;
+    border-radius: 99px;
+    background: #f9f5ef;
+  }
+}
+
+@media (max-width: 760px) {
+  .pageHeading {
+    padding: 0 !important;
+  }
+
+  .settingsCard {
+    padding: 23px 19px 24px !important;
+  }
+
+  .dangerCard {
+    padding: 21px 19px !important;
+  }
+
+  .dialog {
+    padding: 27px 21px 23px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageHeading {
+    align-items: flex-start;
+    display: grid;
+    gap: 10px;
+  }
+
+  .joinedAt {
+    margin: 0;
+  }
+
+  .previewBanner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .previewBadge {
+    display: none;
+  }
+
+  .cardHeading,
+  .cardHeadingSimple {
+    margin-bottom: 20px;
+  }
+
+  .profileForm {
+    grid-template-columns: 1fr;
+  }
+
+  .formActions {
+    grid-column: auto;
+  }
+
+  .primaryButton {
+    width: 100%;
+  }
+
+  .dangerCard {
+    align-items: flex-start;
+    display: grid;
+    gap: 17px;
+  }
+
+  .withdrawalButton {
+    width: fit-content;
+  }
+
+  .sessionRow,
+  .preferenceRow {
+    gap: 14px;
+  }
+
+  .dialogLead br {
+    display: none;
+  }
+
+  .withdrawalEffects > div {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .withdrawalEffects > div > span {
+    grid-row: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .localNavigation a,
+  .switchOn,
+  .switchOff,
+  .switchOn span,
+  .switchOff span {
+    transition: none;
+  }
+}
