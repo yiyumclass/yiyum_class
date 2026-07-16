@@ -67,7 +67,14 @@ export async function loadRecentAdminAuditEntries(): Promise<AdminAuditEntry[]> 
 }
 
 function readTargetLabel(row: AuditRow) {
-  const candidates = [row.metadata.slug, row.metadata.title, row.metadata.lesson_key, row.metadata.section_key];
+  const candidates = [
+    row.metadata.slug,
+    row.metadata.title,
+    row.metadata.product_title,
+    row.metadata.member_email,
+    row.metadata.lesson_key,
+    row.metadata.section_key,
+  ];
   const label = candidates.find((value): value is string => typeof value === "string" && value.length > 0);
   return label ?? row.target_id ?? row.target_type;
 }
