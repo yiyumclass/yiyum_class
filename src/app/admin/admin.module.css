@@ -526,6 +526,11 @@
   color: #a75435;
 }
 
+.stepNumber.waiting {
+  border-style: dashed;
+  color: #948777;
+}
+
 .stepNumber svg {
   width: 17px;
   height: 17px;
@@ -572,6 +577,11 @@
 .stepStatus.current {
   background: #f1dfd6;
   color: #a65335;
+}
+
+.stepStatus.waiting {
+  background: #eee8dd;
+  color: #887a69;
 }
 
 .nextWork {

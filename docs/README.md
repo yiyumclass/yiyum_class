@@ -11,6 +11,9 @@
 | [admin-setup.md](./admin-setup.md) | 관리자 권한·RLS·최초 owner 설정 | 🧱 1단계 |
 | [admin-products-setup.md](./admin-products-setup.md) | 관리자 상품 등록·가격·이용 기간·상태 수정과 상품 DB 설정 | 🧱 2단계 |
 | [admin-courses-setup.md](./admin-courses-setup.md) | 관리자 강의·챕터·차시·영상 연결 관리 | 🧱 3단계 |
+| [admin-orders-setup.md](./admin-orders-setup.md) | 관리자 무료 신청 원장과 주문·결제 조회 확장 기준 | 🧱 주문 조회 |
+| [admin-members-setup.md](./admin-members-setup.md) | 관리자 회원 조회와 수강권 지급·회수·기간 관리 | 🧱 수강권 운영 |
+| [admin-progress-setup.md](./admin-progress-setup.md) | 관리자 강의별·회원별 학습 진도와 장기 미학습 조회 | 🧱 학습 현황 |
 
 ## 전체 진행 상황
 
@@ -26,7 +29,10 @@
   ├─ courses/sections/lessons 관리 화면 ───────── 🟨 코드 완료 / SQL 실행 필요
   ├─ 강의 콘텐츠 RLS·감사 로그 ───────────────── 🟨 코드 완료 / SQL 실행 필요
   ├─ 비공개 영상 업로드·signed 재생 ───────────── 🟨 코드 완료 / SQL 실행 필요
-  └─ orders/entitlements 테이블 ─────────────── ⬜ 미착수
+  ├─ entitlements 테이블·무료 신청 ─────────────── ✅ 코드 완료
+  ├─ 관리자 신청·주문 원장 조회 ───────────────── 🟨 코드 완료 / SQL 실행 필요
+  ├─ 관리자 회원·수강권 운영 ──────────────────── 🟨 코드 완료 / SQL 실행 필요
+  └─ 관리자 학습 현황 조회 ────────────────────── 🟨 코드 완료 / SQL 실행 필요
 [결제]
   ├─ 토스 결제위젯 (테스트 키) ──────────────── ⬜ 미착수
   ├─ 주문 생성 API ─────────────────────────── ⬜ 미착수

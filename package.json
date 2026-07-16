@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "verify:admin": "node scripts/verify-admin-integration.mjs"
+    "verify:admin": "node scripts/verify-admin-integration.mjs",
+    "verify:admin-tabs": "node scripts/verify-admin-tabs-live.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

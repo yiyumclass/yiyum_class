@@ -9,9 +9,9 @@ const navigation = [
   { label: "상품 관리", icon: "product", href: "/admin/products" },
   { label: "강의 관리", icon: "course", href: "/admin/courses" },
   { label: "전자책 관리", icon: "ebook" },
-  { label: "주문 · 결제", icon: "order" },
-  { label: "회원 · 수강권", icon: "member" },
-  { label: "학습 현황", icon: "progress" },
+  { label: "주문 · 결제", icon: "order", href: "/admin/orders" },
+  { label: "회원 · 수강권", icon: "member", href: "/admin/members" },
+  { label: "학습 현황", icon: "progress", href: "/admin/progress" },
   { label: "운영 설정", icon: "settings" },
 ] as const;
 

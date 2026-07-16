@@ -32,6 +32,34 @@ const implementationSteps = [
     number: "04",
     title: "전자책 콘텐츠 관리",
     description: "전자책 파일, 버전과 구매 후 열람 흐름을 관리합니다.",
+    status: "샘플 대기",
+    state: "waiting",
+  },
+  {
+    number: "05",
+    title: "주문 · 결제 조회",
+    description: "무료 신청 유입과 이용권 발급 상태를 주문 원장에서 확인합니다.",
+    status: "완료",
+    state: "complete",
+  },
+  {
+    number: "06",
+    title: "회원 · 수강권 관리",
+    description: "회원별 보유 콘텐츠와 이용 기간, 지급·회수 이력을 관리합니다.",
+    status: "완료",
+    state: "complete",
+  },
+  {
+    number: "07",
+    title: "학습 현황",
+    description: "회원별 강의 진도와 최근 학습, 완료 상태를 운영 지표로 확인합니다.",
+    status: "완료",
+    state: "complete",
+  },
+  {
+    number: "08",
+    title: "운영 설정",
+    description: "서비스 정책과 운영자 계정, 공통 안내 정보를 관리합니다.",
     status: "다음",
     state: "current",
   },
@@ -139,7 +167,7 @@ export default async function AdminDashboardPage() {
               <p className={styles.panelKicker}>SETUP ROADMAP</p>
               <h2 id="build-progress-title">어드민 구축 단계</h2>
             </div>
-            <span className={styles.progressFraction}>3 / 4</span>
+            <span className={styles.progressFraction}>6 / 8</span>
           </div>
 
           <ol className={styles.stepList}>
@@ -169,19 +197,19 @@ export default async function AdminDashboardPage() {
           </div>
 
           <div className={styles.nextWork}>
-            <span className={styles.nextWorkIndex}>04</span>
-            <h3>전자책 파일과 구매 후 열람 흐름을 관리합니다</h3>
+            <span className={styles.nextWorkIndex}>08</span>
+            <h3>운영 정책과 관리자 계정 설정을 한곳에 정리합니다</h3>
             <p>
-              상품과 강의 관리 기반은 준비됐습니다. 다음 단계에서는 전자책 원본과
-              버전을 안전하게 보관하고 수강권 보유자에게만 열람을 제공합니다.
+              콘텐츠·주문·회원·학습 운영 화면이 준비됐습니다. 다음 단계에서는 서비스
+              공통 정책과 운영자 권한, 화면 안내 정보를 안전하게 관리합니다.
             </p>
             <ul>
-              <li>전자책 상품과 파일 1:1 연결</li>
-              <li>버전 교체와 기존 구매자 열람 정책</li>
-              <li>수강권 확인 후 안전한 다운로드·열람</li>
+              <li>운영자 계정과 역할 상태 관리</li>
+              <li>고객 안내·문의와 서비스 공통 정보</li>
+              <li>변경 권한 제한과 감사 로그 기록</li>
             </ul>
             <span className={styles.nextWorkPending}>
-              전자책 관리 탭에서 이어서 구현합니다
+              운영 설정 탭에서 이어서 구현합니다
               <span aria-hidden="true">→</span>
             </span>
           </div>
@@ -249,6 +277,9 @@ function formatAuditAction(action: string) {
     "course_sections.updated": "챕터를 변경했습니다",
     "lessons.created": "차시를 추가했습니다",
     "lessons.updated": "차시를 변경했습니다",
+    "entitlement.granted": "수강권을 지급했습니다",
+    "entitlement.updated": "수강권을 변경했습니다",
+    "entitlement.revoked": "수강권을 회수했습니다",
   };
   return labels[action] ?? "운영 정보를 변경했습니다";
 }
@@ -260,6 +291,7 @@ function formatAuditTarget(targetType: string) {
     courses: "강의",
     course_sections: "챕터",
     lessons: "차시",
+    product_entitlements: "수강권",
   }[targetType] ?? "변경";
 }
 
