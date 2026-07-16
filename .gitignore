@@ -42,3 +42,7 @@ next-env.d.ts
 
 # OMC session state
 .omc/
+
+# local tooling artifacts
+.playwright-mcp/
+supabase/.temp/
