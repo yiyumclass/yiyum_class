@@ -172,6 +172,8 @@ export async function updateProductAction(
   }
 
   const supabase = await createClient();
+  // slug는 수정 대상에서 제외한다: lesson_progress가 상품 slug를 텍스트 키로 참조하므로
+  // 생성 후 불변 계약이다. slug 변경 필드를 이 수정 경로에 추가하지 말 것.
   const { data, error } = await supabase
     .from("products")
     .update({

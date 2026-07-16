@@ -320,6 +320,8 @@ export async function updateLessonAction(
   await requireAdmin();
   if (!isUuid(lessonId)) return invalidTarget("수정할 차시를 확인해 주세요.");
 
+  // withKey=false: lesson_key는 lesson_progress가 텍스트 키로 참조하므로 생성 후 불변 계약이다.
+  // 수정 경로에서는 차시 키를 읽지도 바꾸지도 않는다. lesson_key 수정 필드를 추가하지 말 것.
   const values = readLessonForm(formData, false);
   const fieldErrors = validateLessonForm(values, false);
   if (hasErrors(fieldErrors)) return formError(fieldErrors);
