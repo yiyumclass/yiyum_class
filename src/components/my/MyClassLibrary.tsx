@@ -26,7 +26,10 @@ export default function MyClassLibrary({
   const [notice, setNotice] = useState("");
 
   const course = items
-    .filter((item): item is CourseLibraryItem => item.kind === "course")
+    .filter(
+      (item): item is CourseLibraryItem =>
+        item.kind === "course" && item.status !== "preparing"
+    )
     .sort((a, b) =>
       (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? "")
     )[0];
@@ -250,7 +253,12 @@ function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => vo
         <h3 className={`serif ${styles.cardTitle}`}>{item.title}</h3>
         <p className={styles.cardDescription}>{item.description}</p>
 
-        {isCourse && item.progress !== undefined ? (
+        {isCourse && item.status === "preparing" ? (
+          <div className={styles.preparingMeta}>
+            <strong>수강 신청 완료</strong>
+            <span>첫 공개 차시가 등록되면 바로 학습할 수 있어요.</span>
+          </div>
+        ) : isCourse && item.progress !== undefined ? (
           <div className={styles.cardProgress}>
             <div>
               <span>
@@ -286,7 +294,11 @@ function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => vo
           </div>
         </dl>
 
-        {isCourse ? (
+        {isCourse && item.status === "preparing" ? (
+          <span className={`${styles.cardButton} ${styles.cardButtonDisabled}`} aria-disabled="true">
+            {item.ctaLabel}
+          </span>
+        ) : isCourse ? (
           <Link href={item.href} className={styles.cardButton}>
             {item.ctaLabel} <ArrowIcon />
           </Link>

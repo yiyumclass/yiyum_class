@@ -622,7 +622,8 @@
 }
 
 .cardProgress,
-.ebookMeta {
+.ebookMeta,
+.preparingMeta {
   min-height: 64px;
   margin-top: 23px;
   padding: 16px 0 18px;
@@ -658,6 +659,24 @@
   gap: 9px;
   color: #746b60;
   font-size: 12px;
+}
+
+.preparingMeta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  color: #746b60;
+  font-size: 12px;
+}
+
+.preparingMeta strong {
+  color: #9d4d31;
+  font-size: 12px;
+}
+
+.preparingMeta span {
+  color: #837a6f;
 }
 
 .ebookMeta svg {
@@ -709,6 +728,15 @@
 .cardButton:hover {
   background: #b85c38;
   color: #fffaf3;
+}
+
+.cardButtonDisabled,
+.cardButtonDisabled:hover {
+  border-color: #d8cec1;
+  background: #eee8df;
+  color: #968b7e;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .emptyState {

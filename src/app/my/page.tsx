@@ -46,22 +46,20 @@ export default async function MyPage() {
   const items: LibraryItem[] = [];
 
   for (const catalogItem of catalog) {
-    if (
-      !entitlementSlugs.has(catalogItem.slug) ||
-      !catalogItem.contentReady ||
-      !catalogItem.classroomCourse
-    ) {
+    if (!entitlementSlugs.has(catalogItem.slug)) {
       continue;
     }
-    const course = catalogItem.classroomCourse;
-    const progressResult = await loadCourseProgress(supabase, course);
-    const progress = progressResult.available
-      ? progressResult.progress
+    const course = catalogItem.classroomCourse ?? catalogItem.course;
+    const progress = catalogItem.contentReady
+      ? await loadCourseProgress(supabase, course).then((result) =>
+          result.available ? result.progress : createEmptyCourseProgress(course)
+        )
       : createEmptyCourseProgress(course);
     items.push(
       buildCourseLibraryItem(course, progress, {
         description: catalogItem.summary,
         accessLabel: catalogItem.accessLabel,
+        contentReady: catalogItem.contentReady,
       })
     );
   }

@@ -9,6 +9,7 @@ import type { CourseLibraryItem, EbookLibraryItem } from "@/lib/my-class/types";
 type CourseLibraryDetails = {
   description?: string;
   accessLabel?: string;
+  contentReady?: boolean;
 };
 
 export function buildCourseLibraryItem(
@@ -32,6 +33,7 @@ export function buildCourseLibraryItem(
   );
   const completedCount = completedLessons.length;
   const totalLessons = getAvailableLessons(course).length;
+  const contentReady = details.contentReady ?? totalLessons > 0;
   const percentage = calculateCourseProgressPercent(course, progress);
   const currentLessonProgress = currentLesson
     ? calculateLessonProgressPercent(
@@ -41,7 +43,9 @@ export function buildCourseLibraryItem(
       )
     : 0;
   const status =
-    completedCount === totalLessons && totalLessons > 0
+    !contentReady
+      ? "preparing"
+      : completedCount === totalLessons && totalLessons > 0
       ? "completed"
       : progress.lastWatchedAt || completedCount > 0
         ? "in-progress"
@@ -58,7 +62,9 @@ export function buildCourseLibraryItem(
     description: details.description || course.description,
     status,
     statusLabel:
-      status === "completed"
+      status === "preparing"
+        ? "강의 준비 중"
+        : status === "completed"
         ? "수강 완료"
         : status === "in-progress"
           ? "수강 중"
@@ -67,7 +73,9 @@ export function buildCourseLibraryItem(
     lastActivity: formatLastActivity(progress.lastWatchedAt),
     lastActivityAt: progress.lastWatchedAt,
     ctaLabel:
-      status === "completed"
+      status === "preparing"
+        ? "강의 준비 중"
+        : status === "completed"
         ? "다시 보기"
         : status === "in-progress"
           ? "이어보기"
@@ -77,7 +85,7 @@ export function buildCourseLibraryItem(
     totalLessons,
     currentLessonLabel: currentLesson
       ? `${currentLesson.sectionIndex + 1}장 ${currentLesson.lessonIndex + 1}강 · ${currentLesson.title}`
-      : "첫 강의를 준비 중입니다",
+      : "공개될 차시를 준비 중입니다",
     currentLessonProgress,
     recentCompletedLessonLabel: recentCompletedLesson?.title ?? null,
   };

@@ -12,7 +12,7 @@ type BaseLibraryItem = {
 export type CourseLibraryItem = BaseLibraryItem & {
   kind: "course";
   href: string;
-  status: "not-started" | "in-progress" | "completed";
+  status: "preparing" | "not-started" | "in-progress" | "completed";
   progress: number;
   completedLessons: number;
   totalLessons: number;
