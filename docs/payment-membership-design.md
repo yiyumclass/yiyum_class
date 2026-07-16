@@ -110,6 +110,13 @@ create table public.entitlements (
 > 나중에 구독이 필요하면 `subscriptions`, `billing_keys` 테이블을 **추가**하면 되고
 > 기존 구조는 건드리지 않는다.
 
+> **구현 반영(2026-07)**: 실제 스키마는 위 설계의 `entitlements` 대신
+> `product_entitlements`(회원·상품당 1행, `unique (user_id, product_id)`)로,
+> `orders`는 `20260716120000_create_orders.sql`의 `public.orders`로 구현되어 있다.
+> `orders.source`는 `free_checkout`/`payment`/`admin_grant`를 구분하고 `status`는
+> `pending`/`paid`/`canceled`/`refunded`/`failed`를 갖는다. 무료 신청·관리자 지급은
+> 이용권 upsert와 함께 주문을 append-only로 쌓으며, 유료 결제의 상태 전이는 아직 미착수다.
+
 ### 3.2 RLS (Row Level Security) — 필수
 
 Supabase는 클라이언트에서 DB에 직접 접근하므로 RLS로 잠근다.
