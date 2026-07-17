@@ -10,18 +10,14 @@ import ConsentBlock from "./ConsentBlock";
 type Mode = "login" | "signup";
 
 // 로그인/회원가입 공용 폼. 랜딩 브랜드 톤(크림 배경·세리프·주황 포인트)에 맞춘다.
-// 이메일+비밀번호(Supabase Auth)로 지금 바로 동작하고, 카카오 버튼은 심사 통과 후 그대로 쓴다.
-// 회원가입 필수 수집: 이름·닉네임·이메일·전화번호(+비밀번호). 선택정보는 가입 후 별도 수집.
+// 가입은 카카오 전용: 필수 약관 동의 후 "카카오로 시작하기"만 노출한다(이메일 가입 폼 없음).
+// 로그인은 카카오+이메일 병행: 관리자·기존 이메일 계정이 계속 로그인할 수 있도록 이메일 폼을 유지한다.
 export default function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const isSignup = mode === "signup";
 
-  const [name, setName] = useState("");
-  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [consent, setConsent] = useState({ valid: false, marketing: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,19 +30,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
   };
 
+  // 이메일 로그인 폼 검증. 가입은 카카오 전용이라 이메일 검증은 로그인만 대상으로 한다.
   const validate = () => {
     if (!email.includes("@") || email.length < 5)
       return "이메일 주소를 확인해 주세요.";
     if (password.length < 6) return "비밀번호는 6자 이상이어야 해요.";
-    if (isSignup) {
-      if (password !== passwordConfirm) return "비밀번호가 일치하지 않아요.";
-      if (name.trim().length < 1) return "이름을 입력해 주세요.";
-      if (nickname.trim().length < 1) return "닉네임을 입력해 주세요.";
-      const digits = phone.replace(/\D/g, "");
-      if (digits.length < 10 || digits.length > 11)
-        return "전화번호를 정확히 입력해 주세요. (숫자 10~11자리)";
-      if (!consent.valid) return "필수 항목에 동의해 주세요.";
-    }
     return null;
   };
 
@@ -62,6 +50,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     return message;
   };
 
+  // 이메일+비밀번호 로그인. 가입은 카카오 전용이라 이 경로는 로그인 폼에서만 호출된다.
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -73,36 +62,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
     setLoading(true);
     const supabase = createClient();
-
-    if (isSignup) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name.trim(),
-            nickname: nickname.trim(),
-            phone: phone.replace(/\D/g, ""),
-            marketing_opt_in: consent.marketing,
-          },
-        },
-      });
-      if (error) {
-        setError(translate(error.message));
-        setLoading(false);
-        return;
-      }
-      // 이메일 인증이 꺼져 있으면 session이 바로 발급된다 → 로그인 완료.
-      if (data.session) {
-        router.push(getNext());
-        router.refresh();
-        return;
-      }
-      // 인증이 켜져 있는 경우(대비): 확인 메일 안내.
-      setInfo("확인 메일을 보냈어요. 메일의 링크를 눌러 가입을 완료해 주세요.");
-      setLoading(false);
-      return;
-    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -122,6 +81,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   const signInWithKakao = async () => {
     setError(null);
+    setInfo(null);
+    // 가입은 카카오 전용이므로 필수 약관 동의 없이는 진행하지 않는다.
+    if (isSignup && !consent.valid) {
+      setError("필수 항목에 동의해 주세요.");
+      return;
+    }
     setLoading(true);
     const supabase = createClient();
     const next = encodeURIComponent(getNext());
@@ -170,89 +135,57 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           {isSignup ? "회원가입" : "로그인"}
         </h1>
         <p style={{ color: "#938B7F", fontSize: 14, margin: "0 0 26px" }}>
-          {isSignup ? "이메일로 계정을 만들어 시작하세요" : "다시 오신 것을 환영해요"}
+          {isSignup ? "카카오로 3초 만에 시작하세요" : "다시 오신 것을 환영해요"}
         </p>
 
-        <form onSubmit={submitEmail} style={{ display: "grid", gap: 12 }}>
-          {isSignup && (
-            <>
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="이름"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-              />
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="닉네임"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                autoComplete="nickname"
-              />
-            </>
-          )}
-          <input
-            className="auth-input"
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-          {isSignup && (
+        {/* 가입은 카카오 전용 → 이메일 폼은 로그인 모드에서만 렌더한다. */}
+        {!isSignup && (
+          <form onSubmit={submitEmail} style={{ display: "grid", gap: 12 }}>
             <input
               className="auth-input"
-              type="tel"
-              placeholder="전화번호 ( - 없이 숫자만)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              autoComplete="tel"
+              type="email"
+              placeholder="이메일"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
             />
-          )}
-          <input
-            className="auth-input"
-            type="password"
-            placeholder={isSignup ? "비밀번호 (6자 이상)" : "비밀번호"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={isSignup ? "new-password" : "current-password"}
-          />
-          {isSignup && (
             <input
               className="auth-input"
               type="password"
-              placeholder="비밀번호 확인"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              autoComplete="new-password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
             />
-          )}
 
-          {isSignup && <ConsentBlock onChange={setConsent} />}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                height: 48,
+                borderRadius: 10,
+                border: "none",
+                background: "#B85C38",
+                color: "#F6F1E9",
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: loading ? "default" : "pointer",
+                opacity: loading ? 0.6 : 1,
+                marginTop: 4,
+              }}
+            >
+              {loading ? "처리 중…" : "로그인"}
+            </button>
+          </form>
+        )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              height: 48,
-              borderRadius: 10,
-              border: "none",
-              background: "#B85C38",
-              color: "#F6F1E9",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: loading ? "default" : "pointer",
-              opacity: loading ? 0.6 : 1,
-              marginTop: 4,
-            }}
-          >
-            {loading ? "처리 중…" : isSignup ? "가입하기" : "로그인"}
-          </button>
-        </form>
+        {/* 가입 필수 약관 동의. 카카오 버튼 활성화 조건(consent.valid)의 근거. */}
+        {isSignup && (
+          <div style={{ textAlign: "left", marginBottom: 20 }}>
+            <ConsentBlock onChange={setConsent} />
+          </div>
+        )}
 
         {error && (
           <p style={{ color: "#C0392B", fontSize: 13, margin: "16px 0 0" }}>{error}</p>
@@ -261,24 +194,26 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <p style={{ color: "#5E6B4F", fontSize: 13, margin: "16px 0 0" }}>{info}</p>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            margin: "24px 0",
-            color: "#B7AE9F",
-            fontSize: 12,
-          }}
-        >
-          <span style={{ flex: 1, height: 1, background: "#DDD5C8" }} />
-          또는
-          <span style={{ flex: 1, height: 1, background: "#DDD5C8" }} />
-        </div>
+        {!isSignup && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              margin: "24px 0",
+              color: "#B7AE9F",
+              fontSize: 12,
+            }}
+          >
+            <span style={{ flex: 1, height: 1, background: "#DDD5C8" }} />
+            또는
+            <span style={{ flex: 1, height: 1, background: "#DDD5C8" }} />
+          </div>
+        )}
 
         <button
           onClick={signInWithKakao}
-          disabled={loading}
+          disabled={loading || (isSignup && !consent.valid)}
           style={{
             width: "100%",
             height: 48,
@@ -288,8 +223,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
             color: "#191600",
             fontSize: 15,
             fontWeight: 600,
-            cursor: loading ? "default" : "pointer",
-            opacity: loading ? 0.6 : 1,
+            cursor: loading || (isSignup && !consent.valid) ? "default" : "pointer",
+            opacity: loading || (isSignup && !consent.valid) ? 0.6 : 1,
           }}
         >
           카카오로 {isSignup ? "시작하기" : "로그인"}
