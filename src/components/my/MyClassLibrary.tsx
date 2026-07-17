@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import styles from "@/app/my/my.module.css";
 import type { CourseLibraryItem, LibraryItem } from "@/lib/my-class/types";
@@ -22,6 +23,7 @@ export default function MyClassLibrary({
   displayName: string;
   items: LibraryItem[];
 }) {
+  const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [notice, setNotice] = useState("");
 
@@ -183,6 +185,15 @@ export default function MyClassLibrary({
                 onAction={handleEbookAction}
               />
             ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyMark}>+</span>
+            <h3 className="serif">아직 보유한 콘텐츠가 없어요</h3>
+            <p>관심 있는 클래스를 둘러보고 나에게 맞는 강의를 시작해 보세요.</p>
+            <button type="button" onClick={() => router.push("/courses")}>
+              강의 둘러보기
+            </button>
           </div>
         ) : (
           <div className={styles.emptyState}>
