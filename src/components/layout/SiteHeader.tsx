@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { createClient } from "@/lib/supabase/server";
+import MobileMenu from "./MobileMenu";
 import styles from "./SiteHeader.module.css";
 
 type NavigationKey = "courses" | "ebook" | "reviews" | "sns" | "contact";
@@ -88,6 +89,13 @@ export default async function SiteHeader({
               수강 신청
             </Link>
           )}
+
+          <MobileMenu
+            navItems={navigationItems}
+            activeKey={active}
+            isAdmin={isAdmin}
+            enrollHref={enrollHref}
+          />
         </div>
       </div>
     </header>

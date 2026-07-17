@@ -171,6 +171,9 @@
   }
 
   .inner {
+    /* 내비를 감추면 actions가 가운데 auto 열로 자동배치되므로, 2열(브랜드 | 액션)로 바꿔
+       로고는 좌측, 로그인+햄버거는 우측에 붙인다. */
+    grid-template-columns: 1fr auto;
     padding-right: 22px !important;
     padding-left: 22px !important;
     gap: 12px;
@@ -183,34 +186,26 @@
     margin: -12px -6px;
   }
 
+  /* 모바일: 내비 탭은 햄버거 드로어로 옮기고, 헤더에는 로그인/마이클래스만 인라인으로 남긴다.
+     수강신청/관리자 CTA도 드로어로 이동. */
   .navigation {
-    gap: 0;
-  }
-
-  .navLink:not(.courseLink),
-  .enrollLink {
     display: none;
   }
 
-  .navLink {
-    padding: 23px 0 22px;
-    font-size: 13px;
+  .actions {
+    gap: 4px;
   }
 
-  .actions {
-    gap: 0;
-    font-size: 13px;
+  .enrollLink,
+  .adminLink {
+    display: none;
   }
 
   .accountLink,
   .myClassLink {
-    /* 탭타깃 보강: 로그인/마이클래스 링크 히트 영역 확장 (padding 증가분만큼 음수 margin으로 상쇄 → 레이아웃 불변) */
-    padding: 17px 10px 15px;
-    margin: -10px;
-  }
-
-  .adminActions .myClassLink {
-    display: none;
+    /* 탭타깃 보강: 히트 영역만 확장(세로 padding+음수 margin으로 레이아웃 불변) */
+    padding: 12px 8px;
+    margin: -12px 0;
   }
 }
 
