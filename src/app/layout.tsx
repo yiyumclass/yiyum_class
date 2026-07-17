@@ -14,6 +14,12 @@ export const metadata: Metadata = {
     type: "website",
     images: ["/assets/profile.jpg"],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "이윰 SNS 수익화 클래스",
+    description: "차이는 팔로워 수가 아닙니다 — 처음부터 수익으로 연결되는 계정 설계.",
+    images: ["/assets/profile.jpg"],
+  },
 };
 
 export default function RootLayout({

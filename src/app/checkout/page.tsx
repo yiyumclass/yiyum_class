@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import FreeEnrollmentForm from "@/components/checkout/FreeEnrollmentForm";
@@ -6,6 +7,12 @@ import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "수강 신청 | 이윰 클래스",
+  description: "이윰 클래스 수강 신청 페이지입니다.",
+  robots: { index: false },
+};
 
 // 결제(수강 신청) 페이지 — 로그인 게이트.
 // 미로그인이면 /login 으로 보내고, 로그인 후 여기로 돌아온다(next=/checkout).
