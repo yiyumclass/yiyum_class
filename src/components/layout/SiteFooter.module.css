@@ -126,13 +126,19 @@
 
   .businessInfo {
     margin-top: 13px;
-    gap: 5px;
-    font-size: 11px;
+    gap: 7px;
+    font-size: 12px;
     line-height: 1.7;
   }
 
   .businessInfo > span {
     display: block;
+  }
+
+  .businessInfo a {
+    /* 전화·이메일 링크 탭타깃 보강: padding만큼 음수 margin으로 상쇄해 레이아웃은 그대로 둔다 */
+    padding: 7px 4px;
+    margin: -7px -4px;
   }
 
   .links {
@@ -141,6 +147,12 @@
     flex-wrap: wrap;
     gap: 12px 18px;
     white-space: normal;
+  }
+
+  .links a {
+    /* 푸터 메뉴 링크 탭타깃 보강 (flex item이라 display는 자동으로 block화됨) */
+    padding: 9px 4px;
+    margin: -9px -4px;
   }
 
   .compact .inner {
@@ -152,6 +164,10 @@
   .compactIdentity {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .compactIdentity > span {
+    font-size: 11.5px;
   }
 }
 

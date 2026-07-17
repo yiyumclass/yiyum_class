@@ -282,6 +282,16 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   /* 섹션 상단 여백 축소 */
   section { padding-top: 96px !important; }
 
+  /* 히어로: 데스크톱 기준 상하 패딩(140/90px)이 축소된 모바일 헤딩 크기 대비 과함 →
+     상단 여백을 줄이고, 100vh 대신 100svh를 써서 모바일 브라우저 주소창으로 인한
+     초기 로드 시 스크롤 점프(하단 SCROLL 표시가 실제 화면보다 아래 붙는 문제)를 줄인다.
+     고정 nav 높이(모바일 68px)보다는 충분히 커서 겹치지 않는다. */
+  #hero {
+    padding-top: 100px !important;
+    padding-bottom: 64px !important;
+    min-height: 100svh !important;
+  }
+
   /* 모든 다단 grid → 1단 세로 나열 (about, 대상, 로드맵, 3단 통계) */
   [style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
@@ -315,7 +325,9 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
   /* 히어로 통계: 좌우 2단 → 세로 스택 + 가운데 구분선 숨김 */
   .hero-stats { flex-direction: column !important; align-items: center !important; gap: 16px !important; }
   .hero-stats > div:nth-child(2) { display: none !important; }
-  .hero-stats > div { text-align: center !important; max-width: 100% !important; }
+  /* 고정폭 190px는 세로 스택 시 문장이 너무 좁게 꺾여 어색했음 → 300px까지 여유를 줘서
+     한 줄에 더 자연스럽게 흐르도록 완화 (전체폭을 다 쓰진 않아 가운데 정렬이 카드처럼 보임) */
+  .hero-stats > div { text-align: center !important; width: auto !important; max-width: 300px !important; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }

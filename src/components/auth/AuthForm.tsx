@@ -121,6 +121,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         }
         .auth-input::placeholder { color: #A79F92; }
         .auth-input:focus { border-color: #B85C38; }
+
+        @media (max-width: 430px) {
+          /* iOS Safari는 입력창 font-size가 16px 미만이면 포커스 시 자동 확대(줌)한다.
+             기능/레이아웃은 그대로 두고 모바일에서만 폰트를 16px로 올려 줌을 막는다. */
+          .auth-input { font-size: 16px; }
+        }
       `}</style>
 
       <div style={{ width: "100%", maxWidth: 380, textAlign: "center" }}>

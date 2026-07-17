@@ -44,6 +44,17 @@ export default function LegalLayout({
         .legal th { background: #EAE3D6; font-weight: 600; color: #2E2820; white-space: nowrap; }
         .legal strong { color: #201C17; }
         .legal a { color: #B85C38; }
+
+        @media (max-width: 760px) {
+          /* 제목 크기·여백 축소, 표는 가로 스크롤로 대응(내용은 그대로 두고 스크롤 컨테이너만 부여) */
+          .legal h2 {
+            font-size: 16.5px; margin: 32px 0 12px; padding-top: 18px;
+          }
+          .legal h2:first-of-type { margin-top: 20px; }
+          .legal h3 { font-size: 14.5px; margin: 20px 0 8px; }
+          .legal table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .legal th, .legal td { white-space: normal; }
+        }
       `}</style>
 
       <div className="legal">

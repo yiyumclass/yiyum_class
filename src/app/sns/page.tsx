@@ -97,6 +97,8 @@ export default function SnsPage() {
           <NextLink
             href="/"
             style={{
+              display: "inline-block",
+              padding: "10px 4px",
               fontSize: "13px",
               color: "#A79F92",
               letterSpacing: "0.02em",

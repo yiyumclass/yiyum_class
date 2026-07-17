@@ -105,7 +105,16 @@ export default function ContactPage() {
 
         {/* 돌아가기 */}
         <div style={{ textAlign: "center", marginTop: "40px" }}>
-          <Link href="/" style={{ fontSize: "13px", color: "#A79F92", letterSpacing: "0.02em" }}>
+          <Link
+            href="/"
+            style={{
+              display: "inline-block",
+              padding: "10px 4px",
+              fontSize: "13px",
+              color: "#A79F92",
+              letterSpacing: "0.02em",
+            }}
+          >
             ← 이윰 SNS 수익화 클래스로 돌아가기
           </Link>
         </div>

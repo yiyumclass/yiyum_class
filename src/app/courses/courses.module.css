@@ -449,6 +449,11 @@
     padding: 22px 20px 20px;
   }
 
+  .detailAction {
+    min-height: 40px;
+    padding: 0 16px;
+  }
+
   .summary {
     min-height: 0;
   }
