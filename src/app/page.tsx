@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import LandingInteractions from "@/components/LandingInteractions";
 import ReviewMarquee from "@/components/ReviewMarquee";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -304,7 +305,7 @@ export default async function Home() {
               <div style={{fontSize: '13px', color: '#7C7367', letterSpacing: '0.04em', marginBottom: '44px'}}>부가세 포함</div>
             </>
           ) : null}
-          <a href={checkoutHref} style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">{featuredItem ? "지금 수강 신청하기" : "강의 둘러보기"}<span style={{fontSize: '18px'}}>→</span></a>
+          <Link href={checkoutHref} style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className="cta-lift">{featuredItem ? "지금 수강 신청하기" : "강의 둘러보기"}<span style={{fontSize: '18px'}}>→</span></Link>
           <p style={{fontSize: '13px', color: '#7C7367', lineHeight: '1.7', margin: '36px auto 0', maxWidth: '400px'}}>추후 1:1 밀착 피드백 등 프리미엄 옵션이 별도 상품으로 추가될 예정입니다.</p>
         </div>
       </section>
@@ -319,7 +320,7 @@ export default async function Home() {
               <span style={{fontSize: '14px', color: '#9A9082', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{courseTitle} · {lessonCount}강</span>
               <span className="serif" style={{fontSize: '24px', color: '#EDE7DC', whiteSpace: 'nowrap'}}>{priceLabel}<span style={{fontSize: '15px', color: '#D9825E'}}> 원</span></span>
             </div>
-            <a href={checkoutHref} style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</a>
+            <Link href={checkoutHref} style={{padding: '12px 30px', background: '#D9825E', color: '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>수강 신청</Link>
           </div>
         </div>
       )}

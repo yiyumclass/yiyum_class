@@ -1,6 +1,7 @@
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 type CompletionAction = "preserve" | "complete" | "incomplete";
@@ -15,11 +16,9 @@ type ProgressPayload = {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) {
+  if (!identity) {
     return json({ error: "로그인이 필요합니다." }, 401);
   }
 
@@ -40,15 +39,15 @@ export async function POST(request: Request) {
     return json({ error: "진도 정보가 올바르지 않습니다." }, 400);
   }
 
-  const [isAdmin, hasEntitlement] = await Promise.all([
-    hasActiveAdminAccess(supabase, user.id),
+  const [isAdmin, hasEntitlement, catalogItem] = await Promise.all([
+    hasActiveAdminAccess(supabase, identity.userId),
     hasActiveProductEntitlement(supabase, payload.courseSlug),
+    loadPublicCourseBySlug(payload.courseSlug),
   ]);
   if (!isAdmin && !hasEntitlement) {
     return json({ error: "수강 신청이 필요한 강의입니다." }, 403);
   }
 
-  const catalogItem = await loadPublicCourseBySlug(payload.courseSlug);
   const course = catalogItem?.contentReady
     ? catalogItem.classroomCourse ?? undefined
     : undefined;
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
   );
   const now = new Date().toISOString();
   const row: Record<string, string | number | null> = {
-    user_id: user.id,
+    user_id: identity.userId,
     course_slug: course.slug,
     lesson_id: lesson.id,
     last_position_seconds: positionSeconds,
@@ -111,7 +110,7 @@ export async function POST(request: Request) {
     console.error("Failed to save lesson progress", {
       code: error.code,
       lessonId: lesson.id,
-      userId: user.id,
+      userId: identity.userId,
     });
     return json(
       {

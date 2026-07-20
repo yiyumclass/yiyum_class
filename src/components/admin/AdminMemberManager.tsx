@@ -8,7 +8,6 @@ import {
   type FormEvent,
   type RefObject,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   grantMemberEntitlementAction,
   updateMemberEntitlementAction,
@@ -46,7 +45,6 @@ export default function AdminMemberManager({
   sourceMessage,
   referenceTime,
 }: AdminMemberManagerProps) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MemberFilter>("all");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -101,7 +99,6 @@ export default function AdminMemberManager({
     try {
       const result = await mutation();
       setNotice(result.message);
-      if (result.ok) router.refresh();
       return result.ok;
     } catch {
       setNotice("요청을 처리하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.");

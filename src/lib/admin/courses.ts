@@ -119,25 +119,29 @@ type ProductRow = {
 export async function loadAdminCourses(): Promise<AdminCoursesResult> {
   await requireAdmin();
   const supabase = await createClient();
-  const { data: productRows, error: productError } = await supabase
-    .from("products")
-    .select("id, slug, title, status")
-    .eq("product_type", "course")
-    .order("updated_at", { ascending: false })
-    .returns<ProductRow[]>();
+  const [productResult, courseResult] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, slug, title, status")
+      .eq("product_type", "course")
+      .order("updated_at", { ascending: false })
+      .returns<ProductRow[]>(),
+    supabase
+      .from("courses")
+      .select(
+        "id, product_id, slug, title, short_title, description, instructor, poster_path, status, updated_at"
+      )
+      .order("updated_at", { ascending: false })
+      .returns<CourseRow[]>(),
+  ]);
+  const { data: productRows, error: productError } = productResult;
 
   if (productError) {
     return fallbackResult(productError.code, productError.message);
   }
 
   const products = productRows ?? [];
-  const { data: courseRows, error: courseError } = await supabase
-    .from("courses")
-    .select(
-      "id, product_id, slug, title, short_title, description, instructor, poster_path, status, updated_at"
-    )
-    .order("updated_at", { ascending: false })
-    .returns<CourseRow[]>();
+  const { data: courseRows, error: courseError } = courseResult;
 
   if (courseError) {
     return fallbackResult(courseError.code, courseError.message, products);

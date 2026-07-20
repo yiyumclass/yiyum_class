@@ -27,8 +27,9 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // getUser()를 호출해야 토큰 갱신이 트리거된다.
-  await supabase.auth.getUser();
+  // 서명 검증과 만료 임박 토큰 갱신을 수행한다. 비대칭 서명 claims는 JWKS가
+  // 캐시된 뒤 Auth 서버를 매번 호출하지 않고 로컬에서 검증된다.
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }

@@ -1,0 +1,49 @@
+.loading {
+  min-height: 62vh;
+  display: grid;
+  place-items: center;
+  padding: 80px 24px;
+  background: #f3efe8;
+  color: #57514a;
+}
+
+.dark {
+  min-height: 100dvh;
+  background: #1b1815;
+  color: #b7a995;
+}
+
+.admin {
+  min-height: 55vh;
+  background: transparent;
+  color: #6f675e;
+}
+
+.content {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: #b85c38;
+  border-radius: 50%;
+  animation: route-spin 0.75s linear infinite;
+}
+
+@keyframes route-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.8s;
+  }
+}

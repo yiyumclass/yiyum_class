@@ -1,4 +1,5 @@
 import { loadCourseVideoManifest } from "@/lib/learning/video";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -13,11 +14,9 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) return json({ error: "로그인이 필요합니다." }, 401);
+  if (!identity) return json({ error: "로그인이 필요합니다." }, 401);
 
   const manifest = await loadCourseVideoManifest(supabase, courseSlug);
   if (!manifest.available) {
@@ -36,7 +35,7 @@ export async function GET(
 
   const { data, error } = await supabase.storage
     .from("course-videos")
-    .createSignedUrl(video.video_path, 2 * 60 * 60);
+    .createSignedUrl(video.video_path, 15 * 60);
 
   if (error || !data?.signedUrl) {
     if (error) console.error("Failed to sign lesson video:", error.message);

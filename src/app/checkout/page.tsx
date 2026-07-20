@@ -6,6 +6,7 @@ import SiteFooter from "@/components/layout/SiteFooter";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -28,25 +29,28 @@ export default async function CheckoutPage({
     : query.product;
   const productSlug = requestedProduct || "sns-monetization";
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) {
+  if (!identity) {
     const nextPath = `/checkout?product=${encodeURIComponent(productSlug)}`;
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   const product = await loadPublicProductBySlug(productSlug);
   if (!product) notFound();
-  const courseItem =
+  const [courseItem, alreadyEnrolled] = await Promise.all([
     product.productType === "course"
-      ? await loadPublicCourseBySlug(productSlug)
-      : null;
-  const alreadyEnrolled = await hasActiveProductEntitlement(supabase, productSlug);
+      ? loadPublicCourseBySlug(productSlug)
+      : Promise.resolve(null),
+    hasActiveProductEntitlement(supabase, productSlug),
+  ]);
 
-  const meta = user.user_metadata ?? {};
-  const displayName = meta.name ?? meta.full_name ?? user.email ?? "회원";
+  const meta = identity.metadata;
+  const rawDisplayName = meta.name ?? meta.full_name;
+  const displayName =
+    typeof rawDisplayName === "string" && rawDisplayName.trim()
+      ? rawDisplayName.trim()
+      : identity.email ?? "회원";
   const lessons = courseItem?.course.sections.flatMap((section) => section.lessons) ?? [];
   const productDescription = courseItem
     ? `${courseItem.course.sections.length}개 챕터 · 총 ${lessons.length}강 · ${courseItem.accessLabel}`

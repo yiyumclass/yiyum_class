@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 import MobileMenu from "./MobileMenu";
 import styles from "./SiteHeader.module.css";
@@ -28,19 +30,11 @@ const navigationItems: Array<{
   { key: "contact", label: "문의", href: "/contact" },
 ];
 
-export default async function SiteHeader({
+export default function SiteHeader({
   active,
   currentPath = "/",
   variant = "solid",
 }: SiteHeaderProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const isAdmin = user
-    ? await hasActiveAdminAccess(supabase, user.id)
-    : false;
-
   const loginHref =
     currentPath === "/" ? "/login" : `/login?next=${encodeURIComponent(currentPath)}`;
   const enrollHref = currentPath === "/" ? "#apply" : "/#apply";
@@ -68,36 +62,94 @@ export default async function SiteHeader({
           ))}
         </nav>
 
-        <div
-          className={`${styles.actions} ${isAdmin ? styles.adminActions : ""}`}
+        <Suspense
+          fallback={
+            <HeaderActionsView
+              active={active}
+              enrollHref={enrollHref}
+              loginHref={loginHref}
+              isAdmin={false}
+              isAuthenticated={false}
+            />
+          }
         >
-          {user ? (
-            <Link href="/my" className={styles.myClassLink}>
-              마이 클래스
-            </Link>
-          ) : (
-            <Link href={loginHref} className={styles.accountLink}>
-              로그인
-            </Link>
-          )}
-          {isAdmin ? (
-            <Link href="/admin" className={styles.adminLink}>
-              관리자
-            </Link>
-          ) : (
-            <Link href={enrollHref} className={styles.enrollLink}>
-              수강 신청
-            </Link>
-          )}
-
-          <MobileMenu
-            navItems={navigationItems}
-            activeKey={active}
-            isAdmin={isAdmin}
+          <HeaderActions
+            active={active}
             enrollHref={enrollHref}
+            loginHref={loginHref}
           />
-        </div>
+        </Suspense>
       </div>
     </header>
+  );
+}
+
+async function HeaderActions({
+  active,
+  enrollHref,
+  loginHref,
+}: {
+  active?: NavigationKey;
+  enrollHref: string;
+  loginHref: string;
+}) {
+  const supabase = await createClient();
+  const identity = await getVerifiedIdentity(supabase);
+  const isAdmin = identity
+    ? await hasActiveAdminAccess(supabase, identity.userId)
+    : false;
+
+  return (
+    <HeaderActionsView
+      active={active}
+      enrollHref={enrollHref}
+      loginHref={loginHref}
+      isAdmin={isAdmin}
+      isAuthenticated={Boolean(identity)}
+    />
+  );
+}
+
+function HeaderActionsView({
+  active,
+  enrollHref,
+  loginHref,
+  isAdmin,
+  isAuthenticated,
+}: {
+  active?: NavigationKey;
+  enrollHref: string;
+  loginHref: string;
+  isAdmin: boolean;
+  isAuthenticated: boolean;
+}) {
+  return (
+    <div className={`${styles.actions} ${isAdmin ? styles.adminActions : ""}`}>
+      {isAuthenticated ? (
+        <Link href="/my" className={styles.myClassLink}>
+          마이 클래스
+        </Link>
+      ) : (
+        <Link href={loginHref} className={styles.accountLink}>
+          로그인
+        </Link>
+      )}
+      {isAdmin ? (
+        <Link href="/admin" className={styles.adminLink}>
+          관리자
+        </Link>
+      ) : (
+        <Link href={enrollHref} className={styles.enrollLink}>
+          수강 신청
+        </Link>
+      )}
+
+      <MobileMenu
+        navItems={navigationItems}
+        activeKey={active}
+        isAdmin={isAdmin}
+        enrollHref={enrollHref}
+      />
+    </div>
   );
 }

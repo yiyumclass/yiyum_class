@@ -9,7 +9,6 @@ import {
   type ChangeEvent,
   type DragEvent,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   finalizeLessonVideoAction,
   removeLessonVideoAction,
@@ -60,7 +59,6 @@ export default function AdminLessonVideoDialog({
   onClose: () => void;
   onComplete: (message: string) => void;
 }) {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const uploadRef = useRef<tus.Upload | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -270,13 +268,12 @@ export default function AdminLessonVideoDialog({
 
       setPhase("success");
       setMessage(result.message);
-      router.refresh();
     } catch (error) {
       uploadRef.current = null;
       setPhase("error");
       setMessage(formatUploadError(error));
     }
-  }, [busy, lesson.id, router, selected, storageReady]);
+  }, [busy, lesson.id, selected, storageReady]);
 
   useEffect(() => {
     if (
@@ -314,7 +311,6 @@ export default function AdminLessonVideoDialog({
     }
     setPhase("success");
     setMessage(result.message);
-    router.refresh();
   };
 
   return (

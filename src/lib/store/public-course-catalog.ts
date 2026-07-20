@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { courses as fallbackCourses } from "@/lib/learning/catalog";
 import type { Course, CourseLesson, CourseSection } from "@/lib/learning/types";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { courseProducts } from "./course-products";
 import { resolveSellingPrice } from "./free-enrollment";
 
@@ -91,16 +91,20 @@ type CourseOutlineRow = {
 };
 
 export const loadPublicCourseCatalog = cache(async function loadPublicCourseCatalog(): Promise<PublicCourseCatalogItem[]> {
-  const supabase = await createClient();
-  const { data: productRows, error: productError } = await supabase
-    .from("products")
-    .select(
-      "id, slug, title, summary, price_krw, access_period_days, thumbnail_path, detail_path"
-    )
-    .eq("product_type", "course")
-    .eq("status", "active")
-    .order("updated_at", { ascending: false })
-    .returns<ProductRow[]>();
+  const supabase = createPublicClient();
+  const [productResult, outlineResult] = await Promise.all([
+    supabase
+      .from("products")
+      .select(
+        "id, slug, title, summary, price_krw, access_period_days, thumbnail_path, detail_path"
+      )
+      .eq("product_type", "course")
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .returns<ProductRow[]>(),
+    loadCourseOutlines(supabase),
+  ]);
+  const { data: productRows, error: productError } = productResult;
 
   if (productError) {
     if (isMissingCatalogSchema(productError.code)) return buildFallbackCatalog();
@@ -112,11 +116,14 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
   const products = productRows ?? [];
   if (products.length === 0) return [];
 
-  const outlineResult = await loadCourseOutlines(supabase);
-  const publishedCourses = await loadPublishedCourses(
-    supabase,
-    products.map((product) => product.id)
-  );
+  const publishedCourses = outlineResult.available
+    ? outlineResult.courses.flatMap(({ productId, course, published }) =>
+        published ? [{ productId, course }] : []
+      )
+    : await loadPublishedCourses(
+        supabase,
+        products.map((product) => product.id)
+      );
   if (!publishedCourses) return [];
 
   const outlineByProductId = new Map(
@@ -155,7 +162,7 @@ export const loadPublicCourseBySlug = cache(async function loadPublicCourseBySlu
 });
 
 async function loadPublishedCourses(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createPublicClient>,
   productIds: string[]
 ) {
   const { data: courseRows, error: courseError } = await supabase
@@ -245,7 +252,7 @@ async function loadPublishedCourses(
 }
 
 async function loadCourseOutlines(
-  supabase: Awaited<ReturnType<typeof createClient>>
+  supabase: ReturnType<typeof createPublicClient>
 ) {
   const { data, error } = await supabase.rpc("get_public_course_catalog_outline");
 
@@ -257,7 +264,11 @@ async function loadCourseOutlines(
     }
     return {
       available: false as const,
-      courses: [] as Array<{ productId: string; course: Course }>,
+      courses: [] as Array<{
+        productId: string;
+        course: Course;
+        published: boolean;
+      }>,
     };
   }
 
@@ -266,6 +277,7 @@ async function loadCourseOutlines(
     {
       productId: string;
       course: Course;
+      published: boolean;
       sectionById: Map<string, CourseSection>;
     }
   >();
@@ -275,6 +287,7 @@ async function loadCourseOutlines(
     if (!builder) {
       builder = {
         productId: row.product_id,
+        published: row.course_status === "published",
         course: {
           slug: row.course_slug,
           title: row.course_title,
@@ -320,9 +333,10 @@ async function loadCourseOutlines(
 
   return {
     available: true as const,
-    courses: Array.from(builders.values()).map(({ productId, course }) => ({
+    courses: Array.from(builders.values()).map(({ productId, course, published }) => ({
       productId,
       course,
+      published,
     })),
   };
 }
@@ -393,7 +407,9 @@ function buildClassroomCourse(outline: Course, publishedCourse: Course | null) {
 
   const publishedLessonIds = new Set(
     publishedCourse.sections.flatMap((section) =>
-      section.lessons.map((lesson) => lesson.id)
+      section.lessons
+        .filter((lesson) => lesson.availability !== "coming-soon")
+        .map((lesson) => lesson.id)
     )
   );
 

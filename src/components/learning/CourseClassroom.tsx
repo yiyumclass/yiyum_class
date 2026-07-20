@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { MouseEvent, SyntheticEvent } from "react";
+import type { SyntheticEvent } from "react";
 import {
   useCallback,
   useEffect,
@@ -233,11 +233,8 @@ export default function CourseClassroom({
     setIsCurriculumOpen(false);
   };
 
-  const returnToMyClass = async (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
+  const returnToMyClass = () => {
     persistActiveVideo();
-    await saveChainRef.current.catch(() => undefined);
-    window.location.assign("/my");
   };
 
   const toggleSection = (sectionId: string) => {
@@ -335,7 +332,6 @@ export default function CourseClassroom({
         <div className={styles.headerInner}>
           <Link
             href={isAdminPreview ? "/admin/courses" : "/my"}
-            prefetch={false}
             className={styles.backLink}
             onClick={isAdminPreview ? undefined : returnToMyClass}
           >

@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 
 export type AdminRole = "owner" | "operator";
 
@@ -31,19 +32,16 @@ type AdminRow = {
  */
 export const getAdminAccess = cache(async (): Promise<AdminAccessResult> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (userError || !user) {
+  if (!identity) {
     return { status: "unauthenticated" };
   }
 
   const { data, error } = await supabase
     .from("admin_users")
     .select("role, display_name, is_active")
-    .eq("user_id", user.id)
+    .eq("user_id", identity.userId)
     .maybeSingle<AdminRow>();
 
   if (error) {
@@ -55,7 +53,7 @@ export const getAdminAccess = cache(async (): Promise<AdminAccessResult> => {
     return { status: "denied" };
   }
 
-  const metadataName = user.user_metadata?.nickname ?? user.user_metadata?.name;
+  const metadataName = identity.metadata.nickname ?? identity.metadata.name;
   const fallbackName =
     typeof metadataName === "string" && metadataName.trim()
       ? metadataName.trim()
@@ -64,8 +62,8 @@ export const getAdminAccess = cache(async (): Promise<AdminAccessResult> => {
   return {
     status: "granted",
     admin: {
-      userId: user.id,
-      email: user.email ?? "이메일 정보 없음",
+      userId: identity.userId,
+      email: identity.email ?? "이메일 정보 없음",
       displayName: data.display_name?.trim() || fallbackName,
       role: data.role,
     },

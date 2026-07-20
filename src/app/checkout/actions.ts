@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 export type FreeEnrollmentState = {
@@ -22,11 +23,9 @@ export async function claimFreeProductAction(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) {
+  if (!identity) {
     return { status: "error", message: "로그인 후 다시 신청해 주세요." };
   }
 

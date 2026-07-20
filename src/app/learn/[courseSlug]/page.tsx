@@ -11,6 +11,7 @@ import {
 import { hydrateCourseVideos } from "@/lib/learning/video";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 type CoursePageProps = {
@@ -36,15 +37,17 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   const { adminPreview } = await searchParams;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) {
+  if (!identity) {
     redirect(`/login?next=/learn/${encodeURIComponent(courseSlug)}`);
   }
 
-  const isAdmin = await hasActiveAdminAccess(supabase, user.id);
+  const [isAdmin, catalogItem, hasEntitlement] = await Promise.all([
+    hasActiveAdminAccess(supabase, identity.userId),
+    loadPublicCourseBySlug(courseSlug),
+    hasActiveProductEntitlement(supabase, courseSlug),
+  ]);
   if (adminPreview === "1" && isAdmin) {
     const previewCourse = await loadAdminCoursePreview(supabase, courseSlug);
     if (!previewCourse) notFound();
@@ -69,21 +72,21 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     );
   }
 
-  const catalogItem = await loadPublicCourseBySlug(courseSlug);
   if (!catalogItem?.contentReady || !catalogItem.classroomCourse) notFound();
 
-  const hasEntitlement = await hasActiveProductEntitlement(supabase, courseSlug);
   if (!isAdmin && !hasEntitlement) {
     redirect(`/checkout?product=${encodeURIComponent(courseSlug)}`);
   }
 
   // 보관 콘텐츠는 제외하고 작성 중 차시는 강의실 목차에서 잠근다.
-  const course = await hydrateCourseVideos(supabase, catalogItem.classroomCourse);
-  const progressResult = await loadCourseProgress(supabase, course);
+  const [course, progressResult] = await Promise.all([
+    hydrateCourseVideos(supabase, catalogItem.classroomCourse),
+    loadCourseProgress(supabase, catalogItem.classroomCourse),
+  ]);
   const progress = progressResult.available
     ? progressResult.progress
     : createEmptyCourseProgress(course);
-  const metadata = user.user_metadata ?? {};
+  const metadata = identity.metadata;
   const rawDisplayName = metadata.nickname ?? metadata.name ?? metadata.full_name;
   const displayName =
     typeof rawDisplayName === "string" && rawDisplayName.trim()

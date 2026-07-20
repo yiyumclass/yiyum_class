@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { resolveSellingPrice } from "./free-enrollment";
 
 export type PublicProduct = {
@@ -30,7 +30,7 @@ type ProductRow = {
 export const loadPublicProductBySlug = cache(async function loadPublicProductBySlug(
   slug: string
 ): Promise<PublicProduct | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(

@@ -14,6 +14,7 @@ import {
 import type { LibraryItem } from "@/lib/my-class/types";
 import { loadMyActiveProductEntitlements } from "@/lib/store/entitlements";
 import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
+import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./my.module.css";
 
@@ -24,45 +25,44 @@ export const metadata: Metadata = {
 
 export default async function MyPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const identity = await getVerifiedIdentity(supabase);
 
-  if (!user) {
+  if (!identity) {
     redirect("/login?next=/my");
   }
 
-  const meta = user.user_metadata ?? {};
+  const meta = identity.metadata;
   const rawDisplayName = meta.nickname ?? meta.name ?? meta.full_name;
   const displayName =
     typeof rawDisplayName === "string" && rawDisplayName.trim()
       ? rawDisplayName.trim()
       : "회원";
-  const entitlements = await loadMyActiveProductEntitlements(supabase);
+  const [entitlements, catalog] = await Promise.all([
+    loadMyActiveProductEntitlements(supabase),
+    loadPublicCourseCatalog(),
+  ]);
   const entitlementSlugs = new Set(
     entitlements.map((entitlement) => entitlement.productSlug)
   );
-  const catalog = await loadPublicCourseCatalog();
-  const items: LibraryItem[] = [];
+  const entitledCourses = catalog.filter((catalogItem) =>
+    entitlementSlugs.has(catalogItem.slug)
+  );
+  const items: LibraryItem[] = await Promise.all(
+    entitledCourses.map(async (catalogItem) => {
+      const course = catalogItem.classroomCourse ?? catalogItem.course;
+      const progress = catalogItem.contentReady
+        ? await loadCourseProgress(supabase, course).then((result) =>
+            result.available ? result.progress : createEmptyCourseProgress(course)
+          )
+        : createEmptyCourseProgress(course);
 
-  for (const catalogItem of catalog) {
-    if (!entitlementSlugs.has(catalogItem.slug)) {
-      continue;
-    }
-    const course = catalogItem.classroomCourse ?? catalogItem.course;
-    const progress = catalogItem.contentReady
-      ? await loadCourseProgress(supabase, course).then((result) =>
-          result.available ? result.progress : createEmptyCourseProgress(course)
-        )
-      : createEmptyCourseProgress(course);
-    items.push(
-      buildCourseLibraryItem(course, progress, {
+      return buildCourseLibraryItem(course, progress, {
         description: catalogItem.summary,
         accessLabel: catalogItem.accessLabel,
         contentReady: catalogItem.contentReady,
-      })
-    );
-  }
+      });
+    })
+  );
 
   if (entitlementSlugs.has("small-account-ebook")) {
     items.push(buildEbookLibraryItem());
