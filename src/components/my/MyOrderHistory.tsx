@@ -125,7 +125,7 @@ function OrderCard({ order }: { order: MyOrder }) {
       <div className={styles.orderLead}>
         <div className={styles.orderDate}>
           <span>{formatDate(order.orderedAt)}</span>
-          <small>{order.orderUid}</small>
+          <small>{formatOrderNumber(order.orderUid)}</small>
         </div>
         <span className={`${styles.statusBadge} ${styles[status.tone]}`}>
           {status.label}
@@ -157,7 +157,7 @@ function OrderCard({ order }: { order: MyOrder }) {
         </summary>
         <div className={styles.detailBody}>
           <dl className={styles.detailGrid}>
-            <Detail label="주문번호" value={order.orderUid} />
+            <Detail label="주문번호" value={formatOrderNumber(order.orderUid)} />
             <Detail label="결제 구분" value={sourceLabels[order.source]} />
             <Detail label="주문일시" value={formatDateTime(order.orderedAt)} />
             <Detail
@@ -232,6 +232,13 @@ function resolveVisibleStatus(order: MyOrder): {
 function formatAmount(value: number) {
   if (value === 0) return "무료";
   return `${new Intl.NumberFormat("ko-KR").format(value)}원`;
+}
+
+function formatOrderNumber(value: string) {
+  const match = /^ORD-(\d{8})-([a-f\d]{8})/i.exec(value);
+  if (!match) return value;
+
+  return `${match[1]}-${match[2].toUpperCase()}`;
 }
 
 function formatDate(value: string) {
