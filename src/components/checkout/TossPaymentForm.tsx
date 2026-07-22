@@ -1,6 +1,7 @@
 "use client";
 
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
+import Link from "next/link";
 import { useState } from "react";
 import { createPaymentOrderAction } from "@/app/checkout/actions";
 
@@ -23,6 +24,7 @@ export default function TossPaymentForm({
 }: TossPaymentFormProps) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [policyAccepted, setPolicyAccepted] = useState(false);
 
   async function requestPayment() {
     if (pending) return;
@@ -30,7 +32,7 @@ export default function TossPaymentForm({
     setMessage("");
 
     try {
-      const result = await createPaymentOrderAction(productSlug);
+      const result = await createPaymentOrderAction(productSlug, policyAccepted);
       if (!result.ok) {
         setMessage(result.message);
         return;
@@ -68,10 +70,46 @@ export default function TossPaymentForm({
 
   return (
     <div>
+      <label
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          marginBottom: 16,
+          padding: "13px 14px",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 10,
+          background: "rgba(255,255,255,0.04)",
+          color: "#B7A995",
+          fontSize: 12,
+          lineHeight: 1.65,
+          textAlign: "left",
+          cursor: pending ? "wait" : "pointer",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={policyAccepted}
+          onChange={(event) => setPolicyAccepted(event.target.checked)}
+          disabled={pending}
+          style={{ width: 17, height: 17, margin: "2px 0 0", flex: "0 0 auto" }}
+        />
+        <span>
+          <Link
+            href="/terms#refund-policy"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#E9B48E", textDecoration: "underline" }}
+          >
+            청약철회·환불 기준
+          </Link>
+          을 확인했으며, 결제 완료 즉시 디지털 콘텐츠 제공이 시작되는 것에 동의합니다.
+        </span>
+      </label>
       <button
         type="button"
         onClick={requestPayment}
-        disabled={pending}
+        disabled={pending || !policyAccepted}
         style={{
           width: "100%",
           height: 54,
@@ -81,8 +119,8 @@ export default function TossPaymentForm({
           color: "#1B1815",
           fontSize: 16,
           fontWeight: 700,
-          cursor: pending ? "wait" : "pointer",
-          opacity: pending ? 0.7 : 1,
+          cursor: pending ? "wait" : policyAccepted ? "pointer" : "not-allowed",
+          opacity: pending || !policyAccepted ? 0.58 : 1,
         }}
       >
         {pending

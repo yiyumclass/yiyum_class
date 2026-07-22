@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOrdersPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = await loadAdminOrders();
 
   return (
@@ -19,6 +19,7 @@ export default async function AdminOrdersPage() {
       databaseReady={result.databaseReady}
       sourceMessage={result.message}
       paymentMode={getPaymentMode()}
+      canRefund={admin.role === "owner"}
     />
   );
 }

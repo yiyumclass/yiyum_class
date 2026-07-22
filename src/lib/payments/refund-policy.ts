@@ -1,0 +1,1 @@
+export const REFUND_POLICY_VERSION = "2026-07-22";

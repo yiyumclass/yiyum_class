@@ -340,7 +340,7 @@
 
 .orderTable {
   width: 100%;
-  min-width: 1080px;
+  min-width: 1420px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -431,7 +431,8 @@
 }
 
 .sourceBadge,
-.statusBadge {
+.statusBadge,
+.paymentStatusBadge {
   padding: 5px 8px;
   border-radius: 99px;
   display: inline-flex;
@@ -440,6 +441,27 @@
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.paymentStatusBadge.pending {
+  background: #eee8dd;
+  color: #887c6d;
+}
+
+.paymentStatusBadge.paid {
+  background: #e4ede1;
+  color: #5d7455;
+}
+
+.paymentStatusBadge.canceled,
+.paymentStatusBadge.failed {
+  background: #eee9e3;
+  color: #8a8177;
+}
+
+.paymentStatusBadge.refunded {
+  background: #e7e4ef;
+  color: #68627f;
 }
 
 .free_checkout {
@@ -494,6 +516,293 @@
 .dateCell time {
   color: #5f574e;
   font-size: 12px;
+}
+
+.learningCell,
+.refundedLabel {
+  min-width: 125px;
+  display: grid;
+  gap: 4px;
+}
+
+.learningCell strong {
+  color: #4e493f;
+  font-size: 13px;
+}
+
+.learningCell small,
+.refundedLabel small {
+  color: #9a9185;
+  font-size: 11px;
+}
+
+.refundButton {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #d5a692;
+  border-radius: 7px;
+  background: #fff8f4;
+  color: #9a452b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.refundButton:hover {
+  background: #f8e5dc;
+}
+
+.refundedLabel {
+  min-width: 82px;
+  color: #6d6681;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.processingLabel {
+  color: #8b7651;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.refundDialogFrame {
+  width: min(680px, calc(100% - 48px));
+  max-width: none;
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  overflow: visible;
+}
+
+.refundDialogFrame::backdrop {
+  background: rgba(29, 25, 21, 0.62);
+}
+
+.refundDialog {
+  width: 100%;
+  max-height: calc(100dvh - 48px);
+  padding: 25px;
+  border: 1px solid #d8cfc2;
+  border-radius: 14px;
+  background: #fbf8f3;
+  box-shadow: 0 24px 70px rgba(31, 26, 21, 0.3);
+  overflow-y: auto;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dialogHeader p {
+  margin: 0 0 5px;
+  color: #a65335;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.15em;
+}
+
+.dialogHeader h2 {
+  margin: 0;
+  color: #302a25;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+
+.dialogHeader > button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #eee7dd;
+  color: #6f655b;
+  font-family: inherit;
+  font-size: 23px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dialogHeader > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.refundOrderSummary {
+  margin-top: 22px;
+  padding: 15px;
+  border: 1px solid #e0d8cd;
+  border-radius: 10px;
+  background: #fffdf9;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.refundOrderSummary > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.refundOrderSummary span,
+.learningEvidence span {
+  color: #958b80;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.refundOrderSummary strong {
+  overflow: hidden;
+  color: #3e3831;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.refundOrderSummary small {
+  overflow: hidden;
+  color: #9b9287;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learningEvidence {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #eee9e1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.learningEvidence > div {
+  display: grid;
+  gap: 5px;
+}
+
+.learningEvidence strong {
+  color: #514a42;
+  font-size: 15px;
+}
+
+.refundWarning {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e1c5b8;
+  border-radius: 9px;
+  background: #fcf0e9;
+  color: #7e4b39;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.refundReasonField {
+  position: relative;
+  margin-top: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.refundReasonField > span {
+  color: #50483f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.refundReasonField textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 12px 13px 25px;
+  border: 1px solid #d7cec2;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #433c35;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.refundReasonField > small {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  color: #a49a8f;
+  font-size: 10px;
+}
+
+.refundSuccess,
+.refundError {
+  margin: 13px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.refundSuccess {
+  background: #e7eee2;
+  color: #5b6e52;
+}
+
+.refundError {
+  background: #f5e5df;
+  color: #91482f;
+}
+
+.dialogActions {
+  margin-top: 19px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.cancelButton,
+.confirmRefundButton {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelButton {
+  border: 1px solid #d6cec2;
+  background: #fffdf9;
+  color: #71685f;
+}
+
+.confirmRefundButton {
+  border: 1px solid #9b482e;
+  background: #a65335;
+  color: #fffaf6;
+}
+
+.cancelButton:disabled,
+.confirmRefundButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.refundButton:focus-visible,
+.dialogHeader > button:focus-visible,
+.refundReasonField textarea:focus-visible,
+.cancelButton:focus-visible,
+.confirmRefundButton:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: 2px;
 }
 
 .emptyState {
@@ -615,6 +924,21 @@
 
   .selectField {
     width: 100%;
+  }
+
+  .refundDialogFrame {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .refundDialog {
+    max-height: calc(100dvh - 24px);
+    padding: 20px;
+  }
+
+  .refundOrderSummary,
+  .learningEvidence {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

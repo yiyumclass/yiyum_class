@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,7 +32,8 @@ type PaymentOrderRow = {
 };
 
 export async function createPaymentOrderAction(
-  productSlug: string
+  productSlug: string,
+  refundPolicyAccepted: boolean
 ): Promise<CreatePaymentOrderResult> {
   if (!isTossPaymentConfigured()) {
     return { ok: false, message: "현재 결제 기능을 사용할 수 없습니다." };
@@ -39,6 +41,9 @@ export async function createPaymentOrderAction(
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productSlug)) {
     return { ok: false, message: "결제할 상품을 다시 확인해 주세요." };
+  }
+  if (refundPolicyAccepted !== true) {
+    return { ok: false, message: "환불 정책과 콘텐츠 제공 개시에 동의해 주세요." };
   }
 
   const supabase = await createClient();
@@ -78,6 +83,22 @@ export async function createPaymentOrderAction(
   ) {
     console.error("Toss payment order returned an invalid response.");
     return { ok: false, message: "결제 주문 정보를 확인하지 못했습니다." };
+  }
+
+  const { data: consentRecorded, error: consentError } = await supabase.rpc(
+    "record_toss_refund_policy_consent",
+    {
+      target_order_uid: row.order_uid,
+      target_policy_version: REFUND_POLICY_VERSION,
+    }
+  );
+  if (consentError || consentRecorded !== true) {
+    console.error("Failed to record refund policy consent:", consentError?.code);
+    await supabase.rpc("fail_toss_payment_order", { target_order_uid: row.order_uid });
+    return {
+      ok: false,
+      message: "환불 정책 동의를 기록하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    };
   }
 
   return {

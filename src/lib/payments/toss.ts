@@ -7,8 +7,18 @@ export type TossPayment = {
   orderId: string;
   status: string;
   totalAmount: number;
+  balanceAmount: number;
   approvedAt: string | null;
   method: string | null;
+  cancels: TossCancellation[];
+};
+
+export type TossCancellation = {
+  cancelAmount: number;
+  cancelReason: string;
+  canceledAt: string;
+  transactionKey: string;
+  cancelStatus: string;
 };
 
 export type TossApiResult =
@@ -38,9 +48,21 @@ export async function getTossPayment(paymentKey: string): Promise<TossApiResult>
   });
 }
 
+export async function cancelTossPayment(input: {
+  paymentKey: string;
+  cancelReason: string;
+  idempotencyKey: string;
+}): Promise<TossApiResult> {
+  return requestTossPayment(`/payments/${encodeURIComponent(input.paymentKey)}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ cancelReason: input.cancelReason }),
+    headers: { "Idempotency-Key": input.idempotencyKey },
+  });
+}
+
 async function requestTossPayment(
   path: string,
-  init: Pick<RequestInit, "method" | "body">
+  init: Pick<RequestInit, "method" | "body"> & { headers?: Record<string, string> }
 ): Promise<TossApiResult> {
   const secretKey = process.env.TOSS_SECRET_KEY;
   if (!secretKey) {
@@ -62,6 +84,7 @@ async function requestTossPayment(
       headers: {
         Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
         "Content-Type": "application/json",
+        ...init.headers,
       },
     });
   } catch {
@@ -106,18 +129,46 @@ function readTossPayment(payload: unknown): TossPayment | null {
     typeof payload.paymentKey !== "string" ||
     typeof payload.orderId !== "string" ||
     typeof payload.status !== "string" ||
-    typeof payload.totalAmount !== "number"
+    typeof payload.totalAmount !== "number" ||
+    typeof payload.balanceAmount !== "number"
   ) {
     return null;
   }
+
+  const cancels = Array.isArray(payload.cancels)
+    ? payload.cancels.map(readTossCancellation).filter((item) => item !== null)
+    : [];
 
   return {
     paymentKey: payload.paymentKey,
     orderId: payload.orderId,
     status: payload.status,
     totalAmount: payload.totalAmount,
+    balanceAmount: payload.balanceAmount,
     approvedAt: typeof payload.approvedAt === "string" ? payload.approvedAt : null,
     method: typeof payload.method === "string" ? payload.method : null,
+    cancels,
+  };
+}
+
+function readTossCancellation(payload: unknown): TossCancellation | null {
+  if (!isRecord(payload)) return null;
+  if (
+    typeof payload.cancelAmount !== "number" ||
+    typeof payload.cancelReason !== "string" ||
+    typeof payload.canceledAt !== "string" ||
+    typeof payload.transactionKey !== "string" ||
+    typeof payload.cancelStatus !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    cancelAmount: payload.cancelAmount,
+    cancelReason: payload.cancelReason,
+    canceledAt: payload.canceledAt,
+    transactionKey: payload.transactionKey,
+    cancelStatus: payload.cancelStatus,
   };
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { refundPaymentOrderAction } from "@/app/admin/orders/actions";
 import type {
   AdminOrder,
   AdminOrderSource,
@@ -13,6 +14,7 @@ type AdminOrderManagerProps = {
   databaseReady: boolean;
   sourceMessage: string | null;
   paymentMode: "free" | "toss_test" | "toss_live";
+  canRefund: boolean;
 };
 
 type SourceFilter = "all" | AdminOrderSource;
@@ -44,11 +46,13 @@ export default function AdminOrderManager({
   databaseReady,
   sourceMessage,
   paymentMode,
+  canRefund,
 }: AdminOrderManagerProps) {
   const [query, setQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
+  const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
 
   const filteredOrders = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
@@ -78,7 +82,8 @@ export default function AdminOrderManager({
       ).length,
       active: orders.filter((order) => order.status === "active").length,
       revenue: orders.reduce(
-        (total, order) => total + (order.status === "active" ? order.amountKrw ?? 0 : 0),
+        (total, order) =>
+          total + (order.paymentStatus === "paid" ? order.amountKrw ?? 0 : 0),
         0
       ),
     };
@@ -90,7 +95,7 @@ export default function AdminOrderManager({
         <div>
           <p className={styles.eyebrow}>ORDERS &amp; PAYMENTS</p>
           <h1>주문 · 결제</h1>
-          <p>콘텐츠 신청 유입과 결제 상태, 이용권 발급 결과를 한곳에서 확인합니다.</p>
+            <p>결제 상태와 실제 이용권, 수강 진도와 전액 환불 결과를 한곳에서 확인합니다.</p>
         </div>
         <span className={databaseReady ? styles.liveBadge : styles.pendingBadge}>
           <span aria-hidden="true" />
@@ -149,7 +154,7 @@ export default function AdminOrderManager({
         <div className={styles.panelHeader}>
           <div>
             <h2 id="order-list-title">신청 · 주문 내역</h2>
-            <p>회원, 상품, 신청 경로와 최종 이용권 상태를 기준으로 조회합니다.</p>
+            <p>결제 상태와 이용권 상태를 분리하고 환불 전 수강 기록을 확인합니다.</p>
           </div>
           <span className={styles.resultCount}>총 {formatCount(filteredOrders.length)}건</span>
         </div>
@@ -205,13 +210,21 @@ export default function AdminOrderManager({
                   <th>상품</th>
                   <th>경로</th>
                   <th>결제 금액</th>
+                  <th>결제 상태</th>
                   <th>이용권</th>
+                  <th>학습 기록</th>
                   <th>신청일</th>
+                  <th>처리</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
-                  <OrderRow key={order.id} order={order} />
+                  <OrderRow
+                    key={order.id}
+                    order={order}
+                    canRefund={canRefund}
+                    onRefund={() => setRefundOrder(order)}
+                  />
                 ))}
               </tbody>
             </table>
@@ -228,6 +241,10 @@ export default function AdminOrderManager({
           </div>
         )}
       </section>
+
+      {refundOrder && (
+        <RefundDialog order={refundOrder} onClose={() => setRefundOrder(null)} />
+      )}
     </div>
   );
 }
@@ -284,7 +301,21 @@ function FilterSelect({
   );
 }
 
-function OrderRow({ order }: { order: AdminOrder }) {
+function OrderRow({
+  order,
+  canRefund,
+  onRefund,
+}: {
+  order: AdminOrder;
+  canRefund: boolean;
+  onRefund: () => void;
+}) {
+  const refundable =
+    canRefund &&
+    order.source === "payment" &&
+    order.paymentStatus === "paid" &&
+    order.paymentKeyPresent;
+
   return (
     <tr>
       <td data-label="신청 번호">
@@ -321,17 +352,183 @@ function OrderRow({ order }: { order: AdminOrder }) {
           formatPrice(order.amountKrw)
         )}
       </td>
+      <td data-label="결제 상태">
+        <span className={`${styles.paymentStatusBadge} ${styles[order.paymentStatus]}`}>
+          {formatPaymentStatus(order.paymentStatus)}
+        </span>
+      </td>
       <td data-label="이용권">
         <span className={`${styles.statusBadge} ${styles[order.status]}`}>
           <span aria-hidden="true" />
           {order.status === "active" ? "이용 가능" : "회수됨"}
         </span>
       </td>
+      <td data-label="학습 기록">
+        {order.productType === "course" ? (
+          <span className={styles.learningCell}>
+            <strong>{formatProgress(order.learning.progressPercent)}</strong>
+            <small>
+              시작 {order.learning.startedLessons}/{order.learning.totalLessons} · 완료{" "}
+              {order.learning.completedLessons}
+            </small>
+          </span>
+        ) : (
+          <span className={styles.unavailableAmount}>해당 없음</span>
+        )}
+      </td>
       <td data-label="신청일" className={styles.dateCell}>
         <time dateTime={order.createdAt}>{formatDateTime(order.createdAt)}</time>
         <small>{formatExpiration(order.expiresAt)}</small>
       </td>
+      <td data-label="처리">
+        {refundable ? (
+          <button type="button" className={styles.refundButton} onClick={onRefund}>
+            전액 환불
+          </button>
+        ) : order.paymentStatus === "refunded" ? (
+          <span className={styles.refundedLabel}>
+            환불 완료
+            {order.refundedAt && <small>{formatDate(order.refundedAt)}</small>}
+          </span>
+        ) : order.refundStatus === "processing" ? (
+          <span className={styles.processingLabel}>환불 처리 중</span>
+        ) : (
+          <span className={styles.unavailableAmount}>—</span>
+        )}
+      </td>
     </tr>
+  );
+}
+
+function RefundDialog({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [reason, setReason] = useState("");
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    return () => dialog.close();
+  }, []);
+
+  const submitRefund = () => {
+    setResult(null);
+    startTransition(async () => {
+      const nextResult = await refundPaymentOrderAction(order.id, reason);
+      setResult(nextResult);
+    });
+  };
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className={styles.refundDialogFrame}
+      aria-labelledby="refund-dialog-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        if (!isPending) onClose();
+      }}
+    >
+      <section className={styles.refundDialog}>
+        <div className={styles.dialogHeader}>
+          <div>
+            <p>FULL REFUND</p>
+            <h2 id="refund-dialog-title">전액 환불 확인</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="환불 창 닫기"
+            disabled={isPending}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className={styles.refundOrderSummary}>
+          <div>
+            <span>회원</span>
+            <strong>{order.customerName}</strong>
+            <small>{order.customerEmail}</small>
+          </div>
+          <div>
+            <span>상품</span>
+            <strong>{order.productTitle}</strong>
+            <small>{order.orderUid}</small>
+          </div>
+          <div>
+            <span>환불 예정액</span>
+            <strong>{formatPrice(order.amountKrw ?? 0)}</strong>
+            <small>주문 당시 결제금액 전액</small>
+          </div>
+        </div>
+
+        {order.productType === "course" && (
+          <div className={styles.learningEvidence}>
+            <div>
+              <span>전체 진도</span>
+              <strong>{formatProgress(order.learning.progressPercent)}</strong>
+            </div>
+            <div>
+              <span>시작한 강의</span>
+              <strong>
+                {order.learning.startedLessons}/{order.learning.totalLessons}
+              </strong>
+            </div>
+            <div>
+              <span>완료한 강의</span>
+              <strong>{order.learning.completedLessons}</strong>
+            </div>
+            <div>
+              <span>최대 재생 위치 합계</span>
+              <strong>{formatDuration(order.learning.watchedSeconds)}</strong>
+            </div>
+          </div>
+        )}
+
+        <div className={styles.refundWarning} role="note">
+          Toss에서 결제 전액을 취소한 뒤 주문이 환불 완료로 변경되고, 결제로 발급된 이용권이
+          즉시 회수됩니다. 이 작업은 되돌릴 수 없습니다.
+        </div>
+
+        <label className={styles.refundReasonField}>
+          <span>환불 사유</span>
+          <textarea
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            maxLength={200}
+            rows={3}
+            placeholder="고객 요청 내용과 환불 판단 근거를 입력해 주세요."
+            disabled={isPending || result?.ok}
+          />
+          <small>{reason.trim().length}/200</small>
+        </label>
+
+        {result && (
+          <p className={result.ok ? styles.refundSuccess : styles.refundError} role="status">
+            {result.message}
+          </p>
+        )}
+
+        <div className={styles.dialogActions}>
+          <button type="button" className={styles.cancelButton} onClick={onClose} disabled={isPending}>
+            {result?.ok ? "닫기" : "취소"}
+          </button>
+          {!result?.ok && (
+            <button
+              type="button"
+              className={styles.confirmRefundButton}
+              onClick={submitRefund}
+              disabled={isPending || reason.trim().length < 3}
+            >
+              {isPending ? "Toss 환불 처리 중…" : "전액 환불 및 이용권 회수"}
+            </button>
+          )}
+        </div>
+      </section>
+    </dialog>
   );
 }
 
@@ -397,6 +594,36 @@ function formatExpiration(value: string | null) {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(value))} 만료`;
+}
+
+function formatPaymentStatus(status: AdminOrder["paymentStatus"]) {
+  return {
+    pending: "결제 대기",
+    paid: "결제 완료",
+    canceled: "승인 전 취소",
+    refunded: "환불 완료",
+    failed: "결제 실패",
+  }[status];
+}
+
+function formatProgress(value: number) {
+  return `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value)}%`;
+}
+
+function formatDuration(seconds: number) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) return `${hours}시간 ${minutes}분`;
+  return `${minutes}분`;
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
 }
 
 function SearchIcon() {

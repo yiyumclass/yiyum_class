@@ -21,6 +21,8 @@ type OrderRow = {
   source: "free_checkout" | "payment" | "admin_grant";
   status: "pending" | "paid" | "canceled" | "refunded" | "failed";
   payment_key: string | null;
+  refund_policy_version: string | null;
+  refund_policy_agreed_at: string | null;
 };
 
 type EntitlementRow = {
@@ -52,7 +54,9 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("id, order_uid, product_id, amount, source, status, payment_key")
+    .select(
+      "id, order_uid, product_id, amount, source, status, payment_key, refund_policy_version, refund_policy_agreed_at"
+    )
     .eq("order_uid", input.orderId)
     .maybeSingle<OrderRow>();
 
@@ -79,6 +83,9 @@ export async function POST(request: Request) {
   }
   if (data.status !== "pending") {
     return json({ ok: false, message: "더 이상 승인할 수 없는 주문입니다." }, 409);
+  }
+  if (!data.refund_policy_version || !data.refund_policy_agreed_at) {
+    return json({ ok: false, message: "환불 정책 동의를 확인하지 못했습니다." }, 409);
   }
   if (data.payment_key !== null && data.payment_key !== input.paymentKey) {
     return json({ ok: false, message: "주문에 등록된 결제 정보와 일치하지 않습니다." }, 409);
