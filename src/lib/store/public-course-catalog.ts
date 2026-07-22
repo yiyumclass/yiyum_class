@@ -5,7 +5,6 @@ import { courses as fallbackCourses } from "@/lib/learning/catalog";
 import type { Course, CourseLesson, CourseSection } from "@/lib/learning/types";
 import { createPublicClient } from "@/lib/supabase/public";
 import { courseProducts } from "./course-products";
-import { resolveSellingPrice } from "./free-enrollment";
 
 export type PublicCourseCatalogItem = {
   productId: string;
@@ -360,7 +359,7 @@ function mapProductRow(
     slug: product.slug,
     title: product.title,
     summary: product.summary || course.description,
-    priceKrw: resolveSellingPrice(product.price_krw),
+    priceKrw: product.price_krw,
     accessPeriodDays: product.access_period_days,
     accessLabel: formatAccessPeriod(product.access_period_days),
     thumbnailSrc: resolveLocalImage(product.thumbnail_path, course.posterSrc),

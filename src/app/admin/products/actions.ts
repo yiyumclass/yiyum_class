@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminProductStatus } from "@/lib/admin/products";
-import { resolveSellingPrice } from "@/lib/store/free-enrollment";
 import { createClient } from "@/lib/supabase/server";
 
 export type CreateProductState = {
@@ -57,7 +56,7 @@ export async function createProductAction(
     product_type: values.productType,
     title: values.title,
     summary: values.summary,
-    price_krw: resolveSellingPrice(values.priceKrw),
+    price_krw: values.priceKrw,
     access_period_days:
       values.accessMode === "period" ? values.accessPeriodDays : null,
     status: values.status,
@@ -179,7 +178,7 @@ export async function updateProductAction(
     .update({
       title: values.title,
       summary: values.summary,
-      price_krw: resolveSellingPrice(values.priceKrw),
+      price_krw: values.priceKrw,
       access_period_days:
         values.accessMode === "period" ? values.accessPeriodDays : null,
       status: values.status,

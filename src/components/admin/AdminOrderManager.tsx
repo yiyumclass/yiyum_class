@@ -12,6 +12,7 @@ type AdminOrderManagerProps = {
   orders: AdminOrder[];
   databaseReady: boolean;
   sourceMessage: string | null;
+  paymentMode: "free" | "toss_test" | "toss_live";
 };
 
 type SourceFilter = "all" | AdminOrderSource;
@@ -42,6 +43,7 @@ export default function AdminOrderManager({
   orders,
   databaseReady,
   sourceMessage,
+  paymentMode,
 }: AdminOrderManagerProps) {
   const [query, setQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
@@ -110,10 +112,19 @@ export default function AdminOrderManager({
       <div className={styles.modeNotice} role="status">
         <ReceiptIcon />
         <div>
-          <strong>현재는 무료 신청 내역을 주문 원장으로 표시합니다.</strong>
+          <strong>
+            {paymentMode === "toss_test"
+              ? "Toss Payments 테스트 결제가 연결되어 있습니다."
+              : paymentMode === "toss_live"
+                ? "Toss Payments 실결제가 연결되어 있습니다."
+                : "무료 신청 내역을 주문 원장으로 표시합니다."}
+          </strong>
           <p>
-            실제 결제 승인·취소·환불과 결제 금액은 결제사 연동 후 이 화면에 이어서
-            연결됩니다. 지금은 이용권 발급 여부가 운영 기준입니다.
+            {paymentMode === "toss_test"
+              ? "테스트 승인 주문도 실제 주문과 동일하게 금액과 이용권 발급 결과가 기록됩니다. 카드에는 청구되지 않습니다."
+              : paymentMode === "toss_live"
+                ? "승인된 결제 금액과 이용권 발급 결과를 주문 원장에서 확인합니다."
+                : "0원 상품 신청과 관리자 지급 내역을 이용권 발급 기준으로 확인합니다."}
           </p>
         </div>
       </div>
@@ -127,7 +138,11 @@ export default function AdminOrderManager({
           unit="건"
           tone="active"
         />
-        <SummaryItem label="확인된 결제액" value={formatPrice(summary.revenue)} note="결제 연동 전" />
+        <SummaryItem
+          label="확인된 결제액"
+          value={formatPrice(summary.revenue)}
+          note={paymentMode === "toss_test" ? "테스트 승인액" : undefined}
+        />
       </section>
 
       <section className={styles.orderPanel} aria-labelledby="order-list-title">

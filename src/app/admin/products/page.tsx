@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import AdminProductManager from "@/components/admin/AdminProductManager";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminProducts } from "@/lib/admin/products";
+import { getPaymentMode } from "@/lib/store/free-enrollment";
 
 export const metadata: Metadata = {
   title: "상품 관리 | 이윰 관리자",
@@ -17,6 +18,7 @@ export default async function AdminProductsPage() {
       products={result.products}
       databaseReady={result.databaseReady}
       sourceMessage={result.message}
+      paymentMode={getPaymentMode()}
     />
   );
 }

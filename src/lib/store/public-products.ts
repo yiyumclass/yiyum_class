@@ -2,7 +2,6 @@ import "server-only";
 
 import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/public";
-import { resolveSellingPrice } from "./free-enrollment";
 
 export type PublicProduct = {
   id: string;
@@ -52,7 +51,7 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
     productType: data.product_type,
     title: data.title,
     summary: data.summary,
-    priceKrw: resolveSellingPrice(data.price_krw),
+    priceKrw: data.price_krw,
     accessPeriodDays: data.access_period_days,
     accessLabel:
       data.access_period_days === null

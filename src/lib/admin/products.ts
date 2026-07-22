@@ -4,7 +4,6 @@ import { courses } from "@/lib/learning/catalog";
 import { courseProducts } from "@/lib/store/course-products";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createClient } from "@/lib/supabase/server";
-import { resolveSellingPrice } from "@/lib/store/free-enrollment";
 
 export type AdminProductType = "course" | "ebook";
 export type AdminProductStatus = "draft" | "active" | "paused" | "archived";
@@ -85,7 +84,7 @@ function mapProductRow(row: ProductRow): AdminProduct {
     productType: row.product_type,
     title: row.title,
     summary: row.summary,
-    priceKrw: resolveSellingPrice(row.price_krw),
+    priceKrw: row.price_krw,
     accessPeriodDays: row.access_period_days,
     status: row.status,
     thumbnailPath: row.thumbnail_path,

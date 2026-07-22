@@ -21,13 +21,13 @@ import type {
   AdminProductStatus,
   AdminProductType,
 } from "@/lib/admin/products";
-import { FREE_ENROLLMENT_MODE } from "@/lib/store/free-enrollment";
 import styles from "./AdminProductManager.module.css";
 
 type AdminProductManagerProps = {
   products: AdminProduct[];
   databaseReady: boolean;
   sourceMessage: string | null;
+  paymentMode: "free" | "toss_test" | "toss_live";
 };
 
 type TypeFilter = "all" | AdminProductType;
@@ -57,6 +57,7 @@ export default function AdminProductManager({
   products,
   databaseReady,
   sourceMessage,
+  paymentMode,
 }: AdminProductManagerProps) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -141,12 +142,12 @@ export default function AdminProductManager({
         </div>
       )}
 
-      {FREE_ENROLLMENT_MODE && (
+      {paymentMode === "toss_test" && (
         <div className={styles.freeModeNotice} role="status">
           <span aria-hidden="true">₩</span>
           <div>
-            <strong>결제 연동 전 무료 신청 모드입니다.</strong>
-            <p>현재 모든 강의와 전자책은 0원으로만 저장되며, 수강신청 즉시 이용권이 발급됩니다.</p>
+            <strong>Toss Payments 테스트 결제 모드입니다.</strong>
+            <p>입력한 판매가가 실제 주문 금액으로 사용되지만 테스트 카드에는 청구되지 않습니다.</p>
           </div>
         </div>
       )}
@@ -489,8 +490,7 @@ function ProductEditDialog({
                 suffix="원"
                 defaultValue={String(product.priceKrw)}
                 error={state.fieldErrors.priceKrw}
-                description="무료 신청 모드에서는 0원으로 고정됩니다."
-                readOnly={FREE_ENROLLMENT_MODE}
+                description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
                 required
               />
             </div>
@@ -761,10 +761,8 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
                 step="1000"
                 placeholder="300000"
                 suffix="원"
-                defaultValue={FREE_ENROLLMENT_MODE ? "0" : undefined}
                 error={state.fieldErrors.priceKrw}
-                description="무료 신청 모드에서는 0원으로 고정됩니다."
-                readOnly={FREE_ENROLLMENT_MODE}
+                description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
                 required
               />
               <label className={styles.formField}>
