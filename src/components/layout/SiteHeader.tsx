@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
@@ -30,12 +29,16 @@ const navigationItems: Array<{
   { key: "contact", label: "문의", href: "/contact" },
 ];
 
-export default function SiteHeader({
+export default async function SiteHeader({
   active,
   currentPath = "/",
   variant = "solid",
 }: SiteHeaderProps) {
-  const identityPromise = loadHeaderIdentity();
+  const supabase = await createClient();
+  const identity = await getVerifiedIdentity(supabase);
+  const isAdmin = identity
+    ? await hasActiveAdminAccess(supabase, identity.userId)
+    : false;
   const loginHref =
     currentPath === "/" ? "/login" : `/login?next=${encodeURIComponent(currentPath)}`;
   const enrollHref = currentPath === "/" ? "#apply" : "/#apply";
@@ -65,100 +68,35 @@ export default function SiteHeader({
 
         <div className={styles.actions}>
           <div className={styles.accountSlot}>
-            <Suspense fallback={<HeaderAccountPlaceholder />}>
-              <HeaderAccount
-                identityPromise={identityPromise}
-                loginHref={loginHref}
-              />
-            </Suspense>
+            {identity ? (
+              <Link href="/my" className={styles.myClassLink}>
+                마이 클래스
+              </Link>
+            ) : (
+              <Link href={loginHref} className={styles.accountLink}>
+                로그인
+              </Link>
+            )}
           </div>
 
-          <Suspense fallback={<HeaderRoleActionsPlaceholder />}>
-            <HeaderRoleActions
-              active={active}
-              identityPromise={identityPromise}
-              enrollHref={enrollHref}
-            />
-          </Suspense>
+          {isAdmin ? (
+            <Link href="/admin" className={styles.adminLink}>
+              관리자
+            </Link>
+          ) : (
+            <Link href={enrollHref} className={styles.enrollLink}>
+              수강 신청
+            </Link>
+          )}
+
+          <MobileMenu
+            navItems={navigationItems}
+            activeKey={active}
+            isAdmin={isAdmin}
+            enrollHref={enrollHref}
+          />
         </div>
       </div>
     </header>
-  );
-}
-
-async function loadHeaderIdentity() {
-  const supabase = await createClient();
-  return getVerifiedIdentity(supabase);
-}
-
-async function HeaderAccount({
-  identityPromise,
-  loginHref,
-}: {
-  identityPromise: ReturnType<typeof loadHeaderIdentity>;
-  loginHref: string;
-}) {
-  const identity = await identityPromise;
-
-  return identity ? (
-    <Link href="/my" className={styles.myClassLink}>
-      마이 클래스
-    </Link>
-  ) : (
-    <Link href={loginHref} className={styles.accountLink}>
-      로그인
-    </Link>
-  );
-}
-
-async function HeaderRoleActions({
-  active,
-  identityPromise,
-  enrollHref,
-}: {
-  active?: NavigationKey;
-  identityPromise: ReturnType<typeof loadHeaderIdentity>;
-  enrollHref: string;
-}) {
-  const identity = await identityPromise;
-  let isAdmin = false;
-
-  if (identity) {
-    const supabase = await createClient();
-    isAdmin = await hasActiveAdminAccess(supabase, identity.userId);
-  }
-
-  return (
-    <>
-      {isAdmin ? (
-        <Link href="/admin" className={styles.adminLink}>
-          관리자
-        </Link>
-      ) : (
-        <Link href={enrollHref} className={styles.enrollLink}>
-          수강 신청
-        </Link>
-      )}
-
-      <MobileMenu
-        navItems={navigationItems}
-        activeKey={active}
-        isAdmin={isAdmin}
-        enrollHref={enrollHref}
-      />
-    </>
-  );
-}
-
-function HeaderAccountPlaceholder() {
-  return <span className={styles.accountPlaceholder} aria-hidden="true" />;
-}
-
-function HeaderRoleActionsPlaceholder() {
-  return (
-    <>
-      <span className={styles.rolePlaceholder} aria-hidden="true" />
-      <span className={styles.mobileMenuPlaceholder} aria-hidden="true" />
-    </>
   );
 }
