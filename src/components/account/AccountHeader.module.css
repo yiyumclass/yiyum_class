@@ -70,12 +70,6 @@
   cursor: default;
 }
 
-.soonBadge {
-  color: #b4aba0;
-  font-size: 8px;
-  font-weight: 700;
-}
-
 .userArea {
   justify-self: end;
   display: flex;
@@ -135,7 +129,6 @@
     justify-self: center;
   }
 
-  .soonBadge,
   .userName {
     display: none;
   }

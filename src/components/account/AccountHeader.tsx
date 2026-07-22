@@ -12,7 +12,7 @@ type AccountHeaderProps = {
 
 const accountNavigation = [
   { key: "classes", label: "마이 클래스", href: "/my" },
-  { key: "orders", label: "주문 내역", href: null },
+  { key: "orders", label: "주문 내역", href: "/my/orders" },
   { key: "settings", label: "계정 설정", href: "/account/settings" },
 ] as const;
 
@@ -38,15 +38,6 @@ export default function AccountHeader({
 
         <nav className={styles.accountNav} aria-label="회원 메뉴">
           {accountNavigation.map((item) => {
-            if (!item.href) {
-              return (
-                <span key={item.key} className={styles.navSoon} aria-disabled="true">
-                  {item.label}
-                  <span className={styles.soonBadge}>준비 중</span>
-                </span>
-              );
-            }
-
             const isActive = item.key === active;
             return (
               <Link
