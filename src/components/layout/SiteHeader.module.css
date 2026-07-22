@@ -94,6 +94,37 @@
   white-space: nowrap;
 }
 
+.accountSlot {
+  min-width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accountPlaceholder,
+.rolePlaceholder,
+.mobileMenuPlaceholder {
+  display: block;
+  overflow: hidden;
+  background: rgba(116, 105, 92, 0.14);
+}
+
+.accountPlaceholder {
+  width: 58px;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.rolePlaceholder {
+  width: 88px;
+  height: 38px;
+  border-radius: 999px;
+}
+
+.mobileMenuPlaceholder {
+  display: none;
+}
+
 .accountLink,
 .myClassLink {
   padding: 7px 0 5px;
@@ -196,9 +227,22 @@
     gap: 4px;
   }
 
+  .accountSlot {
+    min-width: 68px;
+  }
+
   .enrollLink,
-  .adminLink {
+  .adminLink,
+  .rolePlaceholder {
     display: none;
+  }
+
+  .mobileMenuPlaceholder {
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    display: block;
+    border-radius: 50%;
   }
 
   .accountLink,

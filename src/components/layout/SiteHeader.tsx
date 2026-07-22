@@ -35,6 +35,7 @@ export default function SiteHeader({
   currentPath = "/",
   variant = "solid",
 }: SiteHeaderProps) {
+  const identityPromise = loadHeaderIdentity();
   const loginHref =
     currentPath === "/" ? "/login" : `/login?next=${encodeURIComponent(currentPath)}`;
   const enrollHref = currentPath === "/" ? "#apply" : "/#apply";
@@ -62,78 +63,73 @@ export default function SiteHeader({
           ))}
         </nav>
 
-        <Suspense
-          fallback={
-            <HeaderActionsView
+        <div className={styles.actions}>
+          <div className={styles.accountSlot}>
+            <Suspense fallback={<HeaderAccountPlaceholder />}>
+              <HeaderAccount
+                identityPromise={identityPromise}
+                loginHref={loginHref}
+              />
+            </Suspense>
+          </div>
+
+          <Suspense fallback={<HeaderRoleActionsPlaceholder />}>
+            <HeaderRoleActions
               active={active}
+              identityPromise={identityPromise}
               enrollHref={enrollHref}
-              loginHref={loginHref}
-              isAdmin={false}
-              isAuthenticated={false}
             />
-          }
-        >
-          <HeaderActions
-            active={active}
-            enrollHref={enrollHref}
-            loginHref={loginHref}
-          />
-        </Suspense>
+          </Suspense>
+        </div>
       </div>
     </header>
   );
 }
 
-async function HeaderActions({
-  active,
-  enrollHref,
+async function loadHeaderIdentity() {
+  const supabase = await createClient();
+  return getVerifiedIdentity(supabase);
+}
+
+async function HeaderAccount({
+  identityPromise,
   loginHref,
 }: {
-  active?: NavigationKey;
-  enrollHref: string;
+  identityPromise: ReturnType<typeof loadHeaderIdentity>;
   loginHref: string;
 }) {
-  const supabase = await createClient();
-  const identity = await getVerifiedIdentity(supabase);
-  const isAdmin = identity
-    ? await hasActiveAdminAccess(supabase, identity.userId)
-    : false;
+  const identity = await identityPromise;
 
-  return (
-    <HeaderActionsView
-      active={active}
-      enrollHref={enrollHref}
-      loginHref={loginHref}
-      isAdmin={isAdmin}
-      isAuthenticated={Boolean(identity)}
-    />
+  return identity ? (
+    <Link href="/my" className={styles.myClassLink}>
+      마이 클래스
+    </Link>
+  ) : (
+    <Link href={loginHref} className={styles.accountLink}>
+      로그인
+    </Link>
   );
 }
 
-function HeaderActionsView({
+async function HeaderRoleActions({
   active,
+  identityPromise,
   enrollHref,
-  loginHref,
-  isAdmin,
-  isAuthenticated,
 }: {
   active?: NavigationKey;
+  identityPromise: ReturnType<typeof loadHeaderIdentity>;
   enrollHref: string;
-  loginHref: string;
-  isAdmin: boolean;
-  isAuthenticated: boolean;
 }) {
+  const identity = await identityPromise;
+  let isAdmin = false;
+
+  if (identity) {
+    const supabase = await createClient();
+    isAdmin = await hasActiveAdminAccess(supabase, identity.userId);
+  }
+
   return (
-    <div className={`${styles.actions} ${isAdmin ? styles.adminActions : ""}`}>
-      {isAuthenticated ? (
-        <Link href="/my" className={styles.myClassLink}>
-          마이 클래스
-        </Link>
-      ) : (
-        <Link href={loginHref} className={styles.accountLink}>
-          로그인
-        </Link>
-      )}
+    <>
       {isAdmin ? (
         <Link href="/admin" className={styles.adminLink}>
           관리자
@@ -150,6 +146,19 @@ function HeaderActionsView({
         isAdmin={isAdmin}
         enrollHref={enrollHref}
       />
-    </div>
+    </>
+  );
+}
+
+function HeaderAccountPlaceholder() {
+  return <span className={styles.accountPlaceholder} aria-hidden="true" />;
+}
+
+function HeaderRoleActionsPlaceholder() {
+  return (
+    <>
+      <span className={styles.rolePlaceholder} aria-hidden="true" />
+      <span className={styles.mobileMenuPlaceholder} aria-hidden="true" />
+    </>
   );
 }
