@@ -29,6 +29,13 @@ export default async function AccountSettingsPage() {
     readMetadataValue(metadata.full_name) ||
     name;
   const phone = readMetadataValue(metadata.phone);
+  const providers = new Set([
+    readMetadataValue(user.app_metadata?.provider),
+    ...(Array.isArray(user.app_metadata?.providers)
+      ? user.app_metadata.providers.map(readMetadataValue)
+      : []),
+    ...(user.identities ?? []).map((identity) => identity.provider),
+  ]);
 
   return (
     <div className={styles.page}>
@@ -42,6 +49,7 @@ export default async function AccountSettingsPage() {
             phone,
             joinedAt: formatJoinedAt(user.created_at),
             marketingEnabled: metadata.marketing_opt_in === true,
+            authProvider: providers.has("kakao") ? "kakao" : "email",
           }}
         />
       </main>

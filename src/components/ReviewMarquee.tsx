@@ -16,6 +16,7 @@ function Row({ images, alt, dir }: { images: string[]; alt: string; dir: "mq-l" 
       <div className={`mq-track ${dir}`}>
         {doubled.map((src, i) => (
           <div className="mq-card" key={i} aria-hidden={i >= images.length}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Native img keeps the CSS marquee duplication/layout behavior unchanged. */}
             <img src={src} alt={i < images.length ? alt : ""} loading="lazy" />
           </div>
         ))}
@@ -38,6 +39,7 @@ export default function ReviewMarquee({ images, alt }: Props) {
       {/* 모바일: 전체 후기 2단 메이슨리 */}
       <div className="mq-masonry mq-mobile" data-reveal="">
         {images.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element -- Native img preserves the existing masonry sizing without changing rendered markup.
           <img key={i} src={src} alt={alt} loading="lazy" className="mq-masonry-img" />
         ))}
       </div>

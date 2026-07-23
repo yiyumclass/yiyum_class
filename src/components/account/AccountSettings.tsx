@@ -11,6 +11,7 @@ type AccountProfile = {
   phone: string;
   joinedAt: string;
   marketingEnabled: boolean;
+  authProvider: "kakao" | "email";
 };
 
 type AccountSettingsProps = {
@@ -25,6 +26,7 @@ const settingNavigation = [
 ];
 
 export default function AccountSettings({ profile }: AccountSettingsProps) {
+  const isKakaoAccount = profile.authProvider === "kakao";
   const [marketingEnabled, setMarketingEnabled] = useState(
     profile.marketingEnabled
   );
@@ -79,11 +81,14 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
       </section>
 
       <div className={styles.previewBanner}>
-        <span className={styles.kakaoMiniMark} aria-hidden="true">
-          <KakaoIcon />
+        <span
+          className={isKakaoAccount ? styles.kakaoMiniMark : styles.emailMiniMark}
+          aria-hidden="true"
+        >
+          {isKakaoAccount ? <KakaoIcon /> : "@"}
         </span>
         <div>
-          <strong>카카오 연동 기준 화면 미리보기</strong>
+          <strong>{isKakaoAccount ? "카카오 연동" : "이메일 로그인"} 계정 설정 미리보기</strong>
           <p>현재 로그인·회원가입 방식은 유지되며, 아래 저장 동작은 아직 연결되지 않았습니다.</p>
         </div>
         <span className={styles.previewBadge}>PREVIEW</span>
@@ -146,7 +151,11 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               <label>
                 <span>이메일</span>
                 <span className={styles.readonlyField}>{profile.email}</span>
-                <small>카카오에서 제공받은 이메일은 연결 계정에서 관리합니다.</small>
+                <small>
+                  {isKakaoAccount
+                    ? "카카오에서 제공받은 이메일은 연결 계정에서 관리합니다."
+                    : "현재 로그인에 사용하는 이메일입니다."}
+                </small>
               </label>
 
               <div className={styles.formActions}>
@@ -167,11 +176,14 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             </div>
 
             <div className={styles.connectedAccount}>
-              <span className={styles.kakaoMark} aria-hidden="true">
-                <KakaoIcon />
+              <span
+                className={isKakaoAccount ? styles.kakaoMark : styles.emailMark}
+                aria-hidden="true"
+              >
+                {isKakaoAccount ? <KakaoIcon /> : "@"}
               </span>
               <span className={styles.connectionCopy}>
-                <strong>카카오 계정</strong>
+                <strong>{isKakaoAccount ? "카카오 계정" : "이메일 계정"}</strong>
                 <span>{profile.email}</span>
               </span>
               <span className={styles.connectedBadge}>
@@ -183,9 +195,15 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             <div className={styles.securityNote}>
               <LockIcon />
               <div>
-                <strong>비밀번호는 카카오에서 관리합니다.</strong>
+                <strong>
+                  {isKakaoAccount
+                    ? "비밀번호는 카카오에서 관리합니다."
+                    : "이메일 로그인 계정입니다."}
+                </strong>
                 <p>
-                  카카오 로그인 회원에게는 별도의 이윰 클래스 비밀번호가 생성되지 않습니다.
+                  {isKakaoAccount
+                    ? "카카오 로그인 회원에게는 별도의 이윰 클래스 비밀번호가 생성되지 않습니다."
+                    : "비밀번호 변경 기능은 아직 계정 설정에 연결되지 않았습니다."}
                 </p>
               </div>
             </div>

@@ -230,6 +230,41 @@
   padding: 34px 4px 12px;
 }
 
+.progressSaveWarning {
+  min-height: 46px;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border: 1px solid #d4a58f;
+  border-radius: 9px;
+  background: #fff4ed;
+  color: #7d4b36;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.progressSaveWarning button {
+  min-height: 34px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid #b85c38;
+  border-radius: 8px;
+  background: #b85c38;
+  color: #fffaf3;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.progressSaveWarning button:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+
 .lessonTopline {
   padding-bottom: 16px;
   border-bottom: 1px solid #d7cfc1;

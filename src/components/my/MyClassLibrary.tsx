@@ -19,9 +19,11 @@ const filters: Array<{ id: Filter; label: string }> = [
 export default function MyClassLibrary({
   displayName,
   items,
+  entitlementLoadError,
 }: {
   displayName: string;
   items: LibraryItem[];
+  entitlementLoadError: string | null;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
@@ -176,7 +178,16 @@ export default function MyClassLibrary({
           </div>
         </div>
 
-        {visibleItems.length > 0 ? (
+        {entitlementLoadError ? (
+          <div className={styles.emptyState} role="alert">
+            <span className={styles.emptyMark}>!</span>
+            <h3 className="serif">콘텐츠 정보를 불러오지 못했어요</h3>
+            <p>{entitlementLoadError} 잠시 후 다시 시도해 주세요.</p>
+            <button type="button" onClick={() => router.refresh()}>
+              다시 불러오기
+            </button>
+          </div>
+        ) : visibleItems.length > 0 ? (
           <div className={styles.contentGrid}>
             {visibleItems.map((item) => (
               <ContentCard

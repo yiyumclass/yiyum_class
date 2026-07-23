@@ -439,9 +439,11 @@ function CourseEditor({
               기본 정보 수정
             </button>
           )}
-          <Link href={`/learn/${course.slug}?adminPreview=1`} className={styles.previewLink}>
-            관리자 미리보기 <span aria-hidden="true">↗</span>
-          </Link>
+          {course.source === "database" && (
+            <Link href={`/learn/${course.slug}?adminPreview=1`} className={styles.previewLink}>
+              관리자 미리보기 <span aria-hidden="true">↗</span>
+            </Link>
+          )}
         </div>
       </header>
 

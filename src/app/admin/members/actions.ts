@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireOwnerAdmin } from "@/lib/admin/auth";
 import type { AdminEntitlementStatus } from "@/lib/admin/members";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,7 +15,7 @@ export async function grantMemberEntitlementAction(
   productId: string,
   expiresAt: string | null
 ): Promise<EntitlementMutationResult> {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   if (!isUuid(memberId) || !isUuid(productId)) {
     return { ok: false, message: "회원과 지급할 상품을 다시 확인해 주세요." };
@@ -52,7 +52,7 @@ export async function updateMemberEntitlementAction(
   status: AdminEntitlementStatus,
   expiresAt: string | null
 ): Promise<EntitlementMutationResult> {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   if (!isUuid(entitlementId) || !["active", "revoked"].includes(status)) {
     return { ok: false, message: "변경할 수강권 정보를 다시 확인해 주세요." };

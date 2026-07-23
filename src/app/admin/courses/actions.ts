@@ -349,7 +349,6 @@ export async function updateLessonAction(
       title: values.title,
       duration_seconds: values.durationSeconds,
       status: values.status,
-      is_preview: values.isPreview,
     })
     .eq("id", lessonId)
     .select("id")

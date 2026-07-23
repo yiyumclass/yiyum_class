@@ -80,12 +80,12 @@ export default function AdminLearningProgress({
       <section className={styles.pageHeading}>
         <div>
           <p className={styles.eyebrow}>LEARNING ANALYTICS</p>
-          <h1>학습 현황</h1>
-          <p>회원과 강의별 진도, 최근 학습과 완료 상태를 확인합니다.</p>
+          <h1>현재 학습 진도</h1>
+          <p>회원과 강의별 현재 진도, 최근 학습과 완료 상태를 확인합니다.</p>
         </div>
         <span className={databaseReady ? styles.liveBadge : styles.pendingBadge}>
           <span aria-hidden="true" />
-          {databaseReady ? "실시간 진도" : "설정 필요"}
+          {databaseReady ? "현재 진도" : "설정 필요"}
         </span>
       </section>
 
@@ -93,17 +93,16 @@ export default function AdminLearningProgress({
         <div className={styles.setupNotice} role="status">
           <DatabaseIcon />
           <div>
-            <strong>학습 현황을 아직 불러올 수 없습니다.</strong>
+            <strong>현재 학습 진도를 아직 불러올 수 없습니다.</strong>
             <p>{sourceMessage}</p>
-            <code>20260716100000_create_admin_learning_progress.sql</code>
           </div>
         </div>
       )}
 
-      <section className={styles.summaryBar} aria-label="학습 현황 요약">
+      <section className={styles.summaryBar} aria-label="현재 학습 진도 요약">
         <SummaryItem label="수강 회원" value={formatNumber(memberCount)} unit="명" />
         <SummaryItem label="최근 30일 학습" value={formatNumber(activeMemberCount)} unit="명" tone="active" />
-        <SummaryItem label="평균 진도" value={formatPercent(averageProgress)} tone="progress" />
+        <SummaryItem label="평균 현재 진도" value={formatPercent(averageProgress)} tone="progress" />
         <SummaryItem label="관심 필요" value={formatNumber(attentionCount)} unit="건" tone="warning" />
       </section>
 
@@ -111,7 +110,7 @@ export default function AdminLearningProgress({
         <section className={styles.courseSection} aria-labelledby="course-summary-title">
           <div className={styles.sectionHeading}>
             <div>
-              <h2 id="course-summary-title">강의별 현황</h2>
+              <h2 id="course-summary-title">강의별 현재 진도</h2>
               <p>유효한 수강권과 현재 공개된 차시를 기준으로 집계합니다.</p>
             </div>
             <span>{courses.length}개 강의</span>
@@ -147,8 +146,8 @@ export default function AdminLearningProgress({
       <section className={styles.progressPanel} aria-labelledby="learner-progress-title">
         <div className={styles.panelHeader}>
           <div>
-            <h2 id="learner-progress-title">회원별 학습 진도</h2>
-            <p>장기 미학습은 마지막 학습 후 14일이 지났거나 아직 시작하지 않은 경우입니다.</p>
+            <h2 id="learner-progress-title">회원별 현재 진도</h2>
+            <p>장기 미학습은 마지막 학습 후 14일이 지났거나 아직 시작하지 않은 경우입니다. 환불 판단용 수강 기록은 주문·결제에서 확인합니다.</p>
           </div>
           <span className={styles.resultCount}>총 {formatNumber(filteredRecords.length)}건</span>
         </div>
@@ -203,7 +202,7 @@ export default function AdminLearningProgress({
                 <tr>
                   <th>회원</th>
                   <th>강의</th>
-                  <th>전체 진도</th>
+                  <th>현재 진도</th>
                   <th>완료 차시</th>
                   <th>최근 학습</th>
                   <th>학습 상태</th>
@@ -219,7 +218,7 @@ export default function AdminLearningProgress({
         ) : (
           <div className={styles.emptyState}>
             <ChartIcon />
-            <strong>{records.length === 0 ? "표시할 학습 현황이 없습니다." : "조건에 맞는 학습 현황이 없습니다."}</strong>
+            <strong>{records.length === 0 ? "표시할 현재 학습 진도가 없습니다." : "조건에 맞는 현재 학습 진도가 없습니다."}</strong>
             <p>{records.length === 0 ? "유효한 강의 수강권이 발급되면 이곳에서 진도를 확인할 수 있습니다." : "검색어 또는 필터를 변경해 보세요."}</p>
           </div>
         )}
@@ -249,8 +248,8 @@ function ProgressRow({ record, referenceDate }: { record: AdminLearningRecord; r
         </span>
       </td>
       <td data-label="강의"><span className={styles.courseIdentity}><strong>{record.courseTitle}</strong><small>/{record.courseSlug}</small></span></td>
-      <td data-label="전체 진도">
-        <span className={styles.progressCell} aria-label={`전체 진도 ${formatPercent(record.progressPercent)}`}>
+      <td data-label="현재 진도">
+        <span className={styles.progressCell} aria-label={`현재 진도 ${formatPercent(record.progressPercent)}`}>
           <span><strong>{formatPercent(record.progressPercent)}</strong><small>{formatWatchTime(record.watchedSeconds)} 학습</small></span>
           <span className={styles.progressTrack} aria-hidden="true"><span style={{ width: `${record.progressPercent}%` }} /></span>
         </span>

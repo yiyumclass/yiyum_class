@@ -30,7 +30,7 @@ try {
     method: "POST",
     body: {
       user_id: adminUser.id,
-      role: "operator",
+      role: "owner",
       display_name: "E2E 관리자",
       created_by: null,
     },
@@ -75,7 +75,7 @@ try {
 
   const [membersAfterGrant, ordersAfterGrant] = await Promise.all([
     rpc("get_admin_member_entitlements", {}, adminSession.access_token),
-    rpc("get_admin_order_ledger", {}, adminSession.access_token),
+    rpc("get_admin_refund_order_ledger", {}, adminSession.access_token),
   ]);
   assert(
     membersAfterGrant.some(
@@ -124,7 +124,7 @@ try {
     adminSession.access_token
   );
   const ordersAfterRevoke = await rpc(
-    "get_admin_order_ledger",
+    "get_admin_refund_order_ledger",
     {},
     adminSession.access_token
   );

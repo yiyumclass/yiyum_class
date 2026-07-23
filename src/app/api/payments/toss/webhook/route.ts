@@ -5,6 +5,8 @@ import { getAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+const WEBHOOK_BODY_LIMIT_BYTES = 64 * 1024;
+
 type WebhookOrderRow = {
   id: string;
   user_id: string;
@@ -22,7 +24,16 @@ export async function POST(request: Request) {
     return Response.json({ ok: false }, { status: 503 });
   }
 
-  const event = await readPaymentEvent(request);
+  if (!isJsonContentType(request.headers.get("content-type"))) {
+    return Response.json({ ok: false }, { status: 415 });
+  }
+
+  const payload = await readLimitedJson(request, WEBHOOK_BODY_LIMIT_BYTES);
+  if (payload === "too_large") {
+    return Response.json({ ok: false }, { status: 413 });
+  }
+
+  const event = readPaymentEvent(payload);
   if (!event) {
     return Response.json({ ok: true }, { status: 200 });
   }
@@ -161,8 +172,7 @@ function revalidatePaymentPaths() {
   revalidatePath("/learn", "layout");
 }
 
-async function readPaymentEvent(request: Request) {
-  const payload: unknown = await request.json().catch(() => null);
+function readPaymentEvent(payload: unknown) {
   if (!isRecord(payload) || payload.eventType !== "PAYMENT_STATUS_CHANGED") return null;
   const data = payload.data;
   if (!isRecord(data)) return null;
@@ -181,6 +191,49 @@ async function readPaymentEvent(request: Request) {
     orderId: data.orderId,
     status: data.status,
   };
+}
+
+async function readLimitedJson(request: Request, limitBytes: number): Promise<unknown | "too_large"> {
+  const body = request.body;
+  if (!body) return null;
+
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytesRead = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytesRead += value.byteLength;
+      if (bytesRead > limitBytes) {
+        await reader.cancel();
+        return "too_large";
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return null;
+  }
+
+  const bodyBytes = new Uint8Array(bytesRead);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bodyBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    return JSON.parse(new TextDecoder().decode(bodyBytes));
+  } catch {
+    return null;
+  }
+}
+
+function isJsonContentType(contentType: string | null) {
+  if (!contentType) return false;
+  const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
+  return mediaType === "application/json" || mediaType.endsWith("+json");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

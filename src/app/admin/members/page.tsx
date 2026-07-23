@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminMembersPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const [memberResult, productResult] = await Promise.all([
     loadAdminMembers(),
     loadAdminProducts(),
@@ -33,6 +33,7 @@ export default async function AdminMembersPage() {
       databaseReady={memberResult.databaseReady && productResult.databaseReady}
       sourceMessage={memberResult.message ?? productResult.message}
       referenceTime={new Date().toISOString()}
+      canManageEntitlements={admin.role === "owner"}
     />
   );
 }

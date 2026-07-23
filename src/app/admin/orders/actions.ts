@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireOwnerAdmin } from "@/lib/admin/auth";
 import {
   cancelTossPayment,
   getTossPayment,
@@ -28,10 +28,7 @@ export async function refundPaymentOrderAction(
   orderId: string,
   reason: string
 ): Promise<RefundPaymentOrderResult> {
-  const actor = await requireAdmin();
-  if (actor.role !== "owner") {
-    return { ok: false, message: "전액 환불은 소유자 관리자만 실행할 수 있습니다." };
-  }
+  const actor = await requireOwnerAdmin();
   if (!isUuid(orderId)) {
     return { ok: false, message: "환불할 주문을 다시 확인해 주세요." };
   }

@@ -280,6 +280,8 @@ function formatAuditAction(action: string) {
     "entitlement.granted": "수강권을 지급했습니다",
     "entitlement.updated": "수강권을 변경했습니다",
     "entitlement.revoked": "수강권을 회수했습니다",
+    "payment.refund_requested": "환불 처리를 시작했습니다",
+    "payment.refunded": "결제를 환불했습니다",
   };
   return labels[action] ?? "운영 정보를 변경했습니다";
 }
@@ -292,6 +294,9 @@ function formatAuditTarget(targetType: string) {
     course_sections: "챕터",
     lessons: "차시",
     product_entitlements: "수강권",
+    payment_refunds: "환불",
+    order: "주문",
+    orders: "주문",
   }[targetType] ?? "변경";
 }
 

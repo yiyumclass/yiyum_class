@@ -8,6 +8,10 @@ export type ProductEntitlement = {
   expiresAt: string | null;
 };
 
+export type ProductEntitlementLoadResult =
+  | { available: true; entitlements: ProductEntitlement[] }
+  | { available: false; errorMessage: string };
+
 type EntitlementRow = {
   product_slug: string;
   product_type: ProductEntitlement["productType"];
@@ -16,7 +20,7 @@ type EntitlementRow = {
 
 export async function loadMyActiveProductEntitlements(
   supabase: SupabaseClient
-): Promise<ProductEntitlement[]> {
+): Promise<ProductEntitlementLoadResult> {
   const { data, error } = await supabase.rpc("get_my_active_product_entitlements");
 
   if (error) {
@@ -25,14 +29,22 @@ export async function loadMyActiveProductEntitlements(
     if (!unavailable) {
       console.error("Failed to load product entitlements:", error.message);
     }
-    return [];
+    return {
+      available: false,
+      errorMessage: unavailable
+        ? "수강권 정보를 불러올 준비가 아직 완료되지 않았습니다."
+        : "수강권 정보를 불러오지 못했습니다.",
+    };
   }
 
-  return ((data ?? []) as unknown as EntitlementRow[]).map((row) => ({
-    productSlug: row.product_slug,
-    productType: row.product_type,
-    expiresAt: row.expires_at,
-  }));
+  return {
+    available: true,
+    entitlements: ((data ?? []) as unknown as EntitlementRow[]).map((row) => ({
+      productSlug: row.product_slug,
+      productType: row.product_type,
+      expiresAt: row.expires_at,
+    })),
+  };
 }
 
 export async function hasActiveProductEntitlement(

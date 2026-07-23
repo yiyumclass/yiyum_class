@@ -12,7 +12,15 @@ type Mode = "login" | "signup";
 // 로그인/회원가입 공용 폼. 랜딩 브랜드 톤(크림 배경·세리프·주황 포인트)에 맞춘다.
 // 가입은 카카오 전용: 필수 약관 동의 후 "카카오로 시작하기"만 노출한다(이메일 가입 폼 없음).
 // 로그인은 카카오+이메일 병행: 관리자·기존 이메일 계정이 계속 로그인할 수 있도록 이메일 폼을 유지한다.
-export default function AuthForm({ mode }: { mode: Mode }) {
+export default function AuthForm({
+  mode,
+  nextPath,
+  authError,
+}: {
+  mode: Mode;
+  nextPath: string;
+  authError: string | null;
+}) {
   const router = useRouter();
   const isSignup = mode === "signup";
 
@@ -20,15 +28,8 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [password, setPassword] = useState("");
   const [consent, setConsent] = useState({ valid: false, marketing: false });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(authError);
   const [info, setInfo] = useState<string | null>(null);
-
-  // 로그인 후 돌아갈 경로. open redirect 방지를 위해 사이트 내부 경로만 허용.
-  const getNext = () => {
-    if (typeof window === "undefined") return "/";
-    const raw = new URLSearchParams(window.location.search).get("next");
-    return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
-  };
 
   // 이메일 로그인 폼 검증. 가입은 카카오 전용이라 이메일 검증은 로그인만 대상으로 한다.
   const validate = () => {
@@ -75,7 +76,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     const isAdmin = data.user
       ? await hasActiveAdminAccess(supabase, data.user.id)
       : false;
-    router.push(isAdmin ? "/admin" : getNext());
+    router.push(isAdmin ? "/admin" : nextPath);
     router.refresh();
   };
 
@@ -89,7 +90,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     }
     setLoading(true);
     const supabase = createClient();
-    const next = encodeURIComponent(getNext());
+    const next = encodeURIComponent(nextPath);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
       options: { redirectTo: `${window.location.origin}/auth/callback?next=${next}` },
@@ -194,10 +195,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         {error && (
-          <p style={{ color: "#C0392B", fontSize: 13, margin: "16px 0 0" }}>{error}</p>
+          <p role="alert" style={{ color: "#C0392B", fontSize: 13, margin: "16px 0 0" }}>
+            {error}
+          </p>
         )}
         {info && (
-          <p style={{ color: "#5E6B4F", fontSize: 13, margin: "16px 0 0" }}>{info}</p>
+          <p role="status" style={{ color: "#5E6B4F", fontSize: 13, margin: "16px 0 0" }}>
+            {info}
+          </p>
         )}
 
         {!isSignup && (
@@ -240,14 +245,28 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           {isSignup ? (
             <>
               이미 계정이 있으신가요?{" "}
-              <Link href="/login" style={{ color: "#B85C38", fontWeight: 600 }}>
+              <Link
+                href={
+                  nextPath === "/"
+                    ? "/login"
+                    : { pathname: "/login", query: { next: nextPath } }
+                }
+                style={{ color: "#B85C38", fontWeight: 600 }}
+              >
                 로그인
               </Link>
             </>
           ) : (
             <>
               계정이 없으신가요?{" "}
-              <Link href="/signup" style={{ color: "#B85C38", fontWeight: 600 }}>
+              <Link
+                href={
+                  nextPath === "/"
+                    ? "/signup"
+                    : { pathname: "/signup", query: { next: nextPath } }
+                }
+                style={{ color: "#B85C38", fontWeight: 600 }}
+              >
                 회원가입
               </Link>
             </>

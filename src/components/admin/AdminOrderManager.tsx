@@ -310,11 +310,7 @@ function OrderRow({
   canRefund: boolean;
   onRefund: () => void;
 }) {
-  const refundable =
-    canRefund &&
-    order.source === "payment" &&
-    order.paymentStatus === "paid" &&
-    order.paymentKeyPresent;
+  const refundAction = getRefundActionState(order, canRefund);
 
   return (
     <tr>
@@ -381,16 +377,20 @@ function OrderRow({
         <small>{formatExpiration(order.expiresAt)}</small>
       </td>
       <td data-label="처리">
-        {refundable ? (
+        {refundAction === "available" ? (
           <button type="button" className={styles.refundButton} onClick={onRefund}>
             전액 환불
           </button>
-        ) : order.paymentStatus === "refunded" ? (
+        ) : refundAction === "retry" ? (
+          <button type="button" className={styles.refundButton} onClick={onRefund}>
+            환불 재시도
+          </button>
+        ) : refundAction === "complete" ? (
           <span className={styles.refundedLabel}>
             환불 완료
             {order.refundedAt && <small>{formatDate(order.refundedAt)}</small>}
           </span>
-        ) : order.refundStatus === "processing" ? (
+        ) : refundAction === "pending" ? (
           <span className={styles.processingLabel}>환불 처리 중</span>
         ) : (
           <span className={styles.unavailableAmount}>—</span>
@@ -398,6 +398,28 @@ function OrderRow({
       </td>
     </tr>
   );
+}
+
+function getRefundActionState(
+  order: AdminOrder,
+  canRefund: boolean
+): "available" | "retry" | "pending" | "complete" | "unavailable" {
+  if (order.paymentStatus === "refunded" || order.refundStatus === "succeeded") {
+    return "complete";
+  }
+
+  if (order.refundStatus === "requested" || order.refundStatus === "processing") {
+    return "pending";
+  }
+
+  const hasRefundablePayment =
+    canRefund &&
+    order.source === "payment" &&
+    order.paymentStatus === "paid" &&
+    order.paymentKeyPresent;
+
+  if (!hasRefundablePayment) return "unavailable";
+  return order.refundStatus === "failed" ? "retry" : "available";
 }
 
 function RefundDialog({ order, onClose }: { order: AdminOrder; onClose: () => void }) {

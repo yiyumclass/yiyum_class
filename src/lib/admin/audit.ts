@@ -72,6 +72,8 @@ function readTargetLabel(row: AuditRow) {
     row.metadata.title,
     row.metadata.product_title,
     row.metadata.member_email,
+    row.metadata.order_uid,
+    row.metadata.refund_uid,
     row.metadata.lesson_key,
     row.metadata.section_key,
   ];

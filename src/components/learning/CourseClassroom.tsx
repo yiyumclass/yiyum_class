@@ -31,6 +31,14 @@ type FlatLesson = CourseLesson & {
 
 type CompletionAction = "preserve" | "complete" | "incomplete";
 
+type ProgressSavePayload = {
+  courseSlug: string;
+  lessonId: string;
+  positionSeconds: number;
+  durationSeconds: number;
+  completionAction: CompletionAction;
+};
+
 export default function CourseClassroom({
   course,
   initialProgress,
@@ -76,6 +84,9 @@ export default function CourseClassroom({
   const [positionsByLessonId, setPositionsByLessonId] = useState(
     initialProgress.positionsByLessonId
   );
+  const [failedProgressSave, setFailedProgressSave] =
+    useState<ProgressSavePayload | null>(null);
+  const [isRetryingProgressSave, setIsRetryingProgressSave] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const saveChainRef = useRef<Promise<void>>(Promise.resolve());
   const lastQueuedPositionsRef = useRef<Record<string, number>>({
@@ -107,6 +118,42 @@ export default function CourseClassroom({
   const previousLesson = availableFlatLessons[activeAvailableIndex - 1];
   const nextLesson = availableFlatLessons[activeAvailableIndex + 1];
 
+  const enqueueProgressSave = useCallback(
+    (payload: ProgressSavePayload, { retry = false }: { retry?: boolean } = {}) => {
+      if (retry) {
+        setIsRetryingProgressSave(true);
+      }
+
+      saveChainRef.current = saveChainRef.current
+        .catch(() => undefined)
+        .then(async () => {
+          try {
+            const response = await fetch("/api/learning/progress", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              keepalive: true,
+            });
+
+            if (!response.ok) {
+              throw new Error(`Progress save failed: ${response.status}`);
+            }
+
+            setFailedProgressSave((current) =>
+              current === payload ? null : current
+            );
+          } catch {
+            setFailedProgressSave(payload);
+          } finally {
+            if (retry) {
+              setIsRetryingProgressSave(false);
+            }
+          }
+        });
+    },
+    []
+  );
+
   const queueProgressSave = useCallback(
     (
       lessonId: string,
@@ -132,28 +179,15 @@ export default function CourseClassroom({
         return;
       }
 
-      saveChainRef.current = saveChainRef.current
-        .catch(() => undefined)
-        .then(async () => {
-          try {
-            const response = await fetch("/api/learning/progress", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                courseSlug: course.slug,
-                lessonId,
-                positionSeconds: safePosition,
-                durationSeconds: safeDuration,
-                completionAction,
-              }),
-              keepalive: true,
-            });
-
-            if (!response.ok) throw new Error(`Progress save failed: ${response.status}`);
-          } catch {}
-        });
+      enqueueProgressSave({
+        courseSlug: course.slug,
+        lessonId,
+        positionSeconds: safePosition,
+        durationSeconds: safeDuration,
+        completionAction,
+      });
     },
-    [course.slug, progressPersistenceEnabled]
+    [course.slug, enqueueProgressSave, progressPersistenceEnabled]
   );
 
   const persistActiveVideo = (
@@ -235,6 +269,11 @@ export default function CourseClassroom({
 
   const returnToMyClass = () => {
     persistActiveVideo();
+  };
+
+  const retryFailedProgressSave = () => {
+    if (!failedProgressSave) return;
+    enqueueProgressSave(failedProgressSave, { retry: true });
   };
 
   const toggleSection = (sectionId: string) => {
@@ -413,6 +452,21 @@ export default function CourseClassroom({
           </div>
 
           <div className={styles.lessonDetails}>
+            {failedProgressSave && !isAdminPreview && (
+              <div className={styles.progressSaveWarning} role="alert">
+                <span>
+                  진도 저장에 실패했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.
+                </span>
+                <button
+                  type="button"
+                  onClick={retryFailedProgressSave}
+                  disabled={isRetryingProgressSave}
+                >
+                  {isRetryingProgressSave ? "재시도 중" : "다시 저장"}
+                </button>
+              </div>
+            )}
+
             <div className={styles.lessonTopline}>
               <span>
                 CHAPTER {String(activeLesson.sectionIndex + 1).padStart(2, "0")} ·

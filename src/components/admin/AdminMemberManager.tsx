@@ -26,6 +26,7 @@ type AdminMemberManagerProps = {
   databaseReady: boolean;
   sourceMessage: string | null;
   referenceTime: string;
+  canManageEntitlements: boolean;
 };
 
 type MemberFilter = "all" | "entitled" | "unentitled" | "expiring";
@@ -44,6 +45,7 @@ export default function AdminMemberManager({
   databaseReady,
   sourceMessage,
   referenceTime,
+  canManageEntitlements,
 }: AdminMemberManagerProps) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<MemberFilter>("all");
@@ -51,6 +53,7 @@ export default function AdminMemberManager({
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const selectedMember = members.find((member) => member.id === selectedMemberId) ?? null;
+  const canOpenEntitlementManager = databaseReady && canManageEntitlements;
   const referenceDate = useMemo(() => new Date(referenceTime), [referenceTime]);
 
   const filteredMembers = useMemo(() => {
@@ -114,7 +117,11 @@ export default function AdminMemberManager({
         <div>
           <p className={styles.eyebrow}>MEMBERS &amp; ENTITLEMENTS</p>
           <h1>회원 · 수강권</h1>
-          <p>회원별 보유 콘텐츠와 이용 기간을 확인하고 수강권을 안전하게 운영합니다.</p>
+          <p>
+            {canManageEntitlements
+              ? "회원별 보유 콘텐츠와 이용 기간을 확인하고 수강권을 안전하게 운영합니다."
+              : "회원별 보유 콘텐츠와 이용 기간을 확인합니다."}
+          </p>
         </div>
         <span className={databaseReady ? styles.liveBadge : styles.pendingBadge}>
           <span aria-hidden="true" />
@@ -202,7 +209,7 @@ export default function AdminMemberManager({
                   <MemberRow
                     key={member.id}
                     member={member}
-                    canManage={databaseReady}
+                    canManage={canOpenEntitlementManager}
                     referenceDate={referenceDate}
                     onManage={() => setSelectedMemberId(member.id)}
                   />
@@ -219,7 +226,7 @@ export default function AdminMemberManager({
         )}
       </section>
 
-      {selectedMember && (
+      {selectedMember && canOpenEntitlementManager && (
         <EntitlementDialog
           member={selectedMember}
           products={products}
@@ -282,7 +289,11 @@ function MemberRow({ member, canManage, referenceDate, onManage }: { member: Adm
       </td>
       <td data-label="최근 로그인" className={styles.dateCell}>{member.lastSignInAt ? formatDateTime(member.lastSignInAt) : "기록 없음"}</td>
       <td className={styles.actionCell}>
-        <button type="button" disabled={!canManage} onClick={onManage}>수강권 관리</button>
+        {canManage ? (
+          <button type="button" onClick={onManage}>수강권 관리</button>
+        ) : (
+          <span className={styles.emptyValue}>조회 전용</span>
+        )}
       </td>
     </tr>
   );

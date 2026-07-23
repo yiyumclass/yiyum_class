@@ -49,12 +49,26 @@
 }
 
 .kakaoMiniMark,
-.kakaoMark {
+.kakaoMark,
+.emailMiniMark,
+.emailMark {
   border-radius: 9px;
-  background: #fee500;
   color: #181600;
   display: grid;
   place-items: center;
+}
+
+.kakaoMiniMark,
+.kakaoMark {
+  background: #fee500;
+}
+
+.emailMiniMark,
+.emailMark {
+  border: 1px solid #d9cdbd;
+  background: #fffaf3;
+  color: #7d5140;
+  font-weight: 750;
 }
 
 .kakaoMiniMark svg,
@@ -64,7 +78,8 @@
   fill: #181600;
 }
 
-.kakaoMiniMark {
+.kakaoMiniMark,
+.emailMiniMark {
   width: 36px;
   height: 36px;
   font-size: 13px;
@@ -356,7 +371,8 @@
   gap: 13px;
 }
 
-.kakaoMark {
+.kakaoMark,
+.emailMark {
   width: 42px;
   height: 42px;
   font-size: 14px;

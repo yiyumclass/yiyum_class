@@ -77,11 +77,25 @@ export const requireAdmin = cache(async (): Promise<AdminIdentity> => {
     redirect("/login?next=/admin");
   }
 
+  if (access.status === "unavailable") {
+    redirect("/admin-access-denied?reason=unavailable");
+  }
+
   if (access.status !== "granted") {
     redirect("/admin-access-denied");
   }
 
   return access.admin;
+});
+
+export const requireOwnerAdmin = cache(async (): Promise<AdminIdentity> => {
+  const admin = await requireAdmin();
+
+  if (admin.role !== "owner") {
+    redirect("/admin-access-denied");
+  }
+
+  return admin;
 });
 
 function isAdminRole(value: unknown): value is AdminRole {

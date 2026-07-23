@@ -37,10 +37,13 @@ export default async function MyPage() {
     typeof rawDisplayName === "string" && rawDisplayName.trim()
       ? rawDisplayName.trim()
       : "회원";
-  const [entitlements, catalog] = await Promise.all([
+  const [entitlementResult, catalog] = await Promise.all([
     loadMyActiveProductEntitlements(supabase),
     loadPublicCourseCatalog(),
   ]);
+  const entitlements = entitlementResult.available
+    ? entitlementResult.entitlements
+    : [];
   const entitlementSlugs = new Set(
     entitlements.map((entitlement) => entitlement.productSlug)
   );
@@ -73,7 +76,15 @@ export default async function MyPage() {
       <AccountHeader active="classes" displayName={displayName} />
 
       <main className={styles.main}>
-        <MyClassLibrary displayName={displayName} items={items} />
+        <MyClassLibrary
+          displayName={displayName}
+          items={items}
+          entitlementLoadError={
+            entitlementResult.available
+              ? null
+              : entitlementResult.errorMessage
+          }
+        />
       </main>
 
       <SiteFooter variant="compact" />
