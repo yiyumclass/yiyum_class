@@ -55,12 +55,21 @@ export async function hydrateCourseVideos(
         return {
           ...lesson,
           durationSeconds: video.duration_seconds || lesson.durationSeconds,
-          videoSrc:
-            video.video_provider === "local"
-              ? video.video_path
-              : `/api/learning/video/${encodeURIComponent(course.slug)}/${encodeURIComponent(lesson.id)}`,
+          videoSrc: resolveLessonVideoSrc(course.slug, lesson.id, video),
         };
       }),
     })),
   };
+}
+
+function resolveLessonVideoSrc(
+  courseSlug: string,
+  lessonKey: string,
+  video: CourseVideoManifestRow
+) {
+  if (video.video_provider === "local") {
+    return process.env.NODE_ENV === "production" ? undefined : video.video_path;
+  }
+
+  return `/api/learning/video/${encodeURIComponent(courseSlug)}/${encodeURIComponent(lessonKey)}`;
 }

@@ -1,7 +1,6 @@
 import type {
   Course,
   CourseLesson,
-  CourseProgress,
 } from "@/lib/learning/types";
 
 const lesson = (
@@ -104,22 +103,3 @@ export const courses: Course[] = [
     ],
   },
 ];
-
-export function getCourseBySlug(slug: string) {
-  return courses.find((course) => course.slug === slug);
-}
-
-// TODO: lesson_progress 조회 결과로 교체한다.
-// 카탈로그와 진도 데이터를 분리해 실제 저장소 연결 시 UI를 바꾸지 않도록 한다.
-export const previewCourseProgress: Record<string, CourseProgress> = {
-  "sns-monetization": {
-    currentLessonId: "sns-04",
-    completedLessonIds: Array.from(
-      { length: 3 },
-      (_, index) => `sns-${String(index + 1).padStart(2, "0")}`
-    ),
-    positionsByLessonId: {},
-    lastWatchedAt: null,
-    lastCompletedLessonId: "sns-03",
-  },
-};

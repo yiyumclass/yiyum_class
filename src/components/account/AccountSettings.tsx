@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
+import {
+  signOutOtherDevicesAction,
+  updateAccountProfileAction,
+  updateNotificationPreferencesAction,
+} from "@/app/account/settings/actions";
 import styles from "./AccountSettings.module.css";
 
 type AccountProfile = {
@@ -11,6 +16,7 @@ type AccountProfile = {
   phone: string;
   joinedAt: string;
   marketingEnabled: boolean;
+  contentUpdatesEnabled: boolean;
   authProvider: "kakao" | "email";
 };
 
@@ -30,10 +36,12 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
   const [marketingEnabled, setMarketingEnabled] = useState(
     profile.marketingEnabled
   );
-  const [contentUpdatesEnabled, setContentUpdatesEnabled] = useState(true);
+  const [contentUpdatesEnabled, setContentUpdatesEnabled] = useState(
+    profile.contentUpdatesEnabled
+  );
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
-  const [withdrawalConfirm, setWithdrawalConfirm] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!withdrawalOpen) return;
@@ -41,7 +49,6 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setWithdrawalOpen(false);
-        setWithdrawalConfirm("");
       }
     };
 
@@ -54,19 +61,36 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
     };
   }, [withdrawalOpen]);
 
-  const showPreviewNotice = (message: string) => {
+  const showNotice = (message: string) => {
     setNotice(message);
   };
 
   const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    showPreviewNotice("목업 단계로, 입력한 정보는 아직 실제 계정에 저장되지 않습니다.");
+    const formData = new FormData(event.currentTarget);
+    startTransition(async () => {
+      const result = await updateAccountProfileAction(formData);
+      showNotice(result.message);
+    });
   };
 
-  const completeWithdrawalPreview = () => {
-    setWithdrawalOpen(false);
-    setWithdrawalConfirm("");
-    showPreviewNotice("회원 탈퇴 확인 흐름까지 미리보기로 확인했습니다.");
+  const saveNotificationPreferences = (
+    nextContentUpdatesEnabled: boolean,
+    nextMarketingEnabled: boolean
+  ) => {
+    setContentUpdatesEnabled(nextContentUpdatesEnabled);
+    setMarketingEnabled(nextMarketingEnabled);
+    startTransition(async () => {
+      const result = await updateNotificationPreferencesAction({
+        contentUpdatesEnabled: nextContentUpdatesEnabled,
+        marketingEnabled: nextMarketingEnabled,
+      });
+      if (!result.ok) {
+        setContentUpdatesEnabled(contentUpdatesEnabled);
+        setMarketingEnabled(marketingEnabled);
+      }
+      showNotice(result.message);
+    });
   };
 
   return (
@@ -88,10 +112,10 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
           {isKakaoAccount ? <KakaoIcon /> : "@"}
         </span>
         <div>
-          <strong>{isKakaoAccount ? "카카오 연동" : "이메일 로그인"} 계정 설정 미리보기</strong>
-          <p>현재 로그인·회원가입 방식은 유지되며, 아래 저장 동작은 아직 연결되지 않았습니다.</p>
+          <strong>{isKakaoAccount ? "카카오 연동" : "이메일 로그인"} 계정</strong>
+          <p>프로필과 알림 설정은 로그인 계정에 안전하게 저장됩니다.</p>
         </div>
-        <span className={styles.previewBadge}>PREVIEW</span>
+        <span className={styles.previewBadge}>CONNECTED</span>
       </div>
 
       {notice && (
@@ -159,8 +183,8 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               </label>
 
               <div className={styles.formActions}>
-                <button type="submit" className={styles.primaryButton}>
-                  변경사항 저장
+                <button type="submit" className={styles.primaryButton} disabled={isPending}>
+                  {isPending ? "저장 중…" : "변경사항 저장"}
                 </button>
               </div>
             </form>
@@ -224,11 +248,15 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() =>
-                    showPreviewNotice("다른 기기 로그아웃은 실제 연동 단계에서 활성화됩니다.")
-                  }
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(async () => {
+                      const result = await signOutOtherDevicesAction();
+                      showNotice(result.message);
+                    });
+                  }}
                 >
-                  모두 로그아웃
+                  {isPending ? "처리 중…" : "모두 로그아웃"}
                 </button>
               </div>
             </div>
@@ -256,8 +284,10 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
                 description="구매한 콘텐츠에 새로운 자료가 추가되면 알려드립니다."
                 checked={contentUpdatesEnabled}
                 onChange={() => {
-                  setContentUpdatesEnabled((value) => !value);
-                  showPreviewNotice("알림 설정 변경은 목업 화면에만 반영됩니다.");
+                  saveNotificationPreferences(
+                    !contentUpdatesEnabled,
+                    marketingEnabled
+                  );
                 }}
               />
               <PreferenceRow
@@ -265,8 +295,10 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
                 description="신규 클래스, 할인과 이벤트 소식을 받아봅니다."
                 checked={marketingEnabled}
                 onChange={() => {
-                  setMarketingEnabled((value) => !value);
-                  showPreviewNotice("마케팅 수신 설정은 목업 화면에만 반영됩니다.");
+                  saveNotificationPreferences(
+                    contentUpdatesEnabled,
+                    !marketingEnabled
+                  );
                 }}
               />
             </div>
@@ -295,7 +327,6 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) {
               setWithdrawalOpen(false);
-              setWithdrawalConfirm("");
             }
           }}
         >
@@ -312,7 +343,6 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               className={styles.dialogClose}
               onClick={() => {
                 setWithdrawalOpen(false);
-                setWithdrawalConfirm("");
               }}
               aria-label="회원 탈퇴 창 닫기"
             >
@@ -323,9 +353,9 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             </span>
             <h2 id="withdrawal-title">회원 탈퇴 전 확인해 주세요</h2>
             <p id="withdrawal-description" className={styles.dialogLead}>
-              탈퇴가 완료되면 이윰 클래스에 로그인할 수 없으며,
+              자동 탈퇴는 현재 제공하지 않으며 고객지원에서 본인 확인 후 처리합니다.
               <br />
-              아래 항목은 이전 상태로 되돌리기 어렵습니다.
+              요청하기 전에 아래 보관 정책을 확인해 주세요.
             </p>
 
             <div className={styles.withdrawalEffects}>
@@ -390,36 +420,19 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               <span aria-hidden="true">↗</span>
             </Link>
 
-            <label className={styles.confirmLabel}>
-              <span className={styles.confirmInstruction}>
-                계속하려면 <strong>회원탈퇴</strong>를 입력해 주세요.
-              </span>
-              <input
-                type="text"
-                value={withdrawalConfirm}
-                onChange={(event) => setWithdrawalConfirm(event.target.value)}
-                placeholder="회원탈퇴"
-              />
-            </label>
             <div className={styles.dialogActions}>
               <button
                 type="button"
                 className={styles.dialogCancel}
                 onClick={() => {
                   setWithdrawalOpen(false);
-                  setWithdrawalConfirm("");
                 }}
               >
                 취소
               </button>
-              <button
-                type="button"
-                className={styles.dialogConfirm}
-                disabled={withdrawalConfirm !== "회원탈퇴"}
-                onClick={completeWithdrawalPreview}
-              >
-                탈퇴 확인
-              </button>
+              <Link href="/contact" className={styles.dialogConfirm}>
+                탈퇴 요청 문의하기
+              </Link>
             </div>
           </section>
         </div>

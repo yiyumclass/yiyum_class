@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwnerAdmin } from "@/lib/admin/auth";
 import type { AdminEntitlementStatus } from "@/lib/admin/members";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/validation/safe-input";
 
 export type EntitlementMutationResult = {
   ok: boolean;
@@ -105,10 +106,4 @@ function revalidateAdminEntitlements() {
 
 function isSetupError(code: string | undefined) {
   return code === "42883" || code === "PGRST202" || code === "PGRST205";
-}
-
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
 }

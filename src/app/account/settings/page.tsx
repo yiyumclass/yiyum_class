@@ -49,6 +49,7 @@ export default async function AccountSettingsPage() {
             phone,
             joinedAt: formatJoinedAt(user.created_at),
             marketingEnabled: metadata.marketing_opt_in === true,
+            contentUpdatesEnabled: metadata.content_updates_opt_in !== false,
             authProvider: providers.has("kakao") ? "kakao" : "email",
           }}
         />

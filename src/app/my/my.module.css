@@ -213,7 +213,7 @@
 .currentLesson strong {
   margin-left: 9px;
   color: #e7d6c8;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -225,7 +225,7 @@
 .progressMeta {
   margin-bottom: 10px;
   color: #afa497;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .progressMeta strong {
@@ -260,7 +260,7 @@
   gap: 10px 20px;
   border-top: 1px solid rgba(238, 226, 212, 0.12);
   color: #aea497;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .lessonTrail span {
@@ -617,7 +617,7 @@
   min-height: 46px;
   margin: 0;
   color: #746b60;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
 }
 
@@ -634,7 +634,7 @@
 .cardProgress > div:first-child {
   margin-bottom: 9px;
   color: #837a6f;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cardProgress strong {
@@ -658,7 +658,7 @@
   align-items: center;
   gap: 9px;
   color: #746b60;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .preparingMeta {
@@ -667,12 +667,12 @@
   justify-content: center;
   gap: 5px;
   color: #746b60;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .preparingMeta strong {
   color: #9d4d31;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .preparingMeta span {
@@ -709,7 +709,7 @@
   margin: 0;
   overflow: hidden;
   color: #50483f;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -770,7 +770,7 @@
 .emptyState p {
   margin: 0;
   color: #81786d;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .emptyState button {
@@ -791,7 +791,7 @@
   min-height: 22px;
   margin: 18px 2px 0;
   color: #8b604d;
-  font-size: 12px;
+  font-size: 13px;
   text-align: right;
 }
 

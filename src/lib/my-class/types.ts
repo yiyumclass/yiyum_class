@@ -23,7 +23,7 @@ export type CourseLibraryItem = BaseLibraryItem & {
 
 export type EbookLibraryItem = BaseLibraryItem & {
   kind: "ebook";
-  status: "available" | "completed";
+  status: "preparing" | "available" | "completed";
 };
 
 export type LibraryItem = CourseLibraryItem | EbookLibraryItem;

@@ -12,6 +12,14 @@ type CourseLibraryDetails = {
   contentReady?: boolean;
 };
 
+type EbookLibraryDetails = {
+  slug: string;
+  title: string;
+  description: string;
+  accessLabel: string;
+  ctaLabel?: string;
+};
+
 export function buildCourseLibraryItem(
   course: Course,
   progress: CourseProgress,
@@ -42,14 +50,12 @@ export function buildCourseLibraryItem(
         completedSet.has(currentLesson.id)
       )
     : 0;
-  const status =
-    !contentReady
-      ? "preparing"
-      : completedCount === totalLessons && totalLessons > 0
-      ? "completed"
-      : progress.lastWatchedAt || completedCount > 0
-        ? "in-progress"
-        : "not-started";
+  const status = resolveCourseStatus({
+    contentReady,
+    completedCount,
+    lastWatchedAt: progress.lastWatchedAt,
+    totalLessons,
+  });
   const recentCompletedLesson = flatLessons.find(
     (lesson) => lesson.id === progress.lastCompletedLessonId
   );
@@ -61,25 +67,11 @@ export function buildCourseLibraryItem(
     title: course.title,
     description: details.description || course.description,
     status,
-    statusLabel:
-      status === "preparing"
-        ? "강의 준비 중"
-        : status === "completed"
-        ? "수강 완료"
-        : status === "in-progress"
-          ? "수강 중"
-          : "학습 전",
+    statusLabel: formatCourseStatusLabel(status),
     accessLabel: details.accessLabel || "이용 기간 확인 필요",
     lastActivity: formatLastActivity(progress.lastWatchedAt),
     lastActivityAt: progress.lastWatchedAt,
-    ctaLabel:
-      status === "preparing"
-        ? "강의 준비 중"
-        : status === "completed"
-        ? "다시 보기"
-        : status === "in-progress"
-          ? "이어보기"
-          : "VOD 강의실 입장",
+    ctaLabel: formatCourseCtaLabel(status),
     progress: percentage,
     completedLessons: completedCount,
     totalLessons,
@@ -91,18 +83,63 @@ export function buildCourseLibraryItem(
   };
 }
 
-export function buildEbookLibraryItem(): EbookLibraryItem {
+type CourseStatusInput = {
+  contentReady: boolean;
+  completedCount: number;
+  lastWatchedAt: string | null;
+  totalLessons: number;
+};
+
+function resolveCourseStatus({
+  contentReady,
+  completedCount,
+  lastWatchedAt,
+  totalLessons,
+}: CourseStatusInput): CourseLibraryItem["status"] {
+  if (!contentReady) return "preparing";
+  if (completedCount === totalLessons && totalLessons > 0) return "completed";
+  if (lastWatchedAt || completedCount > 0) return "in-progress";
+  return "not-started";
+}
+
+function formatCourseStatusLabel(status: CourseLibraryItem["status"]): string {
+  switch (status) {
+    case "preparing":
+      return "강의 준비 중";
+    case "completed":
+      return "수강 완료";
+    case "in-progress":
+      return "수강 중";
+    case "not-started":
+      return "학습 전";
+  }
+}
+
+function formatCourseCtaLabel(status: CourseLibraryItem["status"]): string {
+  switch (status) {
+    case "preparing":
+      return "강의 준비 중";
+    case "completed":
+      return "다시 보기";
+    case "in-progress":
+      return "이어보기";
+    case "not-started":
+      return "VOD 강의실 입장";
+  }
+}
+
+export function buildEbookLibraryItem(details: EbookLibraryDetails): EbookLibraryItem {
   return {
-    id: "small-account-ebook",
+    id: `${details.slug}-ebook`,
     kind: "ebook",
-    title: "작은 계정을 수익으로 연결하는 법",
-    description: "수익화 계정의 방향과 실행 순서를 한 권에 정리한 실전 워크북",
-    status: "available",
-    statusLabel: "보유 중",
-    accessLabel: "무기한",
+    title: details.title,
+    description: details.description,
+    status: "preparing",
+    statusLabel: "파일 준비 중",
+    accessLabel: details.accessLabel,
     lastActivity: "아직 열지 않음",
     lastActivityAt: null,
-    ctaLabel: "전자책 보기",
+    ctaLabel: details.ctaLabel ?? "전자책 준비 중",
   };
 }
 

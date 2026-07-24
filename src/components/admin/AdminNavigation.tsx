@@ -8,11 +8,10 @@ const navigation = [
   { label: "대시보드", icon: "dashboard", href: "/admin" },
   { label: "상품 관리", icon: "product", href: "/admin/products" },
   { label: "강의 관리", icon: "course", href: "/admin/courses" },
-  { label: "전자책 관리", icon: "ebook" },
   { label: "주문 · 결제", icon: "order", href: "/admin/orders" },
   { label: "회원 · 수강권", icon: "member", href: "/admin/members" },
   { label: "학습 현황", icon: "progress", href: "/admin/progress" },
-  { label: "운영 설정", icon: "settings" },
+  { label: "운영자 권한", icon: "settings", href: "/admin/settings" },
 ] as const;
 
 export default function AdminNavigation() {
@@ -23,20 +22,6 @@ export default function AdminNavigation() {
       <p className={styles.navigationLabel}>MANAGEMENT</p>
       <div className={styles.navigationList}>
         {navigation.map((item) => {
-          if (!("href" in item)) {
-            return (
-              <span
-                key={item.label}
-                className={styles.navItemDisabled}
-                aria-disabled="true"
-              >
-                <AdminNavIcon name={item.icon} />
-                <span>{item.label}</span>
-                <span className={styles.navBadge}>준비 중</span>
-              </span>
-            );
-          }
-
           const isActive =
             item.href === "/admin"
               ? pathname === item.href
@@ -83,12 +68,6 @@ function AdminNavIcon({ name }: { name: AdminNavIconName }) {
         <path d="m10 9 5 3-5 3V9Z" />
       </>
     ),
-    ebook: (
-      <>
-        <path d="M5 4.5h9a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Z" />
-        <path d="M17 7.5h2a2 2 0 0 1 2 2V20h-4M8 8h5M8 11.5h5" />
-      </>
-    ),
     order: (
       <>
         <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
@@ -109,7 +88,7 @@ function AdminNavIcon({ name }: { name: AdminNavIconName }) {
     settings: (
       <>
         <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3h4v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.1.36.3.7.6 1 .3.27.7.4 1.1.4h.09v4h-.09A1.7 1.7 0 0 0 19.4 15Z" />
+        <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.5 1a8 8 0 0 0-2.1-1.2L14 3h-4l-.4 2.6a8 8 0 0 0-2.1 1.2l-2.5-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.5-1a8 8 0 0 0 2.1 1.2L10 21h4l.4-2.6a8 8 0 0 0 2.1-1.2l2.5 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z" />
       </>
     ),
   };

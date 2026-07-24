@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminCourseStatus, AdminLesson } from "@/lib/admin/courses";
 import { createClient } from "@/lib/supabase/server";
+import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
 
 type CourseField =
   | "productId"
@@ -671,16 +672,6 @@ function readNumber(formData: FormData, key: string) {
 
 function isKey(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
-}
-
-function isSafeLocalPath(value: string) {
-  return value.startsWith("/") && !value.startsWith("//") && !value.includes("\\");
-}
-
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
 }
 
 function hasErrors(errors: CourseFormState["fieldErrors"]) {

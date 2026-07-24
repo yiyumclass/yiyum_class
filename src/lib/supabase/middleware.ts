@@ -3,8 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // 매 요청마다 Supabase 세션 토큰을 갱신하고 쿠키를 동기화한다.
 // 이게 없으면 세션이 만료돼도 갱신되지 않아 로그인이 풀린 것처럼 보인다.
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+export async function updateSession(
+  request: NextRequest,
+  forwardedHeaders: Headers = request.headers
+) {
+  const responseOptions = {
+    request: {
+      headers: forwardedHeaders,
+    },
+  };
+  let supabaseResponse = NextResponse.next(responseOptions);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +26,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next(responseOptions);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );

@@ -27,6 +27,9 @@ export async function GET(
   if (!video) return json({ error: "재생 가능한 영상이 없습니다." }, 404);
 
   if (video.video_provider === "local") {
+    if (process.env.NODE_ENV === "production") {
+      return json({ error: "개발용 영상 경로는 운영 환경에서 사용할 수 없습니다." }, 410);
+    }
     if (!video.video_path.startsWith("/videos/")) {
       return json({ error: "영상 경로가 올바르지 않습니다." }, 500);
     }

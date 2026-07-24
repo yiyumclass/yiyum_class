@@ -6,65 +6,6 @@ import { loadAdminIntegrationHealth } from "@/lib/admin/health";
 import { loadAdminProducts } from "@/lib/admin/products";
 import styles from "./admin.module.css";
 
-const implementationSteps = [
-  {
-    number: "01",
-    title: "관리자 권한과 접근 제어",
-    description: "일반 회원과 관리자 화면을 분리하고 서버에서 권한을 확인합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "02",
-    title: "상품 관리",
-    description: "강의와 전자책의 가격, 이용 기간과 판매 상태를 관리합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "03",
-    title: "강의 콘텐츠 관리",
-    description: "상품과 강의를 연결하고 챕터, 차시와 영상을 관리합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "04",
-    title: "전자책 콘텐츠 관리",
-    description: "전자책 파일, 버전과 구매 후 열람 흐름을 관리합니다.",
-    status: "샘플 대기",
-    state: "waiting",
-  },
-  {
-    number: "05",
-    title: "주문 · 결제 조회",
-    description: "무료 신청 유입과 이용권 발급 상태를 주문 원장에서 확인합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "06",
-    title: "회원 · 수강권 관리",
-    description: "회원별 보유 콘텐츠와 이용 기간, 지급·회수 이력을 관리합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "07",
-    title: "학습 현황",
-    description: "회원별 강의 진도와 최근 학습, 완료 상태를 운영 지표로 확인합니다.",
-    status: "완료",
-    state: "complete",
-  },
-  {
-    number: "08",
-    title: "운영 설정",
-    description: "서비스 정책과 운영자 계정, 공통 안내 정보를 관리합니다.",
-    status: "다음",
-    state: "current",
-  },
-] as const;
-
 export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
   const [productResult, courseResult, integrationHealth, auditEntries] = await Promise.all([
@@ -143,7 +84,14 @@ export default async function AdminDashboardPage() {
         <div className={styles.integrationStatus} aria-label="사용자 화면 연동 상태">
           <IntegrationState label="상품·강의 DB" ready={productResult.databaseReady && courseResult.databaseReady} />
           <IntegrationState label="공개 커리큘럼" ready={integrationHealth.publicOutlineReady} />
-          <IntegrationState label="무료 신청·수강권" ready={integrationHealth.entitlementReady} />
+          <IntegrationState
+            label="무료 신청·수강권"
+            ready={
+              integrationHealth.entitlementReady &&
+              integrationHealth.libraryReady &&
+              integrationHealth.ownedCourseReady
+            }
+          />
           <IntegrationState label="영상 저장·재생" ready={courseResult.videoStorageReady && integrationHealth.videoDeliveryReady} />
         </div>
 
@@ -159,62 +107,6 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
       </section>
-
-      <div className={styles.dashboardGrid}>
-        <section className={styles.panel} aria-labelledby="build-progress-title">
-          <div className={styles.panelHeading}>
-            <div>
-              <p className={styles.panelKicker}>SETUP ROADMAP</p>
-              <h2 id="build-progress-title">어드민 구축 단계</h2>
-            </div>
-            <span className={styles.progressFraction}>6 / 8</span>
-          </div>
-
-          <ol className={styles.stepList}>
-            {implementationSteps.map((step) => (
-              <li className={styles.stepItem} key={step.number}>
-                <span className={`${styles.stepNumber} ${styles[step.state]}`}>
-                  {step.state === "complete" ? <CheckIcon /> : step.number}
-                </span>
-                <span className={styles.stepCopy}>
-                  <strong>{step.title}</strong>
-                  <span>{step.description}</span>
-                </span>
-                <span className={`${styles.stepStatus} ${styles[step.state]}`}>
-                  {step.status}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className={styles.panel} aria-labelledby="next-work-title">
-          <div className={styles.panelHeading}>
-            <div>
-              <p className={styles.panelKicker}>NEXT</p>
-              <h2 id="next-work-title">다음 작업</h2>
-            </div>
-          </div>
-
-          <div className={styles.nextWork}>
-            <span className={styles.nextWorkIndex}>08</span>
-            <h3>운영 정책과 관리자 계정 설정을 한곳에 정리합니다</h3>
-            <p>
-              콘텐츠·주문·회원·학습 운영 화면이 준비됐습니다. 다음 단계에서는 서비스
-              공통 정책과 운영자 권한, 화면 안내 정보를 안전하게 관리합니다.
-            </p>
-            <ul>
-              <li>운영자 계정과 역할 상태 관리</li>
-              <li>고객 안내·문의와 서비스 공통 정보</li>
-              <li>변경 권한 제한과 감사 로그 기록</li>
-            </ul>
-            <span className={styles.nextWorkPending}>
-              운영 설정 탭에서 이어서 구현합니다
-              <span aria-hidden="true">→</span>
-            </span>
-          </div>
-        </section>
-      </div>
 
       {admin.role === "owner" && (
         <section className={styles.auditPanel} aria-labelledby="recent-audit-title">
@@ -308,14 +200,6 @@ function formatAdminDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function CheckIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="m5 10 3 3 7-7" />
-    </svg>
-  );
 }
 
 function ShieldIcon() {

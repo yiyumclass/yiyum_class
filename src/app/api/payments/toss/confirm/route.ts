@@ -1,4 +1,6 @@
 import { revalidatePath } from "next/cache";
+import { isSameOriginRequest } from "@/lib/http/origin";
+import { readLimitedJson } from "@/lib/http/request-body";
 import { confirmTossPayment, getTossPayment, type TossPayment } from "@/lib/payments/toss";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -6,6 +8,8 @@ import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+
+const CONFIRM_BODY_LIMIT_BYTES = 4 * 1024;
 
 type ConfirmRequest = {
   paymentKey: string;
@@ -40,6 +44,9 @@ export async function POST(request: Request) {
   if (!isTossPaymentConfigured()) {
     return json({ ok: false, message: "결제 서버 설정을 확인하고 있습니다." }, 503);
   }
+  if (!isSameOriginRequest(request)) {
+    return json({ ok: false, message: "결제 요청 출처를 확인하지 못했습니다." }, 403);
+  }
 
   const input = await readConfirmRequest(request);
   if (!input) {
@@ -52,12 +59,14 @@ export async function POST(request: Request) {
     return json({ ok: false, message: "로그인 후 결제를 확인해 주세요." }, 401);
   }
 
-  const { data, error } = await supabase
+  const admin = getAdminClient();
+  const { data, error } = await admin
     .from("orders")
     .select(
       "id, order_uid, product_id, amount, source, status, payment_key, refund_policy_version, refund_policy_agreed_at"
     )
     .eq("order_uid", input.orderId)
+    .eq("user_id", identity.userId)
     .maybeSingle<OrderRow>();
 
   if (error) {
@@ -142,7 +151,6 @@ export async function POST(request: Request) {
     return json({ ok: false, message: "결제 승인 결과가 주문 정보와 일치하지 않습니다." }, 409);
   }
 
-  const admin = getAdminClient();
   const { error: recoveryRecordError } = await admin
     .from("orders")
     .update({
@@ -197,12 +205,14 @@ export async function POST(request: Request) {
 }
 
 async function readConfirmRequest(request: Request): Promise<ConfirmRequest | null> {
-  const payload: unknown = await request.json().catch(() => null);
-  if (!isRecord(payload)) return null;
+  const result = await readLimitedJson(request, {
+    limitBytes: CONFIRM_BODY_LIMIT_BYTES,
+  });
+  if (!result.ok || !isRecord(result.value)) return null;
 
-  const paymentKey = payload.paymentKey;
-  const orderId = payload.orderId;
-  const amount = payload.amount;
+  const paymentKey = result.value.paymentKey;
+  const orderId = result.value.orderId;
+  const amount = result.value.amount;
   if (
     typeof paymentKey !== "string" ||
     paymentKey.length < 1 ||

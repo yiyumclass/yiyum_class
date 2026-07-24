@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --no-warnings --experimental-strip-types --test tests/*.test.ts",
     "lint": "eslint",
     "verify:admin": "node scripts/verify-admin-integration.mjs",
     "verify:admin-tabs": "node scripts/verify-admin-tabs-live.mjs"
@@ -14,7 +15,7 @@
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
     "@tosspayments/tosspayments-sdk": "^2.7.1",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tus-js-client": "^4.3.1"
@@ -24,8 +25,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "puppeteer-core": "^25.3.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.22",
+      "sharp": "0.35.3"
+    },
+    "eslint": {
+      "brace-expansion": "1.1.16"
+    }
   }
 }

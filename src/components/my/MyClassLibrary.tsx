@@ -27,7 +27,6 @@ export default function MyClassLibrary({
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
-  const [notice, setNotice] = useState("");
 
   const course = items
     .filter(
@@ -47,10 +46,6 @@ export default function MyClassLibrary({
 
   const completedCount = items.filter((item) => item.status === "completed").length;
   const inProgressCount = items.filter((item) => item.status === "in-progress").length;
-
-  const handleEbookAction = () => {
-    setNotice("전자책 파일 또는 리더가 연결되면 이 자리에서 바로 열립니다.");
-  };
 
   return (
     <>
@@ -169,7 +164,6 @@ export default function MyClassLibrary({
                 className={filter === item.id ? styles.tabActive : styles.tab}
                 onClick={() => {
                   setFilter(item.id);
-                  setNotice("");
                 }}
               >
                 {item.label}
@@ -193,7 +187,6 @@ export default function MyClassLibrary({
               <ContentCard
                 key={item.id}
                 item={item}
-                onAction={handleEbookAction}
               />
             ))}
           </div>
@@ -216,10 +209,6 @@ export default function MyClassLibrary({
             </button>
           </div>
         )}
-
-        <p className={styles.actionNotice} role="status" aria-live="polite">
-          {notice}
-        </p>
       </section>
     </>
   );
@@ -237,7 +226,7 @@ function SummaryItem({ label, value, suffix }: { label: string; value: number; s
   );
 }
 
-function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => void }) {
+function ContentCard({ item }: { item: LibraryItem }) {
   const isCourse = item.kind === "course";
 
   return (
@@ -301,7 +290,7 @@ function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => vo
           </div>
         ) : (
           <div className={styles.ebookMeta}>
-            <BookIcon /> PDF · 구매 후 언제든 열람
+            <BookIcon /> 디지털 파일 등록 준비 중
           </div>
         )}
 
@@ -324,10 +313,14 @@ function ContentCard({ item, onAction }: { item: LibraryItem; onAction: () => vo
           <Link href={item.href} className={styles.cardButton}>
             {item.ctaLabel} <ArrowIcon />
           </Link>
+        ) : item.status === "preparing" ? (
+          <span className={`${styles.cardButton} ${styles.cardButtonDisabled}`} aria-disabled="true">
+            {item.ctaLabel}
+          </span>
         ) : (
-          <button type="button" className={styles.cardButton} onClick={onAction}>
-            {item.ctaLabel} <ArrowIcon />
-          </button>
+          <span className={`${styles.cardButton} ${styles.cardButtonDisabled}`} aria-disabled="true">
+            전자책 경로 확인 필요
+          </span>
         )}
       </div>
     </article>

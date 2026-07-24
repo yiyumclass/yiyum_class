@@ -109,7 +109,7 @@ export default function AdminOrderManager({
           <div>
             <strong>주문 내역을 아직 불러올 수 없습니다.</strong>
             <p>{sourceMessage}</p>
-            <code>20260715160000_create_admin_order_ledger.sql</code>
+            <code>주문 원장 및 보유 콘텐츠 RPC 마이그레이션 확인 필요</code>
           </div>
         </div>
       )}

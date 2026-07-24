@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminProductStatus } from "@/lib/admin/products";
 import { createClient } from "@/lib/supabase/server";
+import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
 
 export type CreateProductState = {
   status: "idle" | "error" | "success";
@@ -360,16 +361,6 @@ function readString(formData: FormData, key: string) {
 function readNumber(formData: FormData, key: string) {
   const raw = readString(formData, key).replaceAll(",", "");
   return raw ? Number(raw) : Number.NaN;
-}
-
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
-}
-
-function isSafeLocalPath(value: string) {
-  return value.startsWith("/") && !value.startsWith("//") && !value.includes("\\");
 }
 
 function formatStatus(status: AdminProductStatus) {

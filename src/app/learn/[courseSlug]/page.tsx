@@ -10,7 +10,10 @@ import {
 } from "@/lib/learning/progress";
 import { hydrateCourseVideos } from "@/lib/learning/video";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
-import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import {
+  loadMyCourseBySlug,
+  loadPublicCourseBySlug,
+} from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,9 +46,8 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     redirect(`/login?next=/learn/${encodeURIComponent(courseSlug)}`);
   }
 
-  const [isAdmin, catalogItem, hasEntitlement] = await Promise.all([
+  const [isAdmin, hasEntitlement] = await Promise.all([
     hasActiveAdminAccess(supabase, identity.userId),
-    loadPublicCourseBySlug(courseSlug),
     hasActiveProductEntitlement(supabase, courseSlug),
   ]);
   if (adminPreview === "1" && isAdmin) {
@@ -72,11 +74,15 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
     );
   }
 
-  if (!catalogItem?.contentReady || !catalogItem.classroomCourse) notFound();
-
   if (!isAdmin && !hasEntitlement) {
     redirect(`/checkout?product=${encodeURIComponent(courseSlug)}`);
   }
+
+  const catalogItem = hasEntitlement
+    ? await loadMyCourseBySlug(supabase, courseSlug)
+    : await loadPublicCourseBySlug(courseSlug);
+
+  if (!catalogItem?.contentReady || !catalogItem.classroomCourse) notFound();
 
   // 보관 콘텐츠는 제외하고 작성 중 차시는 강의실 목차에서 잠근다.
   const [course, progressResult] = await Promise.all([

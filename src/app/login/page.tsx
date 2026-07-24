@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
 import SiteFooter from "@/components/layout/SiteFooter";
+import { normalizeInternalNext, readFirstParam } from "@/lib/auth/redirects";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -40,21 +41,4 @@ export default async function LoginPage({
       <SiteFooter variant="compact" />
     </>
   );
-}
-
-function readFirstParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function normalizeInternalNext(value: string | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
-    return "/";
-  }
-
-  const pathname = value.split(/[?#]/, 1)[0]?.replace(/\/+$/, "") || "/";
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/auth/callback") {
-    return "/";
-  }
-
-  return value;
 }

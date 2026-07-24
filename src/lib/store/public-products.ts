@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
 
 export type PublicProduct = {
@@ -30,34 +31,30 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
   slug: string
 ): Promise<PublicProduct | null> {
   const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select(
-      "id, slug, product_type, title, summary, price_krw, access_period_days, detail_path"
-    )
-    .eq("slug", slug)
-    .eq("status", "active")
-    .maybeSingle<ProductRow>();
+  const { data, error } = await supabase.rpc("get_public_products", {
+    target_slug: slug,
+  });
 
   if (error) {
     console.error("Failed to load public product:", error.message);
     return null;
   }
-  if (!data) return buildTemporaryProduct(slug);
+  const row = Array.isArray(data) ? (data[0] as ProductRow | undefined) : undefined;
+  if (!row) return canUseLocalCatalogFallback() ? buildTemporaryProduct(slug) : null;
 
   return {
-    id: data.id,
-    slug: data.slug,
-    productType: data.product_type,
-    title: data.title,
-    summary: data.summary,
-    priceKrw: data.price_krw,
-    accessPeriodDays: data.access_period_days,
+    id: row.id,
+    slug: row.slug,
+    productType: row.product_type,
+    title: row.title,
+    summary: row.summary,
+    priceKrw: row.price_krw,
+    accessPeriodDays: row.access_period_days,
     accessLabel:
-      data.access_period_days === null
+      row.access_period_days === null
         ? "기간 제한 없이 이용"
-        : `${data.access_period_days}일 이용`,
-    detailHref: resolveDetailHref(data),
+        : `${row.access_period_days}일 이용`,
+    detailHref: resolveDetailHref(row),
   };
 });
 

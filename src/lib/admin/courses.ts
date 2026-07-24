@@ -2,6 +2,10 @@ import "server-only";
 
 import { requireAdmin } from "@/lib/admin/auth";
 import { courses as catalogCourses } from "@/lib/learning/catalog";
+import {
+  canUseLocalCatalogFallback,
+  logProductionCatalogFallbackBlocked,
+} from "@/lib/runtime/catalog-fallback";
 import { courseProducts } from "@/lib/store/course-products";
 import { createClient } from "@/lib/supabase/server";
 
@@ -288,17 +292,24 @@ function fallbackResult(
   products: ProductRow[] = []
 ): AdminCoursesResult {
   const tableMissing = errorCode === "42P01" || errorCode === "PGRST205";
+  const canUseFallback = canUseLocalCatalogFallback();
 
   if (!tableMissing) {
     console.error("Failed to load admin courses:", errorMessage);
   }
 
+  if (!canUseFallback) {
+    logProductionCatalogFallbackBlocked("Admin courses");
+  }
+
   return {
-    courses: buildCatalogFallback(),
-    availableProducts: products.filter(
-      (product) =>
-        !catalogCourses.some((course) => course.slug === product.slug)
-    ),
+    courses: canUseFallback ? buildCatalogFallback() : [],
+    availableProducts: canUseFallback
+      ? products.filter(
+          (product) =>
+            !catalogCourses.some((course) => course.slug === product.slug)
+        )
+      : [],
     databaseReady: false,
     videoStorageReady: false,
     message: tableMissing

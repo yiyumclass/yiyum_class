@@ -4,8 +4,12 @@ import { readFile } from "node:fs/promises";
 const env = await loadEnv(".env.local");
 const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const appUrl = process.env.ADMIN_TEST_BASE_URL ?? "http://localhost:3001";
+const serviceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY;
+const appUrl =
+  process.env.ADMIN_TEST_BASE_URL ??
+  env.ADMIN_TEST_BASE_URL ??
+  "http://localhost:3001";
 
 if (!supabaseUrl || !anonKey || !serviceRoleKey) {
   throw new Error("Supabase URL, anon key와 테스트용 service role key가 필요합니다.");
@@ -17,6 +21,7 @@ const adminEmail = `admin-e2e-${runId}@example.com`;
 const memberEmail = `member-e2e-${runId}@example.com`;
 const createdUserIds = [];
 let entitlementId = null;
+let adminGrantOrderId = null;
 const checks = [];
 
 try {
@@ -42,6 +47,29 @@ try {
     signIn(memberEmail, password),
   ]);
   pass("Supabase Auth 이메일 로그인");
+
+  const [ordersDenied, progressDenied] = await Promise.all([
+    restExpectError("orders?select=id", memberSession.access_token),
+    restExpectError("lesson_progress", memberSession.access_token, {
+      method: "POST",
+      body: {
+        user_id: memberUser.id,
+        course_slug: "forged-course",
+        lesson_id: "forged-lesson",
+        last_position_seconds: 9999,
+        duration_seconds: 9999,
+      },
+    }),
+  ]);
+  assert(
+    [401, 403].includes(ordersDenied.status) && ordersDenied.body.code === "42501",
+    "회원의 주문 원본 테이블 직접 조회가 차단되지 않았습니다."
+  );
+  assert(
+    [401, 403].includes(progressDenied.status) && progressDenied.body.code === "42501",
+    "회원의 학습 진도 직접 쓰기가 차단되지 않았습니다."
+  );
+  pass("주문 원본 조회·학습 진도 직접 쓰기 차단");
 
   const products = await serviceRest(
     "products?select=id,title&status=neq.archived&order=created_at.asc&limit=1"
@@ -87,15 +115,16 @@ try {
     ),
     "지급한 수강권이 회원 탭 RPC에 반영되지 않았습니다."
   );
+  const adminGrantOrder = ordersAfterGrant.find(
+    (row) =>
+      row.customer_id === memberUser.id &&
+      row.product_id === product.id &&
+      row.entitlement_status === "active" &&
+      row.source === "admin_grant"
+  );
+  adminGrantOrderId = adminGrantOrder?.transaction_id ?? null;
   assert(
-    ordersAfterGrant.some(
-      (row) =>
-        row.transaction_id === entitlementId &&
-        row.customer_id === memberUser.id &&
-        row.entitlement_status === "active" &&
-        row.source === "admin_grant" &&
-        row.amount_krw === 0
-    ),
+    adminGrantOrderId !== null,
     "지급한 수강권이 주문 탭 RPC에 반영되지 않았습니다."
   );
   pass("수강권 지급 → 회원 탭·주문 탭 동시 반영");
@@ -112,7 +141,12 @@ try {
     product.title,
     "관리자 지급",
   ]);
-  pass("Next.js 관리자 두 페이지의 실제 SSR 데이터 표시");
+  await assertPage("/admin/settings", adminCookie, [
+    "운영자 권한",
+    adminEmail,
+    "owner",
+  ]);
+  pass("Next.js 관리자 회원·주문·운영자 권한 SSR 데이터 표시");
 
   await rpc(
     "admin_update_product_entitlement",
@@ -130,7 +164,9 @@ try {
   );
   assert(
     ordersAfterRevoke.some(
-      (row) => row.transaction_id === entitlementId && row.entitlement_status === "revoked"
+      (row) =>
+        row.transaction_id === adminGrantOrderId &&
+        row.entitlement_status === "revoked"
     ),
     "회수한 수강권이 주문 탭에 반영되지 않았습니다."
   );
@@ -193,15 +229,38 @@ try {
 
   console.log(`\n${checks.length}개 통합 검증 통과`);
 } finally {
-  if (entitlementId) {
+  if (createdUserIds.length > 0) {
+    const userFilter = `in.(${createdUserIds.join(",")})`;
     await serviceRest(
-      `admin_audit_logs?target_id=eq.${encodeURIComponent(entitlementId)}`,
+      `admin_audit_logs?actor_user_id=${userFilter}`,
       { method: "DELETE", allowEmpty: true }
     ).catch(() => undefined);
+    if (entitlementId) {
+      await serviceRest(
+        `admin_audit_logs?target_id=eq.${encodeURIComponent(entitlementId)}`,
+        { method: "DELETE", allowEmpty: true }
+      ).catch(() => undefined);
+    }
+    await serviceRest(`orders?user_id=${userFilter}`, {
+      method: "DELETE",
+      allowEmpty: true,
+    }).catch(() => undefined);
+    await serviceRest(`product_entitlements?user_id=${userFilter}`, {
+      method: "DELETE",
+      allowEmpty: true,
+    }).catch(() => undefined);
+    await serviceRest(`user_auth_consents?user_id=${userFilter}`, {
+      method: "DELETE",
+      allowEmpty: true,
+    }).catch(() => undefined);
+    await serviceRest(`admin_users?user_id=${userFilter}`, {
+      method: "DELETE",
+      allowEmpty: true,
+    }).catch(() => undefined);
   }
 
   for (const userId of createdUserIds.reverse()) {
-    await deleteAuthUser(userId).catch(() => undefined);
+    await deleteAuthUser(userId);
   }
 
   if (createdUserIds.length > 0) {
@@ -272,6 +331,22 @@ async function rpcExpectError(name, body, accessToken) {
     body: JSON.stringify(body),
   });
   return { status: response.status, body: await response.json() };
+}
+
+async function restExpectError(path, accessToken, options = {}) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    method: options.method ?? "GET",
+    headers: userHeaders(accessToken),
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const text = await response.text();
+  let body = {};
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { message: text };
+  }
+  return { status: response.status, body };
 }
 
 async function serviceRest(path, options = {}) {

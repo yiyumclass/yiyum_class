@@ -15,7 +15,7 @@
   justify-content: center;
   gap: 9px;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .adminPreviewBanner strong { font-weight: 800; }
@@ -85,12 +85,12 @@
 
 .userName {
   color: #746d63;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .progressCopy {
   color: #746d63;
-  font-size: 12px;
+  font-size: 13px;
   text-align: right;
 }
 
@@ -255,7 +255,7 @@
   background: #b85c38;
   color: #fffaf3;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -472,7 +472,7 @@
 .curriculumHeader > p {
   margin: 0 0 18px;
   color: #8b8277;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .curriculumProgressRow {
@@ -480,7 +480,7 @@
   display: flex;
   justify-content: space-between;
   color: #756d63;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .curriculumProgressRow strong {
@@ -547,7 +547,7 @@
 
 .sectionHeading small {
   color: #938b7f;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -649,14 +649,14 @@
 }
 
 .lessonRowCopy strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.45;
 }
 
 .lessonRowCopy small {
   color: #9a9186;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .nowPlaying {
@@ -751,7 +751,7 @@
     align-items: center;
     justify-content: space-between;
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
   }
 
@@ -764,7 +764,7 @@
 
   .mobileCurriculumButton strong {
     color: #b85c38;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .mobileCurriculumButton svg {

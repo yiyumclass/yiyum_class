@@ -29,7 +29,6 @@ export default function AuthForm({
   const [consent, setConsent] = useState({ valid: false, marketing: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(authError);
-  const [info, setInfo] = useState<string | null>(null);
 
   // 이메일 로그인 폼 검증. 가입은 카카오 전용이라 이메일 검증은 로그인만 대상으로 한다.
   const validate = () => {
@@ -55,7 +54,6 @@ export default function AuthForm({
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setInfo(null);
     const v = validate();
     if (v) {
       setError(v);
@@ -82,24 +80,36 @@ export default function AuthForm({
 
   const signInWithKakao = async () => {
     setError(null);
-    setInfo(null);
     // 가입은 카카오 전용이므로 필수 약관 동의 없이는 진행하지 않는다.
     if (isSignup && !consent.valid) {
       setError("필수 항목에 동의해 주세요.");
       return;
     }
     setLoading(true);
-    const supabase = createClient();
-    const next = encodeURIComponent(nextPath);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${next}` },
-    });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
+    const payload: Record<string, boolean | string> = {
+      mode: isSignup ? "signup" : "login",
+      next: nextPath,
+    };
+    if (isSignup) {
+      payload.age14 = true;
+      payload.terms = true;
+      payload.privacy = true;
+      payload.marketing = consent.marketing;
     }
-    // 성공 시 카카오로 리다이렉트되므로 이후 코드는 실행되지 않음
+    const response = await fetch("/auth/kakao/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const result = (await response.json().catch(() => null)) as
+      | { ok?: boolean; url?: string; message?: string }
+      | null;
+    if (!response.ok || !result?.ok || !result.url) {
+      setError(result?.message ?? "카카오 로그인을 시작하지 못했습니다.");
+      setLoading(false);
+      return;
+    }
+    window.location.assign(result.url);
   };
 
   return (
@@ -199,12 +209,6 @@ export default function AuthForm({
             {error}
           </p>
         )}
-        {info && (
-          <p role="status" style={{ color: "#5E6B4F", fontSize: 13, margin: "16px 0 0" }}>
-            {info}
-          </p>
-        )}
-
         {!isSignup && (
           <div
             style={{

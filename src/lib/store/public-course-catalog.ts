@@ -1,8 +1,10 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import { courses as fallbackCourses } from "@/lib/learning/catalog";
 import type { Course, CourseLesson, CourseSection } from "@/lib/learning/types";
+import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
 import { courseProducts } from "./course-products";
 
@@ -89,31 +91,45 @@ type CourseOutlineRow = {
   lesson_status: "draft" | "published" | null;
 };
 
+type EntitledCourseOutlineRow = CourseOutlineRow & {
+  product_slug: string;
+  product_title: string;
+  product_summary: string;
+  product_price_krw: number;
+  product_access_period_days: number | null;
+  product_thumbnail_path: string | null;
+  product_detail_path: string | null;
+};
+
 export const loadPublicCourseCatalog = cache(async function loadPublicCourseCatalog(): Promise<PublicCourseCatalogItem[]> {
   const supabase = createPublicClient();
   const [productResult, outlineResult] = await Promise.all([
-    supabase
-      .from("products")
-      .select(
-        "id, slug, title, summary, price_krw, access_period_days, thumbnail_path, detail_path"
-      )
-      .eq("product_type", "course")
-      .eq("status", "active")
-      .order("updated_at", { ascending: false })
-      .returns<ProductRow[]>(),
+    supabase.rpc("get_public_products", { target_slug: null }),
     loadCourseOutlines(supabase),
   ]);
   const { data: productRows, error: productError } = productResult;
 
   if (productError) {
-    if (isMissingCatalogSchema(productError.code)) return buildFallbackCatalog();
+    if (
+      isMissingCatalogSchema(productError.code) &&
+      canUseLocalCatalogFallback()
+    ) {
+      return buildFallbackCatalog();
+    }
 
     console.error("Failed to load public course products:", productError.message);
     return [];
   }
 
-  const products = productRows ?? [];
+  const products = ((productRows ?? []) as unknown as Array<
+    ProductRow & { product_type: "course" | "ebook" }
+  >).filter((product) => product.product_type === "course");
   if (products.length === 0) return [];
+
+  if (!outlineResult.available && !canUseLocalCatalogFallback()) {
+    console.error("Public course outline RPC is unavailable in production.");
+    return [];
+  }
 
   const publishedCourses = outlineResult.available
     ? outlineResult.courses.flatMap(({ productId, course, published }) =>
@@ -159,6 +175,32 @@ export const loadPublicCourseBySlug = cache(async function loadPublicCourseBySlu
   const catalog = await loadPublicCourseCatalog();
   return catalog.find((item) => item.slug === slug) ?? null;
 });
+
+export async function loadMyCourseCatalog(
+  supabase: SupabaseClient
+): Promise<PublicCourseCatalogItem[]> {
+  const { data, error } = await supabase.rpc("get_my_active_course_catalog_outline");
+
+  if (error) {
+    const unavailable =
+      error.code === "42883" || error.code === "PGRST202" || error.code === "PGRST205";
+    if (!unavailable) {
+      console.error("Failed to load owned course catalog:", error.message);
+    }
+    return canUseLocalCatalogFallback() ? loadPublicCourseCatalog() : [];
+  }
+
+  const rows = (data ?? []) as unknown as EntitledCourseOutlineRow[];
+  return buildCourseCatalogFromEntitledRows(rows);
+}
+
+export async function loadMyCourseBySlug(
+  supabase: SupabaseClient,
+  slug: string
+): Promise<PublicCourseCatalogItem | null> {
+  const catalog = await loadMyCourseCatalog(supabase);
+  return catalog.find((item) => item.slug === slug) ?? null;
+}
 
 async function loadPublishedCourses(
   supabase: ReturnType<typeof createPublicClient>,
@@ -248,6 +290,73 @@ async function loadPublishedCourses(
       sections: sectionsByCourse.get(course.id) ?? [],
     } satisfies Course,
   }));
+}
+
+function buildCourseCatalogFromEntitledRows(rows: EntitledCourseOutlineRow[]) {
+  const builders = new Map<
+    string,
+    {
+      product: ProductRow;
+      course: Course;
+      sectionById: Map<string, CourseSection>;
+    }
+  >();
+
+  for (const row of rows) {
+    let builder = builders.get(row.course_id);
+    if (!builder) {
+      builder = {
+        product: {
+          id: row.product_id,
+          slug: row.product_slug,
+          title: row.product_title,
+          summary: row.product_summary,
+          price_krw: row.product_price_krw,
+          access_period_days: row.product_access_period_days,
+          thumbnail_path: row.product_thumbnail_path,
+          detail_path: row.product_detail_path,
+        },
+        course: {
+          slug: row.course_slug,
+          title: row.course_title,
+          shortTitle: row.course_short_title,
+          description: row.course_description,
+          instructor: row.course_instructor,
+          posterSrc: resolveLocalImage(row.course_poster_path, "") ?? "",
+          sections: [],
+        },
+        sectionById: new Map(),
+      };
+      builders.set(row.course_id, builder);
+    }
+
+    if (!row.section_id || !row.section_key || !row.section_title) continue;
+
+    let section = builder.sectionById.get(row.section_id);
+    if (!section) {
+      section = {
+        id: row.section_key,
+        title: row.section_title,
+        description: row.section_description ?? "",
+        lessons: [],
+      };
+      builder.sectionById.set(row.section_id, section);
+      builder.course.sections.push(section);
+    }
+
+    if (row.lesson_key && row.lesson_title) {
+      section.lessons.push({
+        id: row.lesson_key,
+        title: row.lesson_title,
+        durationSeconds: row.lesson_duration_seconds ?? 0,
+        availability: "available",
+      });
+    }
+  }
+
+  return Array.from(builders.values()).map(({ product, course }) =>
+    mapProductRow(product, course, course, "database")
+  );
 }
 
 async function loadCourseOutlines(

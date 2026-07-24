@@ -1,6 +1,11 @@
 import { hasActiveAdminAccess } from "@/lib/admin/access";
+import { isSameOriginRequest } from "@/lib/http/origin";
+import { readLimitedJson } from "@/lib/http/request-body";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
-import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import {
+  loadMyCourseBySlug,
+  loadPublicCourseBySlug,
+} from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,7 +19,13 @@ type ProgressPayload = {
   completionAction?: unknown;
 };
 
+const PROGRESS_BODY_LIMIT_BYTES = 4 * 1024;
+
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return json({ error: "요청 출처를 확인하지 못했습니다." }, 403);
+  }
+
   const supabase = await createClient();
   const identity = await getVerifiedIdentity(supabase);
 
@@ -22,12 +33,13 @@ export async function POST(request: Request) {
     return json({ error: "로그인이 필요합니다." }, 401);
   }
 
-  let payload: ProgressPayload;
-  try {
-    payload = (await request.json()) as ProgressPayload;
-  } catch {
+  const parsed = await readLimitedJson(request, {
+    limitBytes: PROGRESS_BODY_LIMIT_BYTES,
+  });
+  if (!parsed.ok || !isRecord(parsed.value)) {
     return json({ error: "올바른 요청 형식이 아닙니다." }, 400);
   }
+  const payload = parsed.value as ProgressPayload;
 
   if (
     typeof payload.courseSlug !== "string" ||
@@ -39,14 +51,18 @@ export async function POST(request: Request) {
     return json({ error: "진도 정보가 올바르지 않습니다." }, 400);
   }
 
-  const [isAdmin, hasEntitlement, catalogItem] = await Promise.all([
+  const [isAdmin, hasEntitlement] = await Promise.all([
     hasActiveAdminAccess(supabase, identity.userId),
     hasActiveProductEntitlement(supabase, payload.courseSlug),
-    loadPublicCourseBySlug(payload.courseSlug),
   ]);
   if (!isAdmin && !hasEntitlement) {
     return json({ error: "수강 신청이 필요한 강의입니다." }, 403);
   }
+
+  const catalogItem =
+    !isAdmin && hasEntitlement
+      ? await loadMyCourseBySlug(supabase, payload.courseSlug)
+      : await loadPublicCourseBySlug(payload.courseSlug);
 
   const course = catalogItem?.contentReady
     ? catalogItem.classroomCourse ?? undefined
@@ -84,26 +100,12 @@ export async function POST(request: Request) {
     0,
     Math.round(Math.min(payload.positionSeconds, durationSeconds || 0))
   );
-  const now = new Date().toISOString();
-  const row: Record<string, string | number | null> = {
-    user_id: identity.userId,
-    course_slug: course.slug,
-    lesson_id: lesson.id,
-    last_position_seconds: positionSeconds,
-    duration_seconds: durationSeconds,
-    last_watched_at: now,
-    updated_at: now,
-  };
-
-  if (payload.completionAction === "complete") {
-    row.completed_at = now;
-  } else if (payload.completionAction === "incomplete") {
-    row.completed_at = null;
-  }
-
-  const { error } = await supabase.from("lesson_progress").upsert(row, {
-    onConflict: "user_id,course_slug,lesson_id",
-    defaultToNull: false,
+  const { data: savedAt, error } = await supabase.rpc("save_my_lesson_progress", {
+    target_course_slug: course.slug,
+    target_lesson_id: lesson.id,
+    target_position_seconds: positionSeconds,
+    target_duration_seconds: durationSeconds,
+    target_completion_action: payload.completionAction,
   });
 
   if (error) {
@@ -121,7 +123,7 @@ export async function POST(request: Request) {
     );
   }
 
-  return json({ ok: true, savedAt: now });
+  return json({ ok: true, savedAt: typeof savedAt === "string" ? savedAt : null });
 }
 
 function isCompletionAction(value: unknown): value is CompletionAction {
@@ -135,4 +137,8 @@ function json(body: object, status = 200) {
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

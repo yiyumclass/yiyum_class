@@ -1,8 +1,12 @@
 import "server-only";
 
-import { courses } from "@/lib/learning/catalog";
-import { courseProducts } from "@/lib/store/course-products";
 import { requireAdmin } from "@/lib/admin/auth";
+import { courses } from "@/lib/learning/catalog";
+import {
+  canUseLocalCatalogFallback,
+  logProductionCatalogFallbackBlocked,
+} from "@/lib/runtime/catalog-fallback";
+import { courseProducts } from "@/lib/store/course-products";
 import { createClient } from "@/lib/supabase/server";
 
 export type AdminProductType = "course" | "ebook";
@@ -61,8 +65,15 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
       console.error("Failed to load admin products:", error.message);
     }
 
+    const canUseFallback = canUseLocalCatalogFallback();
+    const products = canUseFallback ? buildCatalogFallback() : [];
+
+    if (!canUseFallback) {
+      logProductionCatalogFallbackBlocked("Admin products");
+    }
+
     return {
-      products: buildCatalogFallback(),
+      products,
       databaseReady: false,
       message: tableMissing
         ? "현재 상품 관리 기능을 준비하고 있습니다. 잠시 후 다시 확인해 주세요."

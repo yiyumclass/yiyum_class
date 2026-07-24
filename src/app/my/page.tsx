@@ -12,8 +12,8 @@ import {
   buildCourseLibraryItem,
 } from "@/lib/my-class/library-data";
 import type { LibraryItem } from "@/lib/my-class/types";
-import { loadMyActiveProductEntitlements } from "@/lib/store/entitlements";
-import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
+import { loadMyActiveProductLibrary } from "@/lib/store/entitlements";
+import { loadMyCourseCatalog } from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./my.module.css";
@@ -38,20 +38,19 @@ export default async function MyPage() {
       ? rawDisplayName.trim()
       : "회원";
   const [entitlementResult, catalog] = await Promise.all([
-    loadMyActiveProductEntitlements(supabase),
-    loadPublicCourseCatalog(),
+    loadMyActiveProductLibrary(supabase),
+    loadMyCourseCatalog(supabase),
   ]);
   const entitlements = entitlementResult.available
     ? entitlementResult.entitlements
     : [];
-  const entitlementSlugs = new Set(
-    entitlements.map((entitlement) => entitlement.productSlug)
-  );
-  const entitledCourses = catalog.filter((catalogItem) =>
-    entitlementSlugs.has(catalogItem.slug)
+  const entitledCourseSlugs = new Set(
+    entitlements
+      .filter((entitlement) => entitlement.productType === "course")
+      .map((entitlement) => entitlement.productSlug)
   );
   const items: LibraryItem[] = await Promise.all(
-    entitledCourses.map(async (catalogItem) => {
+    catalog.filter((catalogItem) => entitledCourseSlugs.has(catalogItem.slug)).map(async (catalogItem) => {
       const course = catalogItem.classroomCourse ?? catalogItem.course;
       const progress = catalogItem.contentReady
         ? await loadCourseProgress(supabase, course).then((result) =>
@@ -67,9 +66,21 @@ export default async function MyPage() {
     })
   );
 
-  if (entitlementSlugs.has("small-account-ebook")) {
-    items.push(buildEbookLibraryItem());
-  }
+  items.push(
+    ...entitlements
+      .filter((entitlement) => entitlement.productType === "ebook")
+      .map((entitlement) =>
+        buildEbookLibraryItem({
+          slug: entitlement.productSlug,
+          title: entitlement.title,
+          description: entitlement.summary || "구매한 전자책 콘텐츠입니다.",
+          accessLabel: formatLibraryAccessLabel(
+            entitlement.expiresAt,
+            entitlement.accessPeriodDays
+          ),
+        })
+      )
+  );
 
   return (
     <div className={styles.page}>
@@ -90,4 +101,16 @@ export default async function MyPage() {
       <SiteFooter variant="compact" />
     </div>
   );
+}
+
+function formatLibraryAccessLabel(expiresAt: string | null, accessPeriodDays: number | null) {
+  if (expiresAt) {
+    return `${new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(expiresAt))}까지`;
+  }
+  return accessPeriodDays === null ? "기간 제한 없이 이용" : `${accessPeriodDays}일 이용`;
 }
