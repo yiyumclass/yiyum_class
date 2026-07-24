@@ -30,16 +30,14 @@ export const courses: Course[] = [
           lesson(
             "sns-01",
             "크리에이터 카테고리 정복하기 — 진입장벽·시청자층·얼굴 노출",
-            532,
-            "/videos/sns-account-01.mp4"
+            532
           ),
           lesson("sns-02", "계정 정체성 잡는 법 — 한 계정에 여러 주제 올려도 되나요?", 711),
           lesson("sns-03", "수익화를 위한 프로필 4줄 세팅법", 624),
           lesson(
             "sns-04",
             "수익화 필수 랜딩페이지 만드는 법 · 올바른 사용법",
-            723,
-            "/videos/sns-account-04.mp4"
+            723
           ),
           lesson("sns-05", "계정 날아가지 않게 취해야 하는 조치 6가지", 688),
           lesson("sns-06", "SNS에서 마음껏 활동하려면 무조건 해야 하는 것", 557),

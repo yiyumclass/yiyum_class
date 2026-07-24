@@ -13,6 +13,13 @@
 # testing
 /coverage
 
+# local visual QA and protected media artifacts
+/private-media/
+/m-landing.png
+/mobile-*.png
+/signup-page.png
+/yiyume-signup*.png
+
 # next.js
 /.next/
 /out/
