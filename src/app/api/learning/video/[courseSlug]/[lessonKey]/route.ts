@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const SIGNED_VIDEO_URL_TTL_SECONDS = 60 * 60;
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ courseSlug: string; lessonKey: string }> }
@@ -36,9 +38,11 @@ export async function GET(
     return redirectTo(new URL(video.video_path, request.url).toString());
   }
 
+  // 최장 차시가 약 17분 30초라 15분 TTL은 재생 도중 만료됐다.
+  // 일시정지·되감기까지 덮도록 1시간으로 잡고, 만료 시에는 강의실이 재발급을 요청한다.
   const { data, error } = await supabase.storage
     .from("course-videos")
-    .createSignedUrl(video.video_path, 15 * 60);
+    .createSignedUrl(video.video_path, SIGNED_VIDEO_URL_TTL_SECONDS);
 
   if (error || !data?.signedUrl) {
     if (error) console.error("Failed to sign lesson video:", error.message);

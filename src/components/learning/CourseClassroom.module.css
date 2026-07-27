@@ -148,6 +148,76 @@
   background: #16120f;
 }
 
+.videoErrorOverlay,
+.videoLoadingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(22, 18, 15, 0.86);
+  color: #f4ece0;
+}
+
+.videoErrorOverlay strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.videoErrorOverlay span {
+  max-width: 34ch;
+  color: #d8cdbd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.videoErrorOverlay button {
+  min-height: 38px;
+  margin-top: 4px;
+  padding: 0 18px;
+  border: 1px solid #e0d5c4;
+  border-radius: 8px;
+  background: #f4ece0;
+  color: #2b2119;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.videoLoadingOverlay {
+  gap: 12px;
+  background: rgba(22, 18, 15, 0.52);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.videoSpinner {
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(244, 236, 224, 0.28);
+  border-top-color: #f4ece0;
+  border-radius: 50%;
+  animation: videoSpin 0.75s linear infinite;
+}
+
+@keyframes videoSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoSpinner {
+    animation-duration: 2.4s;
+  }
+}
+
 .poster {
   object-fit: cover;
   object-position: center 38%;

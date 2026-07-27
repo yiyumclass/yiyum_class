@@ -31,6 +31,12 @@ type FlatLesson = CourseLesson & {
 
 type CompletionAction = "preserve" | "complete" | "incomplete";
 
+type VideoPlaybackState = "ok" | "recovering" | "failed";
+
+// 서명 URL 만료·일시적 스토리지 오류는 재요청으로 대부분 복구된다.
+// 이 횟수를 넘기면 자동 복구를 멈추고 사용자에게 재시도를 맡긴다.
+const MAX_VIDEO_RECOVERY_ATTEMPTS = 2;
+
 type ProgressSavePayload = {
   courseSlug: string;
   lessonId: string;
@@ -87,6 +93,12 @@ export default function CourseClassroom({
   const [failedProgressSave, setFailedProgressSave] =
     useState<ProgressSavePayload | null>(null);
   const [isRetryingProgressSave, setIsRetryingProgressSave] = useState(false);
+  const [videoPlaybackState, setVideoPlaybackState] =
+    useState<VideoPlaybackState>("ok");
+  const [isVideoBuffering, setIsVideoBuffering] = useState(false);
+  const [videoReloadNonce, setVideoReloadNonce] = useState(0);
+  const videoRecoveryAttemptsRef = useRef(0);
+  const videoResumePositionRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const saveChainRef = useRef<Promise<void>>(Promise.resolve());
   const lastQueuedPositionsRef = useRef<Record<string, number>>({
@@ -117,6 +129,14 @@ export default function CourseClassroom({
   );
   const previousLesson = availableFlatLessons[activeAvailableIndex - 1];
   const nextLesson = availableFlatLessons[activeAvailableIndex + 1];
+
+  // 영상 API는 매 요청 새 서명 URL로 리다이렉트한다. 만료로 재생이 끊기면
+  // 질의 문자열만 바꿔 다시 요청해 새 URL을 받는다.
+  const activeVideoSrc = activeLesson.videoSrc
+    ? videoReloadNonce > 0
+      ? `${activeLesson.videoSrc}${activeLesson.videoSrc.includes("?") ? "&" : "?"}reload=${videoReloadNonce}`
+      : activeLesson.videoSrc
+    : undefined;
 
   const enqueueProgressSave = useCallback(
     (payload: ProgressSavePayload, { retry = false }: { retry?: boolean } = {}) => {
@@ -260,6 +280,7 @@ export default function CourseClassroom({
   const openLesson = (item: FlatLesson) => {
     if (item.availability === "coming-soon") return;
     persistActiveVideo();
+    resetVideoPlaybackState();
     setActiveLessonId(item.id);
     setOpenSectionIds((current) =>
       current.includes(item.sectionId) ? current : [...current, item.sectionId]
@@ -274,6 +295,59 @@ export default function CourseClassroom({
   const retryFailedProgressSave = () => {
     if (!failedProgressSave) return;
     enqueueProgressSave(failedProgressSave, { retry: true });
+  };
+
+  // 차시를 옮기면 이전 차시의 복구 시도 이력이 남지 않도록 되돌린다.
+  const resetVideoPlaybackState = () => {
+    videoRecoveryAttemptsRef.current = 0;
+    videoResumePositionRef.current = 0;
+    setVideoReloadNonce(0);
+    setVideoPlaybackState("ok");
+    setIsVideoBuffering(false);
+  };
+
+  const reloadVideoSource = () => {
+    const video = videoRef.current;
+    videoResumePositionRef.current =
+      video && Number.isFinite(video.currentTime) ? video.currentTime : 0;
+    setVideoPlaybackState("recovering");
+    setVideoReloadNonce((current) => current + 1);
+  };
+
+  const handleVideoError = () => {
+    if (videoRecoveryAttemptsRef.current >= MAX_VIDEO_RECOVERY_ATTEMPTS) {
+      setIsVideoBuffering(false);
+      setVideoPlaybackState("failed");
+      return;
+    }
+
+    videoRecoveryAttemptsRef.current += 1;
+    reloadVideoSource();
+  };
+
+  const retryVideoPlayback = () => {
+    videoRecoveryAttemptsRef.current = 0;
+    reloadVideoSource();
+  };
+
+  const handleVideoPlayable = () => {
+    setIsVideoBuffering(false);
+    setVideoPlaybackState("ok");
+    videoRecoveryAttemptsRef.current = 0;
+
+    const video = videoRef.current;
+    const resumeAt = videoResumePositionRef.current;
+    videoResumePositionRef.current = 0;
+
+    if (
+      video &&
+      resumeAt > 0 &&
+      Number.isFinite(video.duration) &&
+      resumeAt < video.duration - 1 &&
+      Math.abs(video.currentTime - resumeAt) > 1
+    ) {
+      video.currentTime = resumeAt;
+    }
   };
 
   const toggleSection = (sectionId: string) => {
@@ -408,32 +482,65 @@ export default function CourseClassroom({
       <main className={styles.classroom}>
         <section className={styles.lessonColumn} aria-labelledby="lesson-title">
           <div className={styles.playerFrame}>
-            {activeLesson.videoSrc ? (
-              <video
-                key={activeLesson.id}
-                ref={videoRef}
-                className={styles.video}
-                src={activeLesson.videoSrc}
-                poster={course.posterSrc}
-                controls
-                playsInline
-                preload="metadata"
-                aria-label={`${activeLesson.title} 강의 영상`}
-                onTimeUpdate={handleVideoProgress}
-                onPause={() => persistActiveVideo()}
-                onEnded={handleVideoEnded}
-              />
+            {activeVideoSrc ? (
+              <>
+                <video
+                  key={activeLesson.id}
+                  ref={videoRef}
+                  className={styles.video}
+                  src={activeVideoSrc}
+                  poster={course.posterSrc || undefined}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label={`${activeLesson.title} 강의 영상`}
+                  onTimeUpdate={handleVideoProgress}
+                  onPause={() => persistActiveVideo()}
+                  onEnded={handleVideoEnded}
+                  onError={handleVideoError}
+                  onWaiting={() => setIsVideoBuffering(true)}
+                  onCanPlay={handleVideoPlayable}
+                  onPlaying={handleVideoPlayable}
+                />
+                {videoPlaybackState === "failed" ? (
+                  <div className={styles.videoErrorOverlay} role="alert">
+                    <strong>영상을 불러오지 못했습니다</strong>
+                    <span>
+                      네트워크 상태를 확인해 주세요. 로그인이 만료됐다면 다시
+                      로그인한 뒤 이어볼 수 있습니다.
+                    </span>
+                    <button type="button" onClick={retryVideoPlayback}>
+                      다시 불러오기
+                    </button>
+                  </div>
+                ) : (
+                  (isVideoBuffering || videoPlaybackState === "recovering") && (
+                    <div className={styles.videoLoadingOverlay} role="status">
+                      <span className={styles.videoSpinner} aria-hidden="true" />
+                      <span>
+                        {videoPlaybackState === "recovering"
+                          ? "영상을 다시 불러오는 중"
+                          : "영상을 불러오는 중"}
+                      </span>
+                    </div>
+                  )
+                )}
+              </>
             ) : (
               <>
-                <Image
-                  src={course.posterSrc}
-                  alt=""
-                  fill
-                  loading="eager"
-                  fetchPriority="high"
-                  sizes="(max-width: 920px) 100vw, 70vw"
-                  className={styles.poster}
-                />
+                {/* 포스터는 강의 등록 시 선택 입력이라 비어 있을 수 있다.
+                    빈 문자열을 그대로 넘기면 next/image가 예외를 던진다. */}
+                {course.posterSrc && (
+                  <Image
+                    src={course.posterSrc}
+                    alt=""
+                    fill
+                    loading="eager"
+                    fetchPriority="high"
+                    sizes="(max-width: 920px) 100vw, 70vw"
+                    className={styles.poster}
+                  />
+                )}
                 <div className={styles.playerShade} aria-hidden="true" />
                 <button
                   type="button"
