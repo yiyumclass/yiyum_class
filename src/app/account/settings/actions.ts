@@ -31,7 +31,7 @@ export async function updateAccountProfileAction(
     data: { name, nickname, phone },
   });
   if (error) {
-    console.error("Failed to update account profile", error);
+    console.error("Failed to update account profile:", error.code ?? error.name);
     return { ok: false, message: "프로필을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요." };
   }
 
@@ -53,7 +53,7 @@ export async function updateNotificationPreferencesAction(input: {
     marketing_opt_in: input.marketingEnabled === true,
   });
   if (consentError) {
-    console.error("Failed to update marketing consent", consentError);
+    console.error("Failed to update marketing consent:", consentError.code);
     return { ok: false, message: "알림 설정을 저장하지 못했습니다." };
   }
 
@@ -65,7 +65,10 @@ export async function updateNotificationPreferencesAction(input: {
     },
   });
   if (error) {
-    console.error("Failed to update notification preferences", error);
+    console.error(
+      "Failed to update notification preferences:",
+      error.code ?? error.name
+    );
     return { ok: false, message: "알림 설정을 저장하지 못했습니다." };
   }
 
@@ -82,7 +85,7 @@ export async function signOutOtherDevicesAction(): Promise<AccountActionResult> 
 
   const { error } = await supabase.auth.signOut({ scope: "others" });
   if (error) {
-    console.error("Failed to sign out other devices", error);
+    console.error("Failed to sign out other devices:", error.code ?? error.name);
     return { ok: false, message: "다른 기기 로그아웃에 실패했습니다." };
   }
 

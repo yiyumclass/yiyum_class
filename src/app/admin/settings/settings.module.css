@@ -18,6 +18,11 @@
 .inactive { color: #8c3527; }
 .deactivate { height: 36px; background: #8c3527; }
 .deactivate:disabled { opacity: .45; }
+.deactivateConfirm { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid #d4a58f; border-radius: 9px; background: #fff4ed; color: #7d4b36; font-size: 13px; line-height: 1.45; }
+.deactivateConfirm p { margin: 0; }
+.deactivateConfirm > span { display: flex; gap: 8px; }
+.deactivateConfirm button { height: 34px; padding: 0 12px; border: 1px solid #b85c38; border-radius: 8px; background: transparent; color: #7d4b36; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.deactivateConfirm form button { border-color: #8c3527; background: #8c3527; color: #fffaf3; }
 @media (max-width: 760px) {
   .form, .row { grid-template-columns: 1fr; }
 }
