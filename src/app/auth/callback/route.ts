@@ -37,11 +37,20 @@ export async function GET(request: Request) {
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle<{ user_id: string }>();
+      // 조회 자체가 실패한 경우(DB 일시 장애·마이그레이션 미적용 등)를 "동의 안 함"으로
+      // 취급하면 정상 회원까지 강제 로그아웃된다. 조회 실패는 기록만 하고 통과시킨다.
+      if (consentLookupError) {
+        console.error(
+          "Failed to look up auth consent; skipping the signup consent gate:",
+          consentLookupError.code
+        );
+      }
       const requiresSignupConsent =
         !isAdmin &&
+        !consentLookupError &&
         new Date(user.created_at).getTime() >=
           new Date(AUTH_CONSENT_ENFORCED_AT).getTime() &&
-        (!existingConsent || Boolean(consentLookupError)) &&
+        !existingConsent &&
         !consentIntent;
       if (requiresSignupConsent) {
         await supabase.auth.signOut();

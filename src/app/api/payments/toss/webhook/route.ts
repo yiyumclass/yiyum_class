@@ -13,6 +13,15 @@ const WEBHOOK_LOOKUP_MAX_PER_PAYMENT = 10;
 
 const webhookLookupBuckets = new Map<string, { count: number; resetAt: number }>();
 
+// 취소를 정산할 수 있는 주문 상태. payment_key 일치 검증이 승인 사실을 보장하므로
+// 승인 후 발급이 끊긴 pending/failed도 포함한다.
+const SETTLEABLE_CANCEL_STATUSES: WebhookOrderRow["status"][] = [
+  "paid",
+  "refunded",
+  "pending",
+  "failed",
+];
+
 type WebhookOrderRow = {
   id: string;
   user_id: string;
@@ -138,7 +147,12 @@ async function handleCanceledPayment(
   payment: TossPayment
 ) {
   const cancellation = resolveFullCancellation(payment, order.amount);
-  if (!cancellation || (order.status !== "paid" && order.status !== "refunded")) {
+  if (!cancellation) {
+    return Response.json({ ok: false }, { status: 409 });
+  }
+  // 승인 직후 이용권 발급이 끊긴 주문은 pending/failed로 남는다. 이 상태에서 취소 웹훅을
+  // 거절하면 취소 사실이 유실되고 주문이 영구히 "결제 대기"로 노출되므로 함께 정산한다.
+  if (!SETTLEABLE_CANCEL_STATUSES.includes(order.status)) {
     return Response.json({ ok: false }, { status: 409 });
   }
 
