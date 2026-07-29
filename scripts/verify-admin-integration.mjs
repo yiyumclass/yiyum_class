@@ -58,7 +58,7 @@ if (paymentMode === "free") {
   });
   await assertFunctionExists("record_toss_refund_policy_consent", {
     target_order_uid: "__integration-smoke-check__",
-    target_policy_version: "2026-07-22",
+    target_policy_version: "2026-07-29",
   });
   await assertFunctionExists("get_my_order_ledger", {});
   console.log(`✓ 판매 중 Toss 상품: ${products.filter((product) => product.price_krw > 0).length}개`);
