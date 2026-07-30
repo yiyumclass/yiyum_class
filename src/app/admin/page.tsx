@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  formatAdminDateTime,
+  formatAuditAction,
+  formatAuditTarget,
+} from "@/lib/admin/audit-labels";
 import { loadRecentAdminAuditEntries } from "@/lib/admin/audit";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminCourses } from "@/lib/admin/courses";
@@ -125,7 +130,10 @@ export default async function AdminDashboardPage() {
               <p className={styles.panelKicker}>AUDIT LOG</p>
               <h2 id="recent-audit-title">최근 운영 변경</h2>
             </div>
-            <span className={styles.ownerOnlyBadge}>최고 관리자만 표시</span>
+            <Link href="/admin/audit" className={styles.outlineLink}>
+              전체 기록 보기
+              <span aria-hidden="true">↗</span>
+            </Link>
           </div>
           {auditEntries.length > 0 ? (
             <ol className={styles.auditList}>
@@ -169,48 +177,8 @@ function IntegrationState({ label, ready }: { label: string; ready: boolean }) {
   );
 }
 
-function formatAuditAction(action: string) {
-  const labels: Record<string, string> = {
-    "product.created": "상품을 등록했습니다",
-    "product.updated": "상품 정보를 변경했습니다",
-    "courses.created": "강의를 연결했습니다",
-    "courses.updated": "강의 정보를 변경했습니다",
-    "course_sections.created": "챕터를 추가했습니다",
-    "course_sections.updated": "챕터를 변경했습니다",
-    "lessons.created": "차시를 추가했습니다",
-    "lessons.updated": "차시를 변경했습니다",
-    "entitlement.granted": "수강권을 지급했습니다",
-    "entitlement.updated": "수강권을 변경했습니다",
-    "entitlement.revoked": "수강권을 회수했습니다",
-    "payment.refund_requested": "환불 처리를 시작했습니다",
-    "payment.refunded": "결제를 환불했습니다",
-  };
-  return labels[action] ?? "운영 정보를 변경했습니다";
-}
 
-function formatAuditTarget(targetType: string) {
-  return {
-    product: "상품",
-    products: "상품",
-    courses: "강의",
-    course_sections: "챕터",
-    lessons: "차시",
-    product_entitlements: "수강권",
-    payment_refunds: "환불",
-    order: "주문",
-    orders: "주문",
-  }[targetType] ?? "변경";
-}
 
-function formatAdminDateTime(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "numeric",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function ShieldIcon() {
   return (

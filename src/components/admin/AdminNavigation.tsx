@@ -4,24 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "@/app/admin/admin.module.css";
 
+// ownerOnly 항목은 operator에게 보여도 클릭하면 접근 거부로 튕긴다.
+// 갈 수 없는 메뉴를 노출하지 않는 편이 낫다.
 const navigation = [
-  { label: "대시보드", icon: "dashboard", href: "/admin" },
-  { label: "상품 관리", icon: "product", href: "/admin/products" },
-  { label: "강의 관리", icon: "course", href: "/admin/courses" },
-  { label: "주문 · 결제", icon: "order", href: "/admin/orders" },
-  { label: "회원 · 수강권", icon: "member", href: "/admin/members" },
-  { label: "학습 현황", icon: "progress", href: "/admin/progress" },
-  { label: "운영자 권한", icon: "settings", href: "/admin/settings" },
+  { label: "대시보드", icon: "dashboard", href: "/admin", ownerOnly: false },
+  { label: "상품 관리", icon: "product", href: "/admin/products", ownerOnly: false },
+  { label: "강의 관리", icon: "course", href: "/admin/courses", ownerOnly: false },
+  { label: "주문 · 결제", icon: "order", href: "/admin/orders", ownerOnly: false },
+  { label: "회원 · 수강권", icon: "member", href: "/admin/members", ownerOnly: false },
+  { label: "학습 현황", icon: "progress", href: "/admin/progress", ownerOnly: false },
+  { label: "운영 기록", icon: "audit", href: "/admin/audit", ownerOnly: true },
+  { label: "운영자 권한", icon: "settings", href: "/admin/settings", ownerOnly: true },
 ] as const;
 
-export default function AdminNavigation() {
+export default function AdminNavigation({ role }: { role: "owner" | "operator" }) {
   const pathname = usePathname();
+  const visibleNavigation = navigation.filter(
+    (item) => !item.ownerOnly || role === "owner"
+  );
 
   return (
     <nav className={styles.navigation} aria-label="관리자 메뉴">
       <p className={styles.navigationLabel}>MANAGEMENT</p>
       <div className={styles.navigationList}>
-        {navigation.map((item) => {
+        {visibleNavigation.map((item) => {
           const isActive =
             item.href === "/admin"
               ? pathname === item.href
@@ -83,6 +89,12 @@ function AdminNavIcon({ name }: { name: AdminNavIconName }) {
     progress: (
       <>
         <path d="M4 20V10M10 20V4M16 20v-7M22 20V7" />
+      </>
+    ),
+    audit: (
+      <>
+        <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H15l4 4v12.5A1.5 1.5 0 0 1 17.5 21h-11A1.5 1.5 0 0 1 5 19.5v-15Z" />
+        <path d="M14.5 3v4.5H19M8.5 12.5h7M8.5 16h4.5" />
       </>
     ),
     settings: (

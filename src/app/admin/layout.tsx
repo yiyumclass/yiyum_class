@@ -33,7 +33,7 @@ export default async function AdminLayout({
           <span className={styles.brandRole}>ADMIN</span>
         </Link>
 
-        <AdminNavigation />
+        <AdminNavigation role={admin.role} />
 
         <div className={styles.sidebarFooter}>
           <p>관리자 메뉴는 단계별로 활성화됩니다.</p>
