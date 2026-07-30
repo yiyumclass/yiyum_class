@@ -92,7 +92,17 @@ export default async function AdminDashboardPage() {
               integrationHealth.ownedCourseReady
             }
           />
-          <IntegrationState label="영상 저장·재생" ready={courseResult.videoStorageReady && integrationHealth.videoDeliveryReady} />
+          <IntegrationState
+            label={
+              integrationHealth.videoDelivery === "no-content"
+                ? "영상 저장·재생 (연결된 영상 없음)"
+                : "영상 저장·재생"
+            }
+            ready={
+              courseResult.videoStorageReady &&
+              integrationHealth.videoDelivery === "ready"
+            }
+          />
         </div>
 
         <div className={styles.summaryGrid}>
