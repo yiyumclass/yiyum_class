@@ -226,9 +226,12 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
                 </strong>
                 <p>
                   {isKakaoAccount
-                    ? "카카오 로그인 회원에게는 별도의 이윰 클래스 비밀번호가 생성되지 않습니다."
-                    : "비밀번호 변경 기능은 아직 계정 설정에 연결되지 않았습니다."}
+                    ? "카카오 로그인 회원에게는 별도의 이윰 클래스 비밀번호가 생성되지 않습니다. 이메일로도 로그인하려면 비밀번호를 설정할 수 있어요."
+                    : "비밀번호는 언제든지 변경할 수 있습니다."}
                 </p>
+                <Link href="/account/password" className={styles.securityLink}>
+                  {isKakaoAccount ? "비밀번호 설정하기" : "비밀번호 변경하기"}
+                </Link>
               </div>
             </div>
 

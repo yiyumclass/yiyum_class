@@ -8,7 +8,15 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // 비공개·기능 영역은 크롤링 대상에서 제외한다.
-      disallow: ["/admin", "/my", "/account", "/api", "/checkout", "/auth"],
+      disallow: [
+        "/admin",
+        "/my",
+        "/account",
+        "/api",
+        "/checkout",
+        "/auth",
+        "/forgot-password",
+      ],
     },
     sitemap: new URL("/sitemap.xml", SITE_URL).toString(),
   };
