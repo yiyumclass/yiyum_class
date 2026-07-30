@@ -1,0 +1,87 @@
+.block {
+  border: 1px solid #ddd5c8;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+  background: #fbf8f2;
+}
+
+.divider {
+  height: 1px;
+  background: #eae3d6;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #57514a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowStrong {
+  font-weight: 600;
+  color: #201c17;
+}
+
+/* 화면에서만 감추고 포커스는 살려 둔다. display:none이면 키보드로 닿을 수 없다. */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.box {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid #c9c0b2;
+  border-radius: 5px;
+  background: transparent;
+  color: #fff;
+  font-size: 11px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.input:checked + .box,
+.input:indeterminate + .box {
+  border-color: #b85c38;
+  background: #b85c38;
+}
+
+.input:focus-visible + .box {
+  outline: 2px solid #b85c38;
+  outline-offset: 2px;
+}
+
+.required {
+  color: #b85c38;
+}
+
+.optional {
+  color: #938b7f;
+}
+
+.link {
+  color: #b85c38;
+  text-decoration: underline;
+}
+
+.allNote {
+  margin-left: 4px;
+  color: #938b7f;
+  font-size: 12px;
+  font-weight: 500;
+}

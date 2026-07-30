@@ -1,61 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import styles from "./ConsentBlock.module.css";
 
 // 회원가입 동의 블록. 필수(만14세·이용약관·개인정보) 미동의 시 가입 불가.
 // 상태 변경 시 상위로 { valid, marketing }를 올려보낸다.
+//
+// 법정 동의 UI이므로 네이티브 checkbox를 쓴다. div+onClick으로 흉내 내면
+// 키보드로 조작할 수 없고 스크린리더가 체크 상태를 읽어주지 못한다.
 type State = { age14: boolean; terms: boolean; marketing: boolean };
-
-const rowStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 8,
-  fontSize: 13,
-  color: "#57514A",
-  textAlign: "left",
-  lineHeight: 1.5,
-  cursor: "pointer",
-  userSelect: "none",
-};
-
-const boxStyle = (checked: boolean): React.CSSProperties => ({
-  flexShrink: 0,
-  width: 18,
-  height: 18,
-  marginTop: 1,
-  borderRadius: 5,
-  border: `1.5px solid ${checked ? "#B85C38" : "#C9C0B2"}`,
-  background: checked ? "#B85C38" : "transparent",
-  color: "#fff",
-  fontSize: 11,
-  lineHeight: "15px",
-  textAlign: "center",
-});
-
-const linkStyle: React.CSSProperties = { color: "#B85C38", textDecoration: "underline" };
 
 function Row({
   checked,
   onToggle,
-  bold,
+  strong,
+  indeterminate = false,
   children,
 }: {
   checked: boolean;
   onToggle: () => void;
-  bold?: boolean;
+  strong?: boolean;
+  indeterminate?: boolean;
   children: React.ReactNode;
 }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
   return (
-    <div
-      onClick={onToggle}
-      style={{
-        ...rowStyle,
-        ...(bold ? { fontWeight: 600, color: "#201C17" } : {}),
-      }}
-    >
-      <span style={boxStyle(checked)}>{checked ? "✓" : ""}</span>
+    <label className={`${styles.row} ${strong ? styles.rowStrong : ""}`}>
+      <input
+        ref={inputRef}
+        type="checkbox"
+        className={styles.input}
+        checked={checked}
+        onChange={onToggle}
+      />
+      <span className={styles.box} aria-hidden="true">
+        {checked ? "✓" : indeterminate ? "–" : ""}
+      </span>
       <span>{children}</span>
-    </div>
+    </label>
   );
 }
 
@@ -71,46 +58,45 @@ export default function ConsentBlock({
   }, [s, onChange]);
 
   const allChecked = s.age14 && s.terms && s.marketing;
+  const someChecked = s.age14 || s.terms || s.marketing;
   const toggleAll = () =>
     setS({ age14: !allChecked, terms: !allChecked, marketing: !allChecked });
   const toggle = (k: keyof State) => setS((prev) => ({ ...prev, [k]: !prev[k] }));
-  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <div
-      style={{
-        border: "1px solid #DDD5C8",
-        borderRadius: 10,
-        padding: "14px 16px",
-        display: "grid",
-        gap: 12,
-        background: "#FBF8F2",
-      }}
-    >
-      <Row checked={allChecked} onToggle={toggleAll} bold>
+    <div className={styles.block}>
+      <Row
+        checked={allChecked}
+        indeterminate={!allChecked && someChecked}
+        onToggle={toggleAll}
+        strong
+      >
         전체 동의
+        {/* 선택 항목까지 함께 켜진다는 것을 밝힌다. 마케팅 동의가 조용히
+            켜지면 사용자가 인지하지 못한 채 수신 동의한 것이 된다. */}
+        <span className={styles.allNote}>선택 항목 포함</span>
       </Row>
 
-      <div style={{ height: 1, background: "#EAE3D6" }} />
+      <div className={styles.divider} />
 
       <Row checked={s.age14} onToggle={() => toggle("age14")}>
-        <b style={{ color: "#B85C38" }}>[필수]</b> 만 14세 이상입니다
+        <b className={styles.required}>[필수]</b> 만 14세 이상입니다
       </Row>
 
       <Row checked={s.terms} onToggle={() => toggle("terms")}>
-        <b style={{ color: "#B85C38" }}>[필수]</b>{" "}
-        <a href="/terms" target="_blank" rel="noreferrer" style={linkStyle} onClick={stop}>
+        <b className={styles.required}>[필수]</b>{" "}
+        <a href="/terms" target="_blank" rel="noreferrer" className={styles.link}>
           이용약관
         </a>{" "}
         및{" "}
-        <a href="/privacy" target="_blank" rel="noreferrer" style={linkStyle} onClick={stop}>
+        <a href="/privacy" target="_blank" rel="noreferrer" className={styles.link}>
           개인정보 수집·이용
         </a>
         에 동의합니다
       </Row>
 
       <Row checked={s.marketing} onToggle={() => toggle("marketing")}>
-        <b style={{ color: "#938B7F" }}>[선택]</b> 마케팅 정보 수신 동의 (이메일·알림)
+        <b className={styles.optional}>[선택]</b> 마케팅 정보 수신 동의 (이메일·알림)
       </Row>
     </div>
   );
