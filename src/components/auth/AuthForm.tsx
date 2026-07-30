@@ -209,18 +209,6 @@ export default function AuthForm({
             {error}
           </p>
         )}
-        {/* 이메일 계정은 사실상 관리자 계정이라 복구 경로가 반드시 있어야 한다. */}
-        {!isSignup && (
-          <p style={{ margin: "14px 0 0", textAlign: "right" }}>
-            <Link
-              href="/forgot-password"
-              style={{ color: "#938B7F", fontSize: 13, fontWeight: 500 }}
-            >
-              비밀번호를 잊으셨나요?
-            </Link>
-          </p>
-        )}
-
         {!isSignup && (
           <div
             style={{

@@ -4,7 +4,6 @@ import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
   checkNewPassword,
-  isLikelyEmail,
 } from "../src/lib/auth/password.ts";
 
 test("길이와 확인값이 맞으면 통과한다", () => {
@@ -41,13 +40,4 @@ test("확인값이 다르면 거절한다", () => {
   const result = checkNewPassword("correct-horse", "correct-horsE");
   assert.equal(result.ok, false);
   assert.match(!result.ok ? result.message : "", /일치하지/);
-});
-
-test("이메일 형식을 가려낸다", () => {
-  assert.equal(isLikelyEmail("user@example.com"), true);
-  assert.equal(isLikelyEmail("  user@example.com  "), true);
-
-  for (const invalid of ["", "user", "user@", "@example.com", "user@example", "a b@c.com"]) {
-    assert.equal(isLikelyEmail(invalid), false, `${invalid}는 이메일이 아니다`);
-  }
 });

@@ -34,8 +34,3 @@ export function checkNewPassword(
 
   return { ok: true };
 }
-
-export function isLikelyEmail(value: string) {
-  const trimmed = value.trim();
-  return trimmed.length >= 5 && trimmed.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-}

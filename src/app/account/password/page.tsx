@@ -18,10 +18,9 @@ export default async function AccountPasswordPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 재설정 메일의 링크는 /auth/callback을 거쳐 세션을 만든 뒤 이 페이지로 온다.
-  // 링크가 만료됐다면 세션이 없으므로 재요청 화면으로 보낸다.
+  // 메일 발송 경로를 두지 않으므로, 비밀번호 변경은 로그인 상태에서만 가능하다.
   if (!user) {
-    redirect("/forgot-password");
+    redirect("/login?next=/account/password");
   }
 
   const hasEmailIdentity = (user.identities ?? []).some(
