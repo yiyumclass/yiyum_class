@@ -1,25 +1,11 @@
 import "server-only";
 
+// 응답 형태는 검증 로직과 함께 두어야 테스트에서도 같은 타입을 쓴다.
+import type { TossCancellation, TossPayment } from "./toss-verification";
+
+export type { TossCancellation, TossPayment };
+
 const TOSS_API_BASE_URL = "https://api.tosspayments.com/v1";
-
-export type TossPayment = {
-  paymentKey: string;
-  orderId: string;
-  status: string;
-  totalAmount: number;
-  balanceAmount: number;
-  approvedAt: string | null;
-  method: string | null;
-  cancels: TossCancellation[];
-};
-
-export type TossCancellation = {
-  cancelAmount: number;
-  cancelReason: string;
-  canceledAt: string;
-  transactionKey: string;
-  cancelStatus: string;
-};
 
 export type TossApiResult =
   | { ok: true; payment: TossPayment }

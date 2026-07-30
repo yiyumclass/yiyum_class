@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { requireOwnerAdmin } from "@/lib/admin/auth";
+import { resolveFullCancellation } from "@/lib/payments/toss-verification";
 import {
   cancelTossPayment,
   getTossPayment,
-  type TossCancellation,
   type TossPayment,
 } from "@/lib/payments/toss";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -133,18 +133,6 @@ export async function refundPaymentOrderAction(
     ok: true,
     message: `${new Intl.NumberFormat("ko-KR").format(refund.amount)}원이 전액 환불되고 이용권이 회수됐습니다.`,
   };
-}
-
-function resolveFullCancellation(payment: TossPayment, expectedAmount: number) {
-  if (payment.status !== "CANCELED" || payment.balanceAmount !== 0) return null;
-
-  const completed = payment.cancels.filter((item) => item.cancelStatus === "DONE");
-  const canceledAmount = completed.reduce((total, item) => total + item.cancelAmount, 0);
-  if (canceledAmount !== expectedAmount) return null;
-
-  return completed.sort(
-    (a, b) => new Date(b.canceledAt).getTime() - new Date(a.canceledAt).getTime()
-  )[0] as TossCancellation | undefined;
 }
 
 function mapRefundStartError(code: string | undefined) {

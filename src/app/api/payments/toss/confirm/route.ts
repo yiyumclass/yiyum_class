@@ -2,6 +2,13 @@ import { revalidatePath } from "next/cache";
 import { isSameOriginRequest } from "@/lib/http/origin";
 import { readLimitedJson } from "@/lib/http/request-body";
 import { confirmTossPayment, getTossPayment, type TossPayment } from "@/lib/payments/toss";
+import {
+  isActiveEntitlement,
+  isMatchingCompletedPayment,
+  parseConfirmRequest,
+  resolveConfirmationFailure,
+  type ConfirmRequest,
+} from "@/lib/payments/toss-verification";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -10,12 +17,6 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 const CONFIRM_BODY_LIMIT_BYTES = 4 * 1024;
-
-type ConfirmRequest = {
-  paymentKey: string;
-  orderId: string;
-  amount: number;
-};
 
 type OrderRow = {
   id: string;
@@ -208,51 +209,9 @@ async function readConfirmRequest(request: Request): Promise<ConfirmRequest | nu
   const result = await readLimitedJson(request, {
     limitBytes: CONFIRM_BODY_LIMIT_BYTES,
   });
-  if (!result.ok || !isRecord(result.value)) return null;
+  if (!result.ok) return null;
 
-  const paymentKey = result.value.paymentKey;
-  const orderId = result.value.orderId;
-  const amount = result.value.amount;
-  if (
-    typeof paymentKey !== "string" ||
-    paymentKey.length < 1 ||
-    paymentKey.length > 200 ||
-    typeof orderId !== "string" ||
-    !/^[A-Za-z0-9_-]{6,64}$/.test(orderId) ||
-    !Number.isInteger(amount) ||
-    (amount as number) <= 0
-  ) {
-    return null;
-  }
-
-  return { paymentKey, orderId, amount: amount as number };
-}
-
-function isMatchingCompletedPayment(payment: TossPayment, input: ConfirmRequest) {
-  return (
-    payment.status === "DONE" &&
-    payment.paymentKey === input.paymentKey &&
-    payment.orderId === input.orderId &&
-    payment.totalAmount === input.amount
-  );
-}
-
-function isActiveEntitlement(entitlement: EntitlementRow | null) {
-  if (!entitlement || entitlement.status !== "active") return false;
-  return entitlement.expires_at === null || new Date(entitlement.expires_at) > new Date();
-}
-
-function resolveConfirmationFailure(code: string) {
-  if (code === "REJECT_CARD_PAYMENT") {
-    return "카드 결제가 승인되지 않았습니다. 다른 카드나 결제수단을 이용해 주세요.";
-  }
-  if (code === "NOT_FOUND_PAYMENT_SESSION") {
-    return "결제 인증 시간이 만료되었습니다. 주문 페이지에서 다시 결제해 주세요.";
-  }
-  if (code === "FORBIDDEN_REQUEST") {
-    return "결제 요청 정보를 확인하지 못했습니다. 다시 결제해 주세요.";
-  }
-  return "결제 승인을 완료하지 못했습니다. 주문 페이지에서 다시 시도해 주세요.";
+  return parseConfirmRequest(result.value);
 }
 
 function json(body: Record<string, unknown>, status: number) {
@@ -260,8 +219,4 @@ function json(body: Record<string, unknown>, status: number) {
     status,
     headers: { "Cache-Control": "no-store" },
   });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

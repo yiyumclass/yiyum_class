@@ -1,6 +1,13 @@
 import { revalidatePath } from "next/cache";
 import { readLimitedJson } from "@/lib/http/request-body";
-import { getTossPayment, type TossCancellation, type TossPayment } from "@/lib/payments/toss";
+import { getTossPayment, type TossPayment } from "@/lib/payments/toss";
+import {
+  canSettleCancellation,
+  isSupportedPaymentStatus,
+  readPaymentEvent,
+  resolveFullCancellation,
+  resolveLatestCompletedCancellation,
+} from "@/lib/payments/toss-verification";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -12,15 +19,6 @@ const WEBHOOK_LOOKUP_MAX_PER_IP = 60;
 const WEBHOOK_LOOKUP_MAX_PER_PAYMENT = 10;
 
 const webhookLookupBuckets = new Map<string, { count: number; resetAt: number }>();
-
-// 취소를 정산할 수 있는 주문 상태. payment_key 일치 검증이 승인 사실을 보장하므로
-// 승인 후 발급이 끊긴 pending/failed도 포함한다.
-const SETTLEABLE_CANCEL_STATUSES: WebhookOrderRow["status"][] = [
-  "paid",
-  "refunded",
-  "pending",
-  "failed",
-];
 
 type WebhookOrderRow = {
   id: string;
@@ -152,7 +150,7 @@ async function handleCanceledPayment(
   }
   // 승인 직후 이용권 발급이 끊긴 주문은 pending/failed로 남는다. 이 상태에서 취소 웹훅을
   // 거절하면 취소 사실이 유실되고 주문이 영구히 "결제 대기"로 노출되므로 함께 정산한다.
-  if (!SETTLEABLE_CANCEL_STATUSES.includes(order.status)) {
+  if (!canSettleCancellation(order.status)) {
     return Response.json({ ok: false }, { status: 409 });
   }
 
@@ -212,63 +210,11 @@ async function handlePartialCanceledPayment(
   return Response.json({ ok: true, ignored: "partial_cancellation_recorded" }, { status: 200 });
 }
 
-function resolveFullCancellation(payment: TossPayment, expectedAmount: number) {
-  if (payment.status !== "CANCELED" || payment.balanceAmount !== 0) return null;
-  const completed = payment.cancels.filter((item) => item.cancelStatus === "DONE");
-  if (completed.reduce((total, item) => total + item.cancelAmount, 0) !== expectedAmount) {
-    return null;
-  }
-  return completed.sort(
-    (a, b) => new Date(b.canceledAt).getTime() - new Date(a.canceledAt).getTime()
-  )[0] as TossCancellation | undefined;
-}
-
-function resolveLatestCompletedCancellation(payment: TossPayment) {
-  return payment.cancels
-    .filter((item) => item.cancelStatus === "DONE")
-    .sort((a, b) => new Date(b.canceledAt).getTime() - new Date(a.canceledAt).getTime())[0] as
-    | TossCancellation
-    | undefined;
-}
-
 function revalidatePaymentPaths() {
   revalidatePath("/admin/orders");
   revalidatePath("/admin/members");
   revalidatePath("/my");
   revalidatePath("/learn", "layout");
-}
-
-function readPaymentEvent(payload: unknown):
-  | { ok: true; event: { paymentKey: string; orderId: string; status: string } }
-  | { ok: false; reason: "unsupported_event" | "invalid_payload" } {
-  if (!isRecord(payload)) return { ok: false, reason: "invalid_payload" };
-  if (payload.eventType !== "PAYMENT_STATUS_CHANGED") {
-    return { ok: false, reason: "unsupported_event" };
-  }
-  const data = payload.data;
-  if (!isRecord(data)) return { ok: false, reason: "invalid_payload" };
-  if (
-    typeof data.paymentKey !== "string" ||
-    data.paymentKey.length < 1 ||
-    data.paymentKey.length > 200 ||
-    typeof data.orderId !== "string" ||
-    !/^[A-Za-z0-9_-]{6,64}$/.test(data.orderId) ||
-    typeof data.status !== "string"
-  ) {
-    return { ok: false, reason: "invalid_payload" };
-  }
-  return {
-    ok: true,
-    event: {
-      paymentKey: data.paymentKey,
-      orderId: data.orderId,
-      status: data.status,
-    },
-  };
-}
-
-function isSupportedPaymentStatus(status: string) {
-  return status === "DONE" || status === "CANCELED" || status === "PARTIAL_CANCELED";
 }
 
 function isWebhookLookupAllowed(request: Request, paymentKey: string) {
@@ -308,6 +254,3 @@ function getClientIp(request: Request) {
   );
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
