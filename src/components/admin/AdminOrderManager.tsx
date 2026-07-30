@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { refundPaymentOrderAction } from "@/app/admin/orders/actions";
+import {
+  describeFulfillmentIssue,
+  detectFulfillmentIssue,
+} from "@/lib/admin/order-fulfillment";
 import type {
   AdminOrder,
   AdminOrderSource,
@@ -20,6 +24,15 @@ type AdminOrderManagerProps = {
 type SourceFilter = "all" | AdminOrderSource;
 type StatusFilter = "all" | AdminOrderStatus;
 type PeriodFilter = "all" | "today" | "7days" | "30days";
+
+function fulfillmentIssueOf(order: AdminOrder) {
+  return detectFulfillmentIssue({
+    source: order.source,
+    paymentStatus: order.paymentStatus,
+    entitlementStatus: order.status,
+    paymentKeyPresent: order.paymentKeyPresent,
+  });
+}
 
 const sourceFilters: Array<{ value: SourceFilter; label: string }> = [
   { value: "all", label: "전체" },
@@ -52,6 +65,7 @@ export default function AdminOrderManager({
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
+  const [onlyNeedsAttention, setOnlyNeedsAttention] = useState(false);
   const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
 
   const filteredOrders = useMemo(() => {
@@ -59,6 +73,7 @@ export default function AdminOrderManager({
     const periodStart = getPeriodStart(periodFilter);
 
     return orders.filter((order) => {
+      if (onlyNeedsAttention && !fulfillmentIssueOf(order)) return false;
       const matchesQuery =
         !normalizedQuery ||
         order.customerName.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
@@ -71,7 +86,12 @@ export default function AdminOrderManager({
 
       return matchesQuery && matchesSource && matchesStatus && matchesPeriod;
     });
-  }, [orders, periodFilter, query, sourceFilter, statusFilter]);
+  }, [onlyNeedsAttention, orders, periodFilter, query, sourceFilter, statusFilter]);
+
+  const needsAttentionCount = useMemo(
+    () => orders.filter((order) => fulfillmentIssueOf(order)).length,
+    [orders]
+  );
 
   const summary = useMemo(() => {
     const todayStart = getPeriodStart("today");
@@ -148,6 +168,13 @@ export default function AdminOrderManager({
           value={formatPrice(summary.revenue)}
           note={paymentMode === "toss_test" ? "테스트 승인액" : undefined}
         />
+        <SummaryItem
+          label="이행 확인 필요"
+          value={formatCount(needsAttentionCount)}
+          unit="건"
+          tone={needsAttentionCount > 0 ? "attention" : undefined}
+          note={needsAttentionCount > 0 ? "결제 후 이용권 미발급" : undefined}
+        />
       </section>
 
       <section className={styles.orderPanel} aria-labelledby="order-list-title">
@@ -191,6 +218,18 @@ export default function AdminOrderManager({
               options={periodOptions}
               onChange={(value) => setPeriodFilter(value as PeriodFilter)}
             />
+            {needsAttentionCount > 0 && (
+              <button
+                type="button"
+                className={
+                  onlyNeedsAttention ? styles.attentionFilterActive : styles.attentionFilter
+                }
+                onClick={() => setOnlyNeedsAttention((current) => !current)}
+                aria-pressed={onlyNeedsAttention}
+              >
+                이행 확인 필요 {formatCount(needsAttentionCount)}건
+              </button>
+            )}
             <FilterSelect
               label="이용권 상태"
               value={statusFilter}
@@ -232,11 +271,19 @@ export default function AdminOrderManager({
         ) : (
           <div className={styles.emptyState}>
             <ReceiptIcon />
-            <strong>{orders.length === 0 ? "아직 신청 내역이 없습니다." : "조건에 맞는 내역이 없습니다."}</strong>
+            <strong>
+              {orders.length === 0
+                ? "아직 신청 내역이 없습니다."
+                : onlyNeedsAttention
+                  ? "확인이 필요한 주문이 없습니다."
+                  : "조건에 맞는 내역이 없습니다."}
+            </strong>
             <p>
               {orders.length === 0
                 ? "회원이 콘텐츠를 신청하면 이곳에서 바로 확인할 수 있습니다."
-                : "검색어 또는 필터 조건을 변경해 보세요."}
+                : onlyNeedsAttention
+                  ? "결제가 완료된 주문은 모두 이용권까지 발급됐습니다."
+                  : "검색어 또는 필터 조건을 변경해 보세요."}
             </p>
           </div>
         )}
@@ -259,14 +306,22 @@ function SummaryItem({
   label: string;
   value: string;
   unit?: string;
-  tone?: "active";
+  tone?: "active" | "attention";
   note?: string;
 }) {
   return (
     <div className={styles.summaryItem}>
       <span>{label}</span>
       <div className={styles.summaryValueGroup}>
-        <strong className={tone ? styles.summaryValueActive : undefined}>
+        <strong
+          className={
+            tone === "attention"
+              ? styles.summaryValueAttention
+              : tone === "active"
+                ? styles.summaryValueActive
+                : undefined
+          }
+        >
           {value}{unit && <small>{unit}</small>}
         </strong>
         {note && <span className={styles.summaryNote}>{note}</span>}
@@ -311,13 +366,22 @@ function OrderRow({
   onRefund: () => void;
 }) {
   const refundAction = getRefundActionState(order, canRefund);
+  const fulfillmentIssue = fulfillmentIssueOf(order);
 
   return (
-    <tr>
+    <tr className={fulfillmentIssue ? styles.attentionRow : undefined}>
       <td data-label="신청 번호">
         <span className={styles.orderId} title={order.id}>
           {formatOrderId(order.id)}
         </span>
+        {fulfillmentIssue && (
+          <span
+            className={styles.attentionBadge}
+            title={describeFulfillmentIssue(fulfillmentIssue)}
+          >
+            이행 확인 필요
+          </span>
+        )}
       </td>
       <td data-label="회원">
         <span className={styles.customerIdentity}>

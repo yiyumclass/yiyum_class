@@ -170,6 +170,52 @@
   color: #68735a !important;
 }
 
+/* 결제 후 이용권이 발급되지 않은 주문. 0건이 아니면 즉시 눈에 띄어야 한다. */
+.summaryValueAttention {
+  color: #a2412a !important;
+}
+
+.attentionFilter,
+.attentionFilterActive {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #e2bfae;
+  border-radius: 8px;
+  background: #fbf1ea;
+  color: #a2412a;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.attentionFilter:hover {
+  background: #f7e6db;
+}
+
+.attentionFilterActive {
+  border-color: #a2412a;
+  background: #a2412a;
+  color: #fff6f1;
+}
+
+.attentionRow {
+  background: #fdf6f2;
+}
+
+.attentionBadge {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #f3ddd2;
+  color: #a2412a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .summaryValueGroup {
   display: flex;
   flex-direction: column;
