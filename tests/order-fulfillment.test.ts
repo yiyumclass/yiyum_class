@@ -71,6 +71,37 @@ test("환불·취소된 주문은 확인 대상이 아니다", () => {
   }
 });
 
+test("환불이 실패로 기록된 주문은 사람이 확인해야 한다", () => {
+  // Toss 콘솔 부분취소와 중단된 관리자 환불이 모두 여기로 들어온다.
+  assert.equal(
+    detectFulfillmentIssue({ ...paidOrder, refundStatus: "failed" }),
+    "refund-needs-review"
+  );
+});
+
+test("진행 중이거나 완료된 환불은 확인 대상이 아니다", () => {
+  for (const refundStatus of ["requested", "processing", "succeeded"] as const) {
+    assert.equal(
+      detectFulfillmentIssue({ ...paidOrder, refundStatus }),
+      null,
+      `${refundStatus}는 정상 흐름이다`
+    );
+  }
+});
+
+test("미발급 판정이 환불 판정보다 우선한다", () => {
+  // 둘 다 해당하면 돈을 받고 못 주고 있는 쪽을 먼저 알려야 한다.
+  assert.equal(
+    detectFulfillmentIssue({
+      ...paidOrder,
+      paymentStatus: "pending",
+      entitlementStatus: "revoked",
+      refundStatus: "failed",
+    }),
+    "approved-not-fulfilled"
+  );
+});
+
 test("무료 신청과 관리자 지급은 결제 이행 판정 대상이 아니다", () => {
   for (const source of ["free_checkout", "admin_grant"] as const) {
     assert.equal(

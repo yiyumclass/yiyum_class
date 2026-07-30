@@ -344,6 +344,18 @@
   text-align: right;
 }
 
+/* 자동 처리 대상이 아닌 부분 환불을 설명한다. 금액만 보이면 오해를 부른다. */
+.detailNotice {
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  border: 1px solid #e2d3bf;
+  border-radius: 9px;
+  background: #fdf7ec;
+  color: #7b6647;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .detailActions {
   margin-top: 18px;
   display: flex;

@@ -177,11 +177,22 @@ function OrderCard({ order }: { order: MyOrder }) {
             )}
             {order.refundAmountKrw !== null && (
               <Detail
-                label="환불 금액"
+                label={
+                  order.refundStatus === "partial_review"
+                    ? "부분 환불 금액"
+                    : "환불 금액"
+                }
                 value={formatAmount(order.refundAmountKrw)}
               />
             )}
           </dl>
+
+          {order.refundStatus === "partial_review" && (
+            <p className={styles.detailNotice} role="status">
+              부분 환불이 접수되어 확인 중입니다. 이용 기간과 잔여 금액은 확인 후
+              안내드립니다.
+            </p>
+          )}
 
           <div className={styles.detailActions}>
             {productHref && order.entitlementStatus === "active" && (
@@ -210,6 +221,9 @@ function resolveVisibleStatus(order: MyOrder): {
 } {
   if (order.refundStatus === "requested" || order.refundStatus === "processing") {
     return { label: "환불 처리 중", tone: "statusPending" };
+  }
+  if (order.refundStatus === "partial_review") {
+    return { label: "부분 환불 확인 중", tone: "statusPending" };
   }
   if (order.paymentStatus === "refunded") {
     return { label: paymentStatusLabels.refunded, tone: "statusRefunded" };

@@ -10,7 +10,14 @@ export type MyPaymentStatus =
   | "refunded"
   | "failed";
 export type MyEntitlementStatus = "active" | "expired" | "revoked" | "none";
-export type MyRefundStatus = "requested" | "processing" | "succeeded" | "failed";
+// partial_review: Toss 콘솔에서 부분취소가 발생했지만 앱은 전액 환불만 자동
+// 처리한다. 자동 반영 대상이 아니므로 운영자 확인이 필요한 상태다.
+export type MyRefundStatus =
+  | "requested"
+  | "processing"
+  | "succeeded"
+  | "failed"
+  | "partial_review";
 
 export type MyOrder = {
   id: string;

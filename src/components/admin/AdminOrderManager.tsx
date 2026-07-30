@@ -31,6 +31,7 @@ function fulfillmentIssueOf(order: AdminOrder) {
     paymentStatus: order.paymentStatus,
     entitlementStatus: order.status,
     paymentKeyPresent: order.paymentKeyPresent,
+    refundStatus: order.refundStatus,
   });
 }
 
