@@ -133,11 +133,15 @@ export function describeAuditMetadata(metadata: Record<string, unknown>): AuditM
   const after = toRecord(metadata.after);
   const rows: AuditMetadataRow[] = [];
 
+  // before/after로 이미 다룬 필드. 트리거가 같은 필드를 최상위에도 함께 남기는
+  // 경우가 있어(예: status), 걸러내지 않으면 같은 줄이 두 번 나오고 React key도 겹친다.
+  const pairedKeys = new Set([
+    ...Object.keys(before ?? {}),
+    ...Object.keys(after ?? {}),
+  ]);
+
   if (before || after) {
-    const keys = Array.from(
-      new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])
-    );
-    for (const key of keys) {
+    for (const key of pairedKeys) {
       const beforeValue = before ? formatAuditValue(before[key]) : null;
       const afterValue = formatAuditValue(after?.[key]);
       // 안 바뀐 값까지 다 보여주면 정작 바뀐 줄이 묻힌다.
@@ -147,7 +151,7 @@ export function describeAuditMetadata(metadata: Record<string, unknown>): AuditM
   }
 
   for (const [key, value] of Object.entries(metadata)) {
-    if (key === "before" || key === "after") continue;
+    if (key === "before" || key === "after" || pairedKeys.has(key)) continue;
     rows.push({
       key,
       label: formatAuditField(key),
