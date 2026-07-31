@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
+  exportAdminMembersAction,
   grantMemberEntitlementAction,
   updateMemberEntitlementAction,
 } from "@/app/admin/members/actions";
@@ -30,12 +31,17 @@ import type {
   AdminMember,
   AdminMemberEntitlement,
   AdminMemberProductOption,
+  AdminMemberSummary,
 } from "@/lib/admin/members";
 import { useTableParams } from "@/lib/admin/use-table-params";
 import styles from "./AdminMemberManager.module.css";
 
 type AdminMemberManagerProps = {
+  /** 서버가 이미 거르고 정렬해 잘라 준 한 페이지. 여기서 다시 거르지 않는다. */
   members: AdminMember[];
+  totalCount: number;
+  summary: AdminMemberSummary;
+  currentPage: number;
   products: AdminMemberProductOption[];
   databaseReady: boolean;
   sourceMessage: string | null;
@@ -62,14 +68,6 @@ const memberFilters: Array<{ value: MemberFilter; label: string }> = [
   { value: "expiring", label: "30일 내 만료" },
 ];
 
-/** 정렬 버튼을 처음 누를 때의 방향. 날짜·개수는 큰 값부터 보는 편이 쓸모 있다. */
-const defaultSortDirection: Record<SortKey, SortDirection> = {
-  joined: "desc",
-  name: "asc",
-  active: "desc",
-  signin: "desc",
-};
-
 const DEFAULT_SORT = "joined_desc";
 
 const memberTableDefaults = {
@@ -82,6 +80,9 @@ const memberTableDefaults = {
 
 export default function AdminMemberManager({
   members,
+  totalCount,
+  summary,
+  currentPage,
   products,
   databaseReady,
   sourceMessage,
@@ -97,7 +98,6 @@ export default function AdminMemberManager({
   const query = values.q;
   const filter = toMemberFilter(values.filter);
   const { sortKey, sortDirection } = parseSort(values.sort);
-  const page = numberOf("page");
   const pageSize = numberOf("size");
 
   const selectedMember = members.find((member) => member.id === selectedMemberId) ?? null;
@@ -128,58 +128,9 @@ export default function AdminMemberManager({
     [members, referenceDate]
   );
 
-  const filteredRows = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
-
-    return rows.filter((row) => {
-      const { member, activeEntitlements, hasExpiring } = row;
-      const matchesQuery =
-        !normalizedQuery ||
-        member.name.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
-        member.email.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
-        member.id.toLowerCase().includes(normalizedQuery);
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "entitled" && activeEntitlements.length > 0) ||
-        (filter === "unentitled" && activeEntitlements.length === 0) ||
-        (filter === "expiring" && hasExpiring);
-
-      return matchesQuery && matchesFilter;
-    });
-  }, [filter, query, rows]);
-
-  const sortedRows = useMemo(() => {
-    const direction = sortDirection === "asc" ? 1 : -1;
-    return [...filteredRows].sort((left, right) => {
-      const gap = compareRows(left, right, sortKey);
-      // 값이 같으면 이름으로 묶어 페이지 사이에서 순서가 흔들리지 않게 한다.
-      if (gap !== 0) return gap * direction;
-      return left.member.name.localeCompare(right.member.name, "ko-KR");
-    });
-  }, [filteredRows, sortDirection, sortKey]);
-
-  // 필터를 좁히면 URL에 남아 있던 페이지 번호가 범위를 넘어 빈 표가 보일 수 있다.
-  const pageCount = Math.max(1, Math.ceil(sortedRows.length / pageSize));
-  const currentPage = Math.min(Math.max(1, page), pageCount);
-  const pagedRows = sortedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
+  // 거르기·정렬·자르기는 모두 서버가 한다. 여기서 한 번 더 거르면 받은 한 페이지
+  // 안에서만 동작해 오히려 틀린 결과가 된다. 요약도 서버가 준 값을 그대로 쓴다.
   const isFiltered = filter !== "all" || query.trim().length > 0;
-
-  // 요약은 표와 같은 조건을 봐야 한다. 필터를 걸어둔 채 전체 수치를 보면 오독한다.
-  const summary = useMemo(() => {
-    const activeEntitlements = filteredRows.flatMap((row) => row.activeEntitlements);
-    const thirtyDaysAgo = new Date(referenceDate.getTime() - 30 * 24 * 60 * 60 * 1000);
-    return {
-      members: filteredRows.length,
-      active: activeEntitlements.length,
-      newMembers: filteredRows.filter(
-        (row) => new Date(row.member.joinedAt) >= thirtyDaysAgo
-      ).length,
-      expiring: activeEntitlements.filter((entitlement) =>
-        isExpiringSoon(entitlement, referenceDate)
-      ).length,
-    };
-  }, [filteredRows, referenceDate]);
 
   const runMutation = async (mutation: () => Promise<{ ok: boolean; message: string }>) => {
     setPending(true);
@@ -211,41 +162,72 @@ export default function AdminMemberManager({
     }
   };
 
-  const exportCsv = () => {
-    exportRowsToCsv({
-      fileName: "이윰-회원수강권",
-      columns: [
-        { header: "회원 ID", value: (row: MemberRowData) => row.member.id },
-        { header: "이름", value: (row: MemberRowData) => row.member.name },
-        { header: "이메일", value: (row: MemberRowData) => row.member.email },
-        { header: "가입일", value: (row: MemberRowData) => formatDate(row.member.joinedAt) },
-        {
-          header: "최근 로그인",
-          value: (row: MemberRowData) =>
-            row.member.lastSignInAt ? formatDateTime(row.member.lastSignInAt) : "기록 없음",
-        },
-        {
-          header: "활성 수강권 수",
-          value: (row: MemberRowData) => row.activeEntitlements.length,
-        },
-        {
-          header: "보유 콘텐츠",
-          value: (row: MemberRowData) =>
-            row.activeEntitlements.map((entitlement) => entitlement.productTitle).join(";"),
-        },
-        { header: "만료 예정", value: (row: MemberRowData) => (row.hasExpiring ? "Y" : "N") },
-      ],
-      rows: sortedRows,
-    });
-    toast(`${formatNumber(sortedRows.length)}건을 내보냈습니다.`, "success");
+  // 목록을 서버에서 자르게 되면서 브라우저에는 한 페이지밖에 없다.
+  // 화면에 걸린 필터 그대로를 서버에서 다시 읽어 내보낸다.
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const { members: exported, truncated } = await exportAdminMembersAction({
+        search: query.trim() || null,
+        filter,
+        sort: values.sort,
+      });
+
+      const exportRows: MemberRowData[] = exported.map((member) => {
+        const activeEntitlements = member.entitlements.filter((entitlement) =>
+          isEffectivelyActive(entitlement, referenceDate)
+        );
+        return {
+          member,
+          activeEntitlements,
+          hasExpiring: activeEntitlements.some((entitlement) =>
+            isExpiringSoon(entitlement, referenceDate)
+          ),
+        };
+      });
+
+      exportRowsToCsv({
+        fileName: "이윰-회원수강권",
+        columns: [
+          { header: "회원 ID", value: (row: MemberRowData) => row.member.id },
+          { header: "이름", value: (row: MemberRowData) => row.member.name },
+          { header: "이메일", value: (row: MemberRowData) => row.member.email },
+          { header: "가입일", value: (row: MemberRowData) => formatDate(row.member.joinedAt) },
+          {
+            header: "최근 로그인",
+            value: (row: MemberRowData) =>
+              row.member.lastSignInAt ? formatDateTime(row.member.lastSignInAt) : "기록 없음",
+          },
+          {
+            header: "활성 수강권 수",
+            value: (row: MemberRowData) => row.activeEntitlements.length,
+          },
+          {
+            header: "보유 콘텐츠",
+            value: (row: MemberRowData) =>
+              row.activeEntitlements.map((entitlement) => entitlement.productTitle).join(";"),
+          },
+          { header: "만료 예정", value: (row: MemberRowData) => (row.hasExpiring ? "Y" : "N") },
+        ],
+        rows: exportRows,
+      });
+
+      toast(
+        truncated
+          ? `상한까지 ${formatNumber(exportRows.length)}건만 내보냈습니다. 필터를 좁혀 나눠 받아 주세요.`
+          : `${formatNumber(exportRows.length)}건을 내보냈습니다.`,
+        truncated ? "error" : "success"
+      );
+    } catch {
+      toast("내보내기에 실패했습니다. 잠시 후 다시 시도해 주세요.", "error");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const toggleSort = (key: SortKey) => {
-    const next =
-      sortKey === key
-        ? `${key}_${sortDirection === "asc" ? "desc" : "asc"}`
-        : `${key}_${defaultSortDirection[key]}`;
-    setValues({ sort: next });
+    setValues({ sort: nextSortValue(key, { sortKey, sortDirection }) });
   };
 
   const ariaSortFor = (key: SortKey) =>
@@ -285,12 +267,12 @@ export default function AdminMemberManager({
         <div className={styles.summaryBar}>
           <SummaryItem
             label={isFiltered ? "조회된 회원" : "전체 회원"}
-            value={summary.members}
+            value={summary.totalMembers}
             unit="명"
           />
-          <SummaryItem label="활성 수강권" value={summary.active} unit="개" tone="active" />
+          <SummaryItem label="활성 수강권" value={summary.activeEntitlements} unit="개" tone="active" />
           <SummaryItem label="최근 30일 가입" value={summary.newMembers} unit="명" />
-          <SummaryItem label="30일 내 만료" value={summary.expiring} unit="개" tone="warning" />
+          <SummaryItem label="30일 내 만료" value={summary.expiringEntitlements} unit="개" tone="warning" />
         </div>
       </section>
 
@@ -301,15 +283,15 @@ export default function AdminMemberManager({
             <p>콘텐츠 접근은 로그인 여부가 아닌 유효한 수강권을 기준으로 합니다.</p>
           </div>
           <div className={styles.panelHeaderActions}>
-            <span className={styles.resultCount}>총 {formatNumber(sortedRows.length)}명</span>
+            <span className={styles.resultCount}>총 {formatNumber(totalCount)}명</span>
             <button
               type="button"
               className={styles.exportButton}
-              onClick={exportCsv}
-              disabled={sortedRows.length === 0}
+              onClick={() => void exportCsv()}
+              disabled={totalCount === 0 || exporting}
             >
               <DownloadIcon />
-              CSV 내보내기
+              {exporting ? "내보내는 중…" : "CSV 내보내기"}
             </button>
           </div>
         </div>
@@ -340,7 +322,7 @@ export default function AdminMemberManager({
           </label>
         </div>
 
-        {sortedRows.length > 0 ? (
+        {totalCount > 0 ? (
           <>
             <div className={styles.tableWrap}>
               <table className={`${styles.memberTable} ${tableStyles.cardTable}`}>
@@ -385,7 +367,7 @@ export default function AdminMemberManager({
                   </tr>
                 </thead>
                 <tbody>
-                  {pagedRows.map((row) => (
+                  {rows.map((row) => (
                     <MemberRow
                       key={row.member.id}
                       row={row}
@@ -401,7 +383,7 @@ export default function AdminMemberManager({
             <AdminPagination
               page={currentPage}
               pageSize={pageSize}
-              totalCount={sortedRows.length}
+              totalCount={totalCount}
               unit="명"
               onPageChange={(next) => setValues({ page: next })}
               onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
@@ -954,36 +936,33 @@ function expiryTime(entitlement: AdminMemberEntitlement) {
     : Number.POSITIVE_INFINITY;
 }
 
-function compareRows(left: MemberRowData, right: MemberRowData, key: SortKey) {
-  switch (key) {
-    case "name":
-      return left.member.name.localeCompare(right.member.name, "ko-KR");
-    case "active":
-      return left.activeEntitlements.length - right.activeEntitlements.length;
-    case "signin":
-      return signInTime(left.member) - signInTime(right.member);
-    default:
-      return new Date(left.member.joinedAt).getTime() - new Date(right.member.joinedAt).getTime();
-  }
-}
 
 /** 로그인 기록이 없는 회원은 항상 가장 오래된 쪽으로 보낸다. */
-function signInTime(member: AdminMember) {
-  return member.lastSignInAt ? new Date(member.lastSignInAt).getTime() : 0;
-}
 
 function toMemberFilter(value: string): MemberFilter {
   return memberFilters.some((item) => item.value === value) ? (value as MemberFilter) : "all";
 }
 
+// 정렬은 서버가 하므로 URL 값은 SQL이 아는 다섯 가지뿐이다.
+// 헤더 버튼은 그중 하나를 고르는 역할만 한다.
 function parseSort(value: string): { sortKey: SortKey; sortDirection: SortDirection } {
-  const [key, direction] = value.split("_");
-  const sortKey: SortKey =
-    key === "name" || key === "active" || key === "signin" || key === "joined" ? key : "joined";
-  return {
-    sortKey,
-    sortDirection: direction === "asc" ? "asc" : "desc",
-  };
+  if (value === "joined_asc") return { sortKey: "joined", sortDirection: "asc" };
+  if (value === "name") return { sortKey: "name", sortDirection: "asc" };
+  if (value === "entitlements_desc") return { sortKey: "active", sortDirection: "desc" };
+  if (value === "signin_desc") return { sortKey: "signin", sortDirection: "desc" };
+  return { sortKey: "joined", sortDirection: "desc" };
+}
+
+/** 헤더를 눌렀을 때 보낼 서버 정렬값. 가입일만 양방향을 지원한다. */
+function nextSortValue(key: SortKey, current: { sortKey: SortKey; sortDirection: SortDirection }) {
+  if (key === "joined") {
+    return current.sortKey === "joined" && current.sortDirection === "desc"
+      ? "joined_asc"
+      : "joined_desc";
+  }
+  if (key === "name") return "name";
+  if (key === "active") return "entitlements_desc";
+  return "signin_desc";
 }
 
 function getEffectiveStatus(

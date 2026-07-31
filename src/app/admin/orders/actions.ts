@@ -1,7 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwnerAdmin } from "@/lib/admin/auth";
+import { requireAdmin, requireOwnerAdmin } from "@/lib/admin/auth";
+import {
+  readOption,
+  readParam,
+  resolvePeriodStart,
+} from "@/lib/admin/list-params";
+import {
+  ADMIN_ORDER_PERIODS,
+  ADMIN_ORDER_SORTS,
+  ADMIN_ORDER_SOURCE_FILTERS,
+  ADMIN_ORDER_STATUS_FILTERS,
+  loadAdminOrdersForExport,
+  type AdminOrder,
+} from "@/lib/admin/orders";
 import { resolveFullCancellation } from "@/lib/payments/toss-verification";
 import {
   cancelTossPayment,
@@ -15,6 +28,40 @@ export type RefundPaymentOrderResult = {
   ok: boolean;
   message: string;
 };
+
+/** 화면이 URL에 걸어 둔 조회 조건. 클라이언트가 보낸 값이라 그대로 믿지 않는다. */
+export type ExportAdminOrdersInput = {
+  q?: string;
+  source?: string;
+  status?: string;
+  period?: string;
+  attention?: boolean;
+  sort?: string;
+};
+
+/**
+ * CSV 내보내기.
+ *
+ * 목록이 서버 페이지네이션으로 바뀌면서 브라우저에는 한 페이지밖에 없다. 정산과
+ * CS 대응은 걸린 필터 전체가 필요하므로, 같은 조건으로 서버에서 다시 읽어 돌려준다.
+ */
+export async function exportAdminOrdersAction(
+  input: ExportAdminOrdersInput
+): Promise<{ rows: AdminOrder[]; truncated: boolean }> {
+  await requireAdmin();
+
+  const period = readOption(input.period, ADMIN_ORDER_PERIODS, "all");
+  const { orders, truncated } = await loadAdminOrdersForExport({
+    search: readParam(input.q),
+    source: readOption(input.source, ADMIN_ORDER_SOURCE_FILTERS, "all"),
+    status: readOption(input.status, ADMIN_ORDER_STATUS_FILTERS, "all"),
+    since: resolvePeriodStart(period),
+    attention: input.attention === true,
+    sort: readOption(input.sort, ADMIN_ORDER_SORTS, "created_desc"),
+  });
+
+  return { rows: orders, truncated };
+}
 
 type RefundStartRow = {
   refund_id: string;

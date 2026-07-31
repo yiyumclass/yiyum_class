@@ -4,14 +4,16 @@ import Link from "next/link";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useTransition,
   type MouseEvent,
   type ReactNode,
 } from "react";
-import { refundPaymentOrderAction } from "@/app/admin/orders/actions";
+import {
+  exportAdminOrdersAction,
+  refundPaymentOrderAction,
+} from "@/app/admin/orders/actions";
 import {
   describeFulfillmentIssue,
   detectFulfillmentIssue,
@@ -20,6 +22,7 @@ import type {
   AdminOrder,
   AdminOrderSource,
   AdminOrderStatus,
+  AdminOrderSummary,
 } from "@/lib/admin/orders";
 import { exportRowsToCsv } from "@/lib/admin/csv";
 import { useTableParams } from "@/lib/admin/use-table-params";
@@ -42,7 +45,12 @@ import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminOrderManager.module.css";
 
 type AdminOrderManagerProps = {
+  /** 서버가 이미 거르고 정렬하고 잘라 준 한 페이지. 화면은 더 거르지 않는다. */
   orders: AdminOrder[];
+  totalCount: number;
+  summary: AdminOrderSummary;
+  page: number;
+  pageSize: number;
   databaseReady: boolean;
   sourceMessage: string | null;
   paymentMode: "free" | "toss_test" | "toss_live";
@@ -52,14 +60,17 @@ type AdminOrderManagerProps = {
 type SourceFilter = "all" | AdminOrderSource;
 type StatusFilter = "all" | AdminOrderStatus;
 type PeriodFilter = "all" | "today" | "7days" | "30days";
-type SortKey =
-  | "created_desc"
-  | "created_asc"
-  | "amount_desc"
-  | "amount_asc"
-  | "progress_desc"
-  | "progress_asc";
-type SortColumn = "created" | "amount" | "progress";
+// 진도율 정렬은 서버에 없다. 자르기 전 전체 행에 학습 집계를 돌려야 해서
+// 페이지를 나눈 이점이 사라진다. 진도 기준 조회는 학습 현황 화면에 있다.
+type SortKey = "created_desc" | "created_asc" | "amount_desc" | "amount_asc";
+type SortColumn = "created" | "amount";
+
+const sortKeys: readonly SortKey[] = [
+  "created_desc",
+  "created_asc",
+  "amount_desc",
+  "amount_asc",
+];
 
 function fulfillmentIssueOf(order: AdminOrder) {
   return detectFulfillmentIssue({
@@ -103,37 +114,31 @@ const orderTableDefaults = {
   size: DEFAULT_ADMIN_PAGE_SIZE,
 };
 
-// 금액이 없는 주문(연동 대기)은 0원과 구분해야 하므로 정렬에서 양 끝으로 몬다.
-const UNKNOWN_AMOUNT = -1;
-
-const sortComparators: Record<SortKey, (a: AdminOrder, b: AdminOrder) => number> = {
-  created_desc: (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-  created_asc: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
-  amount_desc: (a, b) => (b.amountKrw ?? UNKNOWN_AMOUNT) - (a.amountKrw ?? UNKNOWN_AMOUNT),
-  amount_asc: (a, b) => (a.amountKrw ?? UNKNOWN_AMOUNT) - (b.amountKrw ?? UNKNOWN_AMOUNT),
-  progress_desc: (a, b) => b.learning.progressPercent - a.learning.progressPercent,
-  progress_asc: (a, b) => a.learning.progressPercent - b.learning.progressPercent,
-};
-
 export default function AdminOrderManager({
   orders,
+  totalCount,
+  summary,
+  page,
+  pageSize,
   databaseReady,
   sourceMessage,
   paymentMode,
   canRefund,
 }: AdminOrderManagerProps) {
   const { toast } = useAdminFeedback();
-  const { values, setValues, numberOf } = useTableParams(orderTableDefaults);
+  const { values, setValues } = useTableParams(orderTableDefaults);
   const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
   const [detailOrder, setDetailOrder] = useState<AdminOrder | null>(null);
+  const [isExporting, startExport] = useTransition();
 
   const sourceFilter = values.source as SourceFilter;
   const statusFilter = values.status as StatusFilter;
   const periodFilter = values.period as PeriodFilter;
   const onlyNeedsAttention = values.attention === "1";
-  const sort = (sortComparators[values.sort as SortKey] ? values.sort : "created_desc") as SortKey;
-  const page = numberOf("page");
-  const pageSize = numberOf("size");
+  // 서버가 허용값 밖의 정렬을 기본값으로 떨어뜨리므로 화면 표시도 같이 맞춘다.
+  const sort = (
+    sortKeys.includes(values.sort as SortKey) ? values.sort : "created_desc"
+  ) as SortKey;
 
   const searchQuery = values.q;
   const [searchInput, setSearchInput] = useState(searchQuery);
@@ -156,54 +161,6 @@ export default function AdminOrderManager({
     return () => window.clearTimeout(timer);
   }, [searchInput, setValues]);
 
-  const filteredOrders = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase("ko-KR");
-    const periodStart = getPeriodStart(periodFilter);
-
-    const matched = orders.filter((order) => {
-      if (onlyNeedsAttention && !fulfillmentIssueOf(order)) return false;
-      const matchesQuery =
-        !normalizedQuery ||
-        order.customerName.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
-        order.customerEmail.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
-        order.productTitle.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
-        order.orderUid.toLowerCase().includes(normalizedQuery) ||
-        order.id.toLowerCase().includes(normalizedQuery);
-      const matchesSource = sourceFilter === "all" || order.source === sourceFilter;
-      const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-      const matchesPeriod = !periodStart || new Date(order.createdAt) >= periodStart;
-
-      return matchesQuery && matchesSource && matchesStatus && matchesPeriod;
-    });
-
-    return matched.sort(sortComparators[sort]);
-  }, [
-    onlyNeedsAttention,
-    orders,
-    periodFilter,
-    searchQuery,
-    sort,
-    sourceFilter,
-    statusFilter,
-  ]);
-
-  // URL로 직접 들어온 범위 밖 페이지 번호가 빈 표를 만들지 않게 잘라 맞춘다.
-  const currentPage = Math.min(
-    Math.max(1, page),
-    Math.max(1, Math.ceil(filteredOrders.length / pageSize))
-  );
-
-  const pagedOrders = useMemo(
-    () => filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [currentPage, filteredOrders, pageSize]
-  );
-
-  // 이 지표만 전체 기준이다. 필터에 가려 놓친 미이행 주문이 생기면 안 되기 때문이다.
-  const needsAttentionCount = useMemo(
-    () => orders.filter((order) => fulfillmentIssueOf(order)).length,
-    [orders]
-  );
-
   const filterApplied =
     searchQuery.trim().length > 0 ||
     sourceFilter !== "all" ||
@@ -211,30 +168,12 @@ export default function AdminOrderManager({
     periodFilter !== "all" ||
     onlyNeedsAttention;
 
-  // 요약이 항상 전체 누적이면 기간을 좁혀 놓고도 전체 매출을 읽게 된다.
-  const summary = useMemo(() => {
-    const todayStart = getPeriodStart("today");
-    return {
-      total: filteredOrders.length,
-      today: filteredOrders.filter(
-        (order) => todayStart && new Date(order.createdAt) >= todayStart
-      ).length,
-      active: filteredOrders.filter((order) => order.status === "active").length,
-      revenue: filteredOrders.reduce(
-        (total, order) =>
-          total + (order.paymentStatus === "paid" ? order.amountKrw ?? 0 : 0),
-        0
-      ),
-    };
-  }, [filteredOrders]);
-
   const toggleSort = useCallback(
     (column: SortColumn) => {
       const [descKey, ascKey] = (
         {
           created: ["created_desc", "created_asc"],
           amount: ["amount_desc", "amount_asc"],
-          progress: ["progress_desc", "progress_asc"],
         } as const
       )[column];
       setValues({ sort: sort === descKey ? ascKey : descKey });
@@ -242,14 +181,44 @@ export default function AdminOrderManager({
     [setValues, sort]
   );
 
+  // 화면에는 한 페이지밖에 없으므로, 걸린 필터 전체를 서버에서 다시 읽어 내보낸다.
   const exportCsv = useCallback(() => {
-    exportRowsToCsv({
-      fileName: "이윰-주문내역",
-      columns: orderCsvColumns,
-      rows: filteredOrders,
+    startExport(async () => {
+      try {
+        const { rows, truncated } = await exportAdminOrdersAction({
+          q: searchQuery,
+          source: sourceFilter,
+          status: statusFilter,
+          period: periodFilter,
+          attention: onlyNeedsAttention,
+          sort,
+        });
+
+        exportRowsToCsv({
+          fileName: "이윰-주문내역",
+          columns: orderCsvColumns,
+          rows,
+        });
+
+        if (truncated) {
+          toast("상한 5000행까지만 내보냈습니다.", "error");
+        } else {
+          toast(`${formatCount(rows.length)}건을 내보냈습니다.`, "success");
+        }
+      } catch (error) {
+        console.error("Failed to export admin orders:", error);
+        toast("CSV를 내보내지 못했습니다. 잠시 후 다시 시도해 주세요.", "error");
+      }
     });
-    toast(`${formatCount(filteredOrders.length)}건을 내보냈습니다.`, "success");
-  }, [filteredOrders, toast]);
+  }, [
+    onlyNeedsAttention,
+    periodFilter,
+    searchQuery,
+    sort,
+    sourceFilter,
+    statusFilter,
+    toast,
+  ]);
 
   const copyValue = useCallback(
     async (label: string, value: string) => {
@@ -315,25 +284,33 @@ export default function AdminOrderManager({
           {filterApplied && <span className={styles.filterBadge}>필터 적용됨</span>}
         </div>
         <div className={styles.summaryBar}>
-          <SummaryItem label="신청 건수" value={formatCount(summary.total)} unit="건" />
-          <SummaryItem label="오늘 신청" value={formatCount(summary.today)} unit="건" />
+          <SummaryItem
+            label="신청 건수"
+            value={formatCount(summary.totalOrders)}
+            unit="건"
+          />
+          <SummaryItem
+            label="오늘 신청"
+            value={formatCount(summary.todayOrders)}
+            unit="건"
+          />
           <SummaryItem
             label="이용 가능"
-            value={formatCount(summary.active)}
+            value={formatCount(summary.activeEntitlements)}
             unit="건"
             tone="active"
           />
           <SummaryItem
             label="확인된 결제액"
-            value={formatPrice(summary.revenue)}
+            value={formatPrice(summary.paidAmount)}
             note={paymentMode === "toss_test" ? "테스트 승인액" : undefined}
           />
           <SummaryItem
             label="이행 확인 필요 (전체 기준)"
-            value={formatCount(needsAttentionCount)}
+            value={formatCount(summary.attentionTotal)}
             unit="건"
-            tone={needsAttentionCount > 0 ? "attention" : undefined}
-            note={needsAttentionCount > 0 ? "결제 후 이용권 미발급" : undefined}
+            tone={summary.attentionTotal > 0 ? "attention" : undefined}
+            note={summary.attentionTotal > 0 ? "결제 후 이용권 미발급" : undefined}
           />
         </div>
       </section>
@@ -345,15 +322,15 @@ export default function AdminOrderManager({
             <p>결제 상태와 이용권 상태를 분리하고 환불 전 수강 기록을 확인합니다.</p>
           </div>
           <div className={styles.panelHeaderActions}>
-            <span className={styles.resultCount}>총 {formatCount(filteredOrders.length)}건</span>
+            <span className={styles.resultCount}>총 {formatCount(totalCount)}건</span>
             <button
               type="button"
               className={styles.exportButton}
               onClick={exportCsv}
-              disabled={filteredOrders.length === 0}
+              disabled={totalCount === 0 || isExporting}
             >
               <DownloadIcon />
-              CSV 내보내기
+              {isExporting ? "CSV 준비 중…" : "CSV 내보내기"}
             </button>
           </div>
         </div>
@@ -391,7 +368,7 @@ export default function AdminOrderManager({
               onChange={(value) => setValues({ period: value })}
             />
             {/* 0건이어도 필터가 걸려 있으면 해제 수단이 남아 있어야 한다. */}
-            {(needsAttentionCount > 0 || onlyNeedsAttention) && (
+            {(summary.attentionTotal > 0 || onlyNeedsAttention) && (
               <button
                 type="button"
                 className={
@@ -400,7 +377,7 @@ export default function AdminOrderManager({
                 onClick={() => setValues({ attention: onlyNeedsAttention ? "0" : "1" })}
                 aria-pressed={onlyNeedsAttention}
               >
-                이행 확인 필요 {formatCount(needsAttentionCount)}건
+                이행 확인 필요 {formatCount(summary.attentionTotal)}건
               </button>
             )}
             <FilterSelect
@@ -417,7 +394,7 @@ export default function AdminOrderManager({
           기간입니다.
         </p>
 
-        {filteredOrders.length > 0 ? (
+        {orders.length > 0 ? (
           <>
             <div className={styles.tableWrap}>
               <table className={`${styles.orderTable} ${tableStyles.cardTable}`}>
@@ -435,12 +412,8 @@ export default function AdminOrderManager({
                     />
                     <th scope="col">결제 상태</th>
                     <th scope="col">이용권</th>
-                    <SortableHeader
-                      label="학습 기록"
-                      column="progress"
-                      sort={sort}
-                      onSort={toggleSort}
-                    />
+                    {/* 진도율 정렬은 서버에 없다. 표시만 하고 정렬 버튼은 두지 않는다. */}
+                    <th scope="col">학습 기록</th>
                     <SortableHeader
                       label="신청일"
                       column="created"
@@ -451,7 +424,7 @@ export default function AdminOrderManager({
                   </tr>
                 </thead>
                 <tbody>
-                  {pagedOrders.map((order) => (
+                  {orders.map((order) => (
                     <OrderRow
                       key={order.id}
                       order={order}
@@ -465,9 +438,9 @@ export default function AdminOrderManager({
             </div>
 
             <AdminPagination
-              page={currentPage}
+              page={page}
               pageSize={pageSize}
-              totalCount={filteredOrders.length}
+              totalCount={totalCount}
               onPageChange={(next) => setValues({ page: next })}
               onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
             />
@@ -476,14 +449,14 @@ export default function AdminOrderManager({
           <div className={styles.emptyState}>
             <ReceiptIcon />
             <strong>
-              {orders.length === 0
+              {!filterApplied
                 ? "아직 신청 내역이 없습니다."
                 : onlyNeedsAttention
                   ? "확인이 필요한 주문이 없습니다."
                   : "조건에 맞는 내역이 없습니다."}
             </strong>
             <p>
-              {orders.length === 0
+              {!filterApplied
                 ? "회원이 콘텐츠를 신청하면 이곳에서 바로 확인할 수 있습니다."
                 : onlyNeedsAttention
                   ? "결제가 완료된 주문은 모두 이용권까지 발급됐습니다."
@@ -1155,28 +1128,6 @@ function RefundDialog({ order, onClose }: { order: AdminOrder; onClose: () => vo
       )}
     </AdminDialog>
   );
-}
-
-// "오늘"은 KST 자정에 맞춘 당일 기준이고, "7일/30일"은 조회 시점부터 거슬러 세는 롤링 윈도우다. 기준이 다른 것은 의도된 설계다.
-function getPeriodStart(period: PeriodFilter) {
-  if (period === "all") return null;
-
-  const now = new Date();
-  if (period === "today") {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Seoul",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(now);
-    const year = Number(parts.find((part) => part.type === "year")?.value);
-    const month = Number(parts.find((part) => part.type === "month")?.value);
-    const day = Number(parts.find((part) => part.type === "day")?.value);
-    return new Date(Date.UTC(year, month - 1, day) - 9 * 60 * 60 * 1000);
-  }
-
-  const days = period === "7days" ? 7 : 30;
-  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
 function formatSource(source: AdminOrderSource) {

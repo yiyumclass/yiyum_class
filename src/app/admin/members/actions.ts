@@ -1,8 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwnerAdmin } from "@/lib/admin/auth";
-import type { AdminEntitlementStatus } from "@/lib/admin/members";
+import { requireAdmin, requireOwnerAdmin } from "@/lib/admin/auth";
+import {
+  ADMIN_MEMBER_FILTERS,
+  ADMIN_MEMBER_SORTS,
+  loadAdminMembersForExport,
+  type AdminEntitlementStatus,
+  type AdminMember,
+} from "@/lib/admin/members";
 import { createClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/validation/safe-input";
 
@@ -106,4 +112,30 @@ function revalidateAdminEntitlements() {
 
 function isSetupError(code: string | undefined) {
   return code === "42883" || code === "PGRST202" || code === "PGRST205";
+}
+
+/**
+ * CSV 내보내기.
+ *
+ * 목록을 서버에서 자르게 되면서 브라우저에 전체 데이터가 없다. 화면에 걸린 필터
+ * 그대로를 서버에서 다시 읽어 돌려준다. 인자는 신뢰하지 않고 허용값으로 좁힌다.
+ */
+export async function exportAdminMembersAction(input: {
+  search?: string | null;
+  filter?: string;
+  sort?: string;
+}): Promise<{ members: AdminMember[]; truncated: boolean }> {
+  await requireAdmin();
+
+  const filter = (ADMIN_MEMBER_FILTERS as readonly string[]).includes(input.filter ?? "")
+    ? (input.filter as (typeof ADMIN_MEMBER_FILTERS)[number])
+    : "all";
+  const sort = (ADMIN_MEMBER_SORTS as readonly string[]).includes(input.sort ?? "")
+    ? (input.sort as (typeof ADMIN_MEMBER_SORTS)[number])
+    : "joined_desc";
+  const search = typeof input.search === "string" && input.search.trim().length > 0
+    ? input.search.trim()
+    : null;
+
+  return loadAdminMembersForExport({ search, filter, sort });
 }

@@ -9,35 +9,11 @@ import { loadRecentAdminAuditEntries } from "@/lib/admin/audit";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminCourses } from "@/lib/admin/courses";
 import { loadAdminIntegrationHealth } from "@/lib/admin/health";
-import { loadAdminMembers } from "@/lib/admin/members";
-import { detectFulfillmentIssue } from "@/lib/admin/order-fulfillment";
-import { loadAdminOrders } from "@/lib/admin/orders";
+import { loadAdminMemberSummary } from "@/lib/admin/members";
+import { loadAdminOrderSummary } from "@/lib/admin/orders";
 import { loadAdminProducts } from "@/lib/admin/products";
 import { getPaymentMode } from "@/lib/store/free-enrollment";
 import styles from "./admin.module.css";
-
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/**
- * KST 기준 하루 경계를 UTC 시각으로 돌려준다. 서버는 UTC로 돌기 때문에
- * 환산 없이 "오늘"을 세면 자정부터 오전 9시까지의 매출이 전날로 잡힌다.
- */
-function startOfKstDay(now: Date, daysAgo = 0) {
-  const kstNow = new Date(now.getTime() + KST_OFFSET_MS);
-  const midnight = Date.UTC(
-    kstNow.getUTCFullYear(),
-    kstNow.getUTCMonth(),
-    kstNow.getUTCDate() - daysAgo
-  );
-  return midnight - KST_OFFSET_MS;
-}
-
-function toTime(value: string | null) {
-  if (!value) return null;
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? time : null;
-}
 
 export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
@@ -54,50 +30,13 @@ export default async function AdminDashboardPage() {
     loadAdminCourses(),
     loadAdminIntegrationHealth(),
     loadRecentAdminAuditEntries(),
-    loadAdminOrders(),
-    loadAdminMembers(),
+    loadAdminOrderSummary(),
+    loadAdminMemberSummary(),
   ]);
 
-  const now = new Date();
-  const todayStart = startOfKstDay(now);
-  const weekStart = startOfKstDay(now, 6);
-  const monthStart = startOfKstDay(now, 29);
-  const expirySoon = now.getTime() + 30 * DAY_MS;
-
-  const paidOrders = orderResult.orders.filter((order) => order.paymentStatus === "paid");
-  const revenueAt = (order: (typeof paidOrders)[number]) =>
-    toTime(order.approvedAt) ?? toTime(order.createdAt) ?? 0;
-  const sumAmount = (since: number) =>
-    paidOrders
-      .filter((order) => revenueAt(order) >= since)
-      .reduce((total, order) => total + (order.amountKrw ?? 0), 0);
-
-  const todayRevenue = sumAmount(todayStart);
-  const weekRevenue = sumAmount(weekStart);
-  const todayOrderCount = orderResult.orders.filter(
-    (order) => (toTime(order.createdAt) ?? 0) >= todayStart
-  ).length;
-  const attentionCount = orderResult.orders.filter((order) =>
-    detectFulfillmentIssue({
-      source: order.source,
-      paymentStatus: order.paymentStatus,
-      entitlementStatus: order.status,
-      paymentKeyPresent: order.paymentKeyPresent,
-      refundStatus: order.refundStatus,
-    })
-  ).length;
-
-  const newMemberCount = memberResult.members.filter(
-    (member) => (toTime(member.joinedAt) ?? 0) >= monthStart
-  ).length;
-  const expiringCount = memberResult.members.reduce((total, member) => {
-    const expiring = member.entitlements.filter((entitlement) => {
-      if (entitlement.status !== "active") return false;
-      const expiresAt = toTime(entitlement.expiresAt);
-      return expiresAt !== null && expiresAt >= now.getTime() && expiresAt <= expirySoon;
-    });
-    return total + expiring.length;
-  }, 0);
+  // 집계는 전부 SQL이 계산한다. 기간 경계(KST 오늘, 최근 30일)도 RPC 안에 있다.
+  const orderSummary = orderResult.summary;
+  const memberSummary = memberResult.summary;
 
   const paymentMode = getPaymentMode();
   const revenueNote =
@@ -108,15 +47,12 @@ export default async function AdminDashboardPage() {
   const ordersReady = orderResult.databaseReady;
   const membersReady = memberResult.databaseReady;
 
+  // 서버 집계는 기간별 결제액을 나눠주지 않는다. 없는 숫자를 지어내지 않도록
+  // 기간 카드를 접고 누적 한 장으로 둔다.
   const revenueCards = [
     {
-      label: "오늘 결제액",
-      value: ordersReady ? money(todayRevenue) : "—",
-      note: revenueNote,
-    },
-    {
-      label: "최근 7일 결제액",
-      value: ordersReady ? money(weekRevenue) : "—",
+      label: "누적 결제액",
+      value: ordersReady ? money(orderSummary.paidAmount) : "—",
       note: revenueNote,
     },
   ];
@@ -124,19 +60,21 @@ export default async function AdminDashboardPage() {
   const operationCards = [
     {
       label: "오늘 신청",
-      value: ordersReady ? `${todayOrderCount.toLocaleString("ko-KR")}건` : "—",
+      value: ordersReady ? `${orderSummary.todayOrders.toLocaleString("ko-KR")}건` : "—",
       note: "무료·유료 신청 전체입니다",
       href: "/admin/orders",
     },
     {
       label: "최근 30일 신규 가입",
-      value: membersReady ? `${newMemberCount.toLocaleString("ko-KR")}명` : "—",
+      value: membersReady ? `${memberSummary.newMembers.toLocaleString("ko-KR")}명` : "—",
       note: "가입일 기준입니다",
       href: "/admin/members",
     },
     {
       label: "30일 내 만료 예정 수강권",
-      value: membersReady ? `${expiringCount.toLocaleString("ko-KR")}건` : "—",
+      value: membersReady
+        ? `${memberSummary.expiringEntitlements.toLocaleString("ko-KR")}건`
+        : "—",
       note: "전체 기준입니다",
       href: "/admin/members?filter=expiring",
     },
@@ -207,12 +145,12 @@ export default async function AdminDashboardPage() {
 
         {!ordersReady && (
           <p className={styles.kpiNotice} role="status">
-            {orderResult.message ?? "주문 정보를 불러오지 못했습니다."}
+            주문 정보를 불러오지 못했습니다.
           </p>
         )}
         {!membersReady && (
           <p className={styles.kpiNotice} role="status">
-            {memberResult.message ?? "회원 정보를 불러오지 못했습니다."}
+            회원 정보를 불러오지 못했습니다.
           </p>
         )}
 
@@ -237,14 +175,16 @@ export default async function AdminDashboardPage() {
           ))}
 
           <Link
-            className={attentionCount > 0 ? styles.kpiCardAlert : styles.kpiCard}
+            className={orderSummary.attentionTotal > 0 ? styles.kpiCardAlert : styles.kpiCard}
             href="/admin/orders?attention=1"
           >
             <p>
               이행 확인 필요
-              {attentionCount > 0 && <AlertIcon className={styles.kpiIcon} />}
+              {orderSummary.attentionTotal > 0 && <AlertIcon className={styles.kpiIcon} />}
             </p>
-            <strong>{ordersReady ? `${attentionCount.toLocaleString("ko-KR")}건` : "—"}</strong>
+            <strong>
+              {ordersReady ? `${orderSummary.attentionTotal.toLocaleString("ko-KR")}건` : "—"}
+            </strong>
             <small>전체 기준입니다</small>
           </Link>
         </div>

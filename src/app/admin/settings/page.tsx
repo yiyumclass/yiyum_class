@@ -7,7 +7,7 @@ import AdminSettingsFeedback, {
 } from "@/components/admin/AdminSettingsFeedback";
 import { requireOwnerAdmin } from "@/lib/admin/auth";
 import { loadManagedAdminUsers } from "@/lib/admin/admin-users";
-import { loadAdminMembers } from "@/lib/admin/members";
+import { loadAdminMemberOptions } from "@/lib/admin/members";
 import styles from "./settings.module.css";
 
 export const metadata: Metadata = {
@@ -53,7 +53,7 @@ export default async function AdminSettingsPage({
   const currentAdmin = await requireOwnerAdmin();
   const [admins, memberResult, query] = await Promise.all([
     loadManagedAdminUsers(),
-    loadAdminMembers(),
+    loadAdminMemberOptions(),
     searchParams,
   ]);
 
@@ -69,11 +69,7 @@ export default async function AdminSettingsPage({
         }
       : null;
 
-  const memberOptions = memberResult.members.map((member) => ({
-    id: member.id,
-    name: member.name,
-    email: member.email,
-  }));
+  const memberOptions = memberResult.options;
 
   const activeOwnerCount = admins.filter(
     (admin) => admin.isActive && admin.role === "owner"
