@@ -1,15 +1,19 @@
 import "server-only";
 
+import { isAuditAction } from "@/lib/admin/audit-labels";
 import { requireAdmin } from "@/lib/admin/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/validation/safe-input";
 
 export type AdminAuditEntry = {
   id: number;
   action: string;
   targetType: string;
   targetLabel: string;
+  actorUserId: string | null;
   actorName: string;
   createdAt: string;
+  metadata: Record<string, unknown>;
 };
 
 type AuditRow = {
@@ -64,14 +68,63 @@ export async function loadRecentAdminAuditEntries(): Promise<AdminAuditEntry[]> 
   return decorateAuditRows(supabase, data ?? []);
 }
 
+/** 화면이 걸 수 있는 조회 조건. 모두 Supabase 쿼리 빌더로 표현 가능한 범위다. */
+export type AdminAuditFilters = {
+  targetType?: AuditTargetType | null;
+  /** created_at 하한(ISO). 페이지가 KST 하루 경계로 환산해 넘긴다. */
+  from?: string | null;
+  /** created_at 상한(ISO, 포함). */
+  to?: string | null;
+  actorUserId?: string | null;
+  action?: string | null;
+};
+
+/** 내보내기 한 번에 읽을 최대 행 수. 사고 조사 범위를 덮으면서도 응답이 터지지 않는 선. */
+export const AUDIT_EXPORT_LIMIT = 2000;
+
+/** 화면(searchParams)과 내보내기 액션이 함께 넘기는 날것의 조회 조건. */
+export type AdminAuditFilterInput = {
+  target?: string;
+  from?: string;
+  to?: string;
+  actor?: string;
+  action?: string;
+};
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/**
+ * 날짜 입력(`YYYY-MM-DD`)을 KST 하루 경계의 UTC 시각으로 바꾼다.
+ * 서버가 UTC로 돌기 때문에 환산 없이 비교하면 하루가 9시간씩 밀린다.
+ */
+function toKstBoundary(value: string | undefined, edge: "start" | "end") {
+  if (!value || !DATE_ONLY.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  const kstMidnight = Date.UTC(year, month - 1, day);
+  if (!Number.isFinite(kstMidnight)) return null;
+  const offset = edge === "start" ? 0 : 24 * 60 * 60 * 1000 - 1;
+  return new Date(kstMidnight + offset - KST_OFFSET_MS).toISOString();
+}
+
+/** 검증되지 않은 쿼리 문자열을 조회 조건으로 좁힌다. 화면과 액션이 같은 규칙을 쓴다. */
+export function resolveAuditFilters(input: AdminAuditFilterInput): AdminAuditFilters {
+  return {
+    targetType: isAuditTargetType(input.target) ? input.target : null,
+    action: isAuditAction(input.action) ? input.action : null,
+    actorUserId: input.actor && isUuid(input.actor) ? input.actor : null,
+    from: toKstBoundary(input.from, "start"),
+    to: toKstBoundary(input.to, "end"),
+  };
+}
+
 /**
  * 전체 감사 로그를 페이지 단위로 읽는다. 대시보드의 최근 8건만으로는
  * 사후 추적이 불가능하다.
  */
-export async function loadAdminAuditPage(options: {
-  page: number;
-  targetType?: AuditTargetType | null;
-}): Promise<AdminAuditPage> {
+export async function loadAdminAuditPage(
+  options: AdminAuditFilters & { page: number }
+): Promise<AdminAuditPage> {
   const admin = await requireAdmin();
   if (admin.role !== "owner") {
     return { entries: [], total: 0, page: 1, pageCount: 1, available: false };
@@ -89,9 +142,11 @@ export async function loadAdminAuditPage(options: {
     .order("created_at", { ascending: false })
     .range(from, from + AUDIT_PAGE_SIZE - 1);
 
-  if (options.targetType) {
-    query = query.eq("target_type", options.targetType);
-  }
+  if (options.targetType) query = query.eq("target_type", options.targetType);
+  if (options.action) query = query.eq("action", options.action);
+  if (options.actorUserId) query = query.eq("actor_user_id", options.actorUserId);
+  if (options.from) query = query.gte("created_at", options.from);
+  if (options.to) query = query.lte("created_at", options.to);
 
   const { data, count, error } = await query.returns<AuditRow[]>();
 
@@ -107,6 +162,46 @@ export async function loadAdminAuditPage(options: {
     total,
     page,
     pageCount: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)),
+    available: true,
+  };
+}
+
+/**
+ * 내보내기용. 화면은 25건씩 끊어 보지만 CSV까지 한 페이지만 나가면 정산·사고
+ * 조사에 쓸 수 없어, 같은 조건의 전체(상한까지)를 한 번에 읽는다.
+ */
+export async function loadAdminAuditForExport(
+  filters: AdminAuditFilters
+): Promise<{ entries: AdminAuditEntry[]; truncated: boolean; available: boolean }> {
+  const admin = await requireAdmin();
+  if (admin.role !== "owner") {
+    return { entries: [], truncated: false, available: false };
+  }
+
+  const supabase = await createClient();
+  let query = supabase
+    .from("admin_audit_logs")
+    .select("id, actor_user_id, action, target_type, target_id, metadata, created_at")
+    .order("created_at", { ascending: false })
+    .limit(AUDIT_EXPORT_LIMIT);
+
+  if (filters.targetType) query = query.eq("target_type", filters.targetType);
+  if (filters.action) query = query.eq("action", filters.action);
+  if (filters.actorUserId) query = query.eq("actor_user_id", filters.actorUserId);
+  if (filters.from) query = query.gte("created_at", filters.from);
+  if (filters.to) query = query.lte("created_at", filters.to);
+
+  const { data, error } = await query.returns<AuditRow[]>();
+
+  if (error) {
+    console.error("Failed to export the admin audit log:", error.message);
+    return { entries: [], truncated: false, available: false };
+  }
+
+  const rows = data ?? [];
+  return {
+    entries: await decorateAuditRows(supabase, rows),
+    truncated: rows.length >= AUDIT_EXPORT_LIMIT,
     available: true,
   };
 }
@@ -138,8 +233,11 @@ async function decorateAuditRows(
     action: row.action,
     targetType: row.target_type,
     targetLabel: readTargetLabel(row),
+    actorUserId: row.actor_user_id,
     actorName: row.actor_user_id ? actorNames.get(row.actor_user_id) ?? "관리자" : "시스템",
     createdAt: row.created_at,
+    metadata:
+      typeof row.metadata === "object" && row.metadata !== null ? row.metadata : {},
   }));
 }
 

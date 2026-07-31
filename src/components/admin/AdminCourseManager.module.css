@@ -82,14 +82,10 @@
   stroke-linecap: round;
 }
 
-.setupNotice,
-.actionNotice {
+.setupNotice {
   border-radius: 9px;
   display: flex;
   align-items: flex-start;
-}
-
-.setupNotice {
   padding: 15px 17px;
   border: 1px solid #dfd0af;
   background: #f7f0da;
@@ -127,40 +123,6 @@
   background: rgba(255, 253, 244, 0.55);
   color: #6d5d37;
   font-size: 13px;
-}
-
-.actionNotice {
-  min-height: 44px;
-  padding: 7px 8px 7px 13px;
-  border: 1px solid #d7cbbf;
-  background: #f8eee7;
-  color: #7d5140;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  font-size: 14px;
-}
-
-.actionNotice button {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #9a7565;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.actionNotice svg,
-.dialogHeader button svg {
-  width: 17px;
-  height: 17px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
 }
 
 .summaryBar {
@@ -1135,9 +1097,45 @@
   font-weight: 650;
 }
 
-.videoCreateHeading > span {
-  color: #998f84;
+/* 파일을 고르기 전에 읽히도록 안내 문구 수준이 아니라 경고 배너로 세운다. */
+.videoCreateConstraint {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #e2cfae;
+  border-radius: 8px;
+  background: #f9f2df;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.videoCreateConstraint > svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  fill: none;
+  stroke: #9c7c3c;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.videoCreateConstraint > span {
+  display: grid;
+  gap: 3px;
+}
+
+.videoCreateConstraint strong {
+  color: #6d5c33;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.videoCreateConstraint small {
+  color: #8d7d5d;
   font-size: 12px;
+  line-height: 1.45;
 }
 
 .videoCreatePicker {
@@ -1320,80 +1318,7 @@
   cursor: pointer;
 }
 
-.dialogBackdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  padding: 22px;
-  background: rgba(28, 25, 22, 0.62);
-  display: grid;
-  place-items: center;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-}
-
-.dialog {
-  width: min(100%, 700px);
-  max-height: calc(100dvh - 44px);
-  overflow-y: auto;
-  padding: 0;
-  border: 1px solid #ddd4c8;
-  border-radius: 12px;
-  background: #fffaf4;
-  box-shadow: 0 28px 76px rgba(28, 23, 19, 0.28);
-}
-
-.dialogHeader {
-  min-height: 118px;
-  padding: 26px 28px 22px;
-  border-bottom: 1px solid #e3dbd0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.dialogHeader > div > span {
-  display: block;
-  margin-bottom: 6px;
-  color: #a65a3c;
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.14em;
-}
-
-.dialogHeader h2 {
-  margin: 0;
-  color: #2e2923;
-  font-size: 24px;
-  letter-spacing: -0.03em;
-}
-
-.dialogHeader p {
-  margin: 7px 0 0;
-  color: #8d8479;
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.dialogHeader > button {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #80776c;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.dialogHeader > button:hover:not(:disabled) { background: #eee6dc; }
-
 .dialogForm {
-  padding: 24px 28px 28px;
   display: grid;
   gap: 17px;
 }
@@ -1572,43 +1497,22 @@
 .previewUnavailable strong { color: #795342; font-size: 13px; }
 .previewUnavailable small { color: #9b7d6c; font-size: 12px; line-height: 1.45; }
 
-.dialogActions {
-  padding-top: 2px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 7px;
-}
-
-.dialogActions button,
 .successState button {
   min-height: 44px;
   padding: 0 16px;
+  border: 1px solid #b85c38;
   border-radius: 7px;
+  background: #b85c38;
+  color: #fffaf3;
   font-family: inherit;
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
 }
 
-.dialogActions button:first-child {
-  border: 1px solid #d7cec2;
-  background: transparent;
-  color: #70675d;
-}
-
-.dialogActions button:last-child,
-.successState button {
-  border: 1px solid #b85c38;
-  background: #b85c38;
-  color: #fffaf3;
-}
-
-.dialogActions button:disabled,
-.dialogHeader button:disabled { opacity: 0.56; cursor: wait; }
-
 .successState {
-  min-height: 330px;
-  padding: 50px 28px;
+  min-height: 300px;
+  padding: 36px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1652,11 +1556,11 @@
 .lessonActions button:focus-visible,
 .orderButtons button:focus-visible,
 .orderButtonsCompact button:focus-visible,
-.dialog button:focus-visible,
-.dialog input:focus-visible,
-.dialog select:focus-visible,
-.dialog textarea:focus-visible,
-.actionNotice button:focus-visible {
+.dialogForm button:focus-visible,
+.dialogForm input:focus-visible,
+.dialogForm select:focus-visible,
+.dialogForm textarea:focus-visible,
+.successState button:focus-visible {
   outline: 2px solid #b85c38;
   outline-offset: 2px;
 }
@@ -1700,14 +1604,12 @@
 @media (max-width: 760px) {
   .pageHeading,
   .summaryBar,
-  .courseWorkspace,
-  .dialog {
+  .courseWorkspace {
     padding-top: 0 !important;
   }
 
   .summaryBar,
-  .courseWorkspace,
-  .dialog {
+  .courseWorkspace {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
@@ -1779,11 +1681,6 @@
   .lessonActions .videoAction,
   .lessonActions .videoActionReady { width: 88px; }
   .lessonActions > button:last-child { width: 44px; }
-  .dialogBackdrop { padding: 10px; }
-  .dialog { max-height: calc(100dvh - 20px); }
-  .dialogHeader { min-height: 0; padding: 20px 18px 17px; }
-  .dialogHeader p { max-width: 260px; }
-  .dialogForm { padding: 18px; }
   .formGrid { grid-template-columns: 1fr; }
   .lockedMeta { grid-template-columns: 1fr; gap: 5px; }
   .videoCreateSelected {
@@ -1797,7 +1694,6 @@
     grid-column: 3;
     grid-row: 1;
   }
-  .dialogActions { display: grid; grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 400px) {

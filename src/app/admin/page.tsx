@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertIcon } from "@/components/admin/icons";
 import {
   formatAdminDateTime,
   formatAuditAction,
@@ -8,17 +9,139 @@ import { loadRecentAdminAuditEntries } from "@/lib/admin/audit";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminCourses } from "@/lib/admin/courses";
 import { loadAdminIntegrationHealth } from "@/lib/admin/health";
+import { loadAdminMembers } from "@/lib/admin/members";
+import { detectFulfillmentIssue } from "@/lib/admin/order-fulfillment";
+import { loadAdminOrders } from "@/lib/admin/orders";
 import { loadAdminProducts } from "@/lib/admin/products";
+import { getPaymentMode } from "@/lib/store/free-enrollment";
 import styles from "./admin.module.css";
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * KST 기준 하루 경계를 UTC 시각으로 돌려준다. 서버는 UTC로 돌기 때문에
+ * 환산 없이 "오늘"을 세면 자정부터 오전 9시까지의 매출이 전날로 잡힌다.
+ */
+function startOfKstDay(now: Date, daysAgo = 0) {
+  const kstNow = new Date(now.getTime() + KST_OFFSET_MS);
+  const midnight = Date.UTC(
+    kstNow.getUTCFullYear(),
+    kstNow.getUTCMonth(),
+    kstNow.getUTCDate() - daysAgo
+  );
+  return midnight - KST_OFFSET_MS;
+}
+
+function toTime(value: string | null) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+}
 
 export default async function AdminDashboardPage() {
   const admin = await requireAdmin();
-  const [productResult, courseResult, integrationHealth, auditEntries] = await Promise.all([
+  const isOwner = admin.role === "owner";
+  const [
+    productResult,
+    courseResult,
+    integrationHealth,
+    auditEntries,
+    orderResult,
+    memberResult,
+  ] = await Promise.all([
     loadAdminProducts(),
     loadAdminCourses(),
     loadAdminIntegrationHealth(),
     loadRecentAdminAuditEntries(),
+    loadAdminOrders(),
+    loadAdminMembers(),
   ]);
+
+  const now = new Date();
+  const todayStart = startOfKstDay(now);
+  const weekStart = startOfKstDay(now, 6);
+  const monthStart = startOfKstDay(now, 29);
+  const expirySoon = now.getTime() + 30 * DAY_MS;
+
+  const paidOrders = orderResult.orders.filter((order) => order.paymentStatus === "paid");
+  const revenueAt = (order: (typeof paidOrders)[number]) =>
+    toTime(order.approvedAt) ?? toTime(order.createdAt) ?? 0;
+  const sumAmount = (since: number) =>
+    paidOrders
+      .filter((order) => revenueAt(order) >= since)
+      .reduce((total, order) => total + (order.amountKrw ?? 0), 0);
+
+  const todayRevenue = sumAmount(todayStart);
+  const weekRevenue = sumAmount(weekStart);
+  const todayOrderCount = orderResult.orders.filter(
+    (order) => (toTime(order.createdAt) ?? 0) >= todayStart
+  ).length;
+  const attentionCount = orderResult.orders.filter((order) =>
+    detectFulfillmentIssue({
+      source: order.source,
+      paymentStatus: order.paymentStatus,
+      entitlementStatus: order.status,
+      paymentKeyPresent: order.paymentKeyPresent,
+      refundStatus: order.refundStatus,
+    })
+  ).length;
+
+  const newMemberCount = memberResult.members.filter(
+    (member) => (toTime(member.joinedAt) ?? 0) >= monthStart
+  ).length;
+  const expiringCount = memberResult.members.reduce((total, member) => {
+    const expiring = member.entitlements.filter((entitlement) => {
+      if (entitlement.status !== "active") return false;
+      const expiresAt = toTime(entitlement.expiresAt);
+      return expiresAt !== null && expiresAt >= now.getTime() && expiresAt <= expirySoon;
+    });
+    return total + expiring.length;
+  }, 0);
+
+  const paymentMode = getPaymentMode();
+  const revenueNote =
+    paymentMode === "toss_test" ? "테스트 승인액입니다" : "결제 완료 기준입니다";
+  const money = (value: number) => `${value.toLocaleString("ko-KR")}원`;
+
+  // 지표별로 출처가 다르므로, 실패한 쪽만 "—"로 두고 나머지는 그대로 보여준다.
+  const ordersReady = orderResult.databaseReady;
+  const membersReady = memberResult.databaseReady;
+
+  const revenueCards = [
+    {
+      label: "오늘 결제액",
+      value: ordersReady ? money(todayRevenue) : "—",
+      note: revenueNote,
+    },
+    {
+      label: "최근 7일 결제액",
+      value: ordersReady ? money(weekRevenue) : "—",
+      note: revenueNote,
+    },
+  ];
+
+  const operationCards = [
+    {
+      label: "오늘 신청",
+      value: ordersReady ? `${todayOrderCount.toLocaleString("ko-KR")}건` : "—",
+      note: "무료·유료 신청 전체입니다",
+      href: "/admin/orders",
+    },
+    {
+      label: "최근 30일 신규 가입",
+      value: membersReady ? `${newMemberCount.toLocaleString("ko-KR")}명` : "—",
+      note: "가입일 기준입니다",
+      href: "/admin/members",
+    },
+    {
+      label: "30일 내 만료 예정 수강권",
+      value: membersReady ? `${expiringCount.toLocaleString("ko-KR")}건` : "—",
+      note: "전체 기준입니다",
+      href: "/admin/members?filter=expiring",
+    },
+  ];
+
   const lessonCount = courseResult.courses.reduce(
     (courseTotal, course) =>
       courseTotal +
@@ -65,13 +188,66 @@ export default async function AdminDashboardPage() {
           <p className={styles.eyebrow}>OVERVIEW</p>
           <h1>운영 현황</h1>
           <p className={styles.headingDescription}>
-            {admin.displayName}님, 현재 콘텐츠와 어드민 구축 상태를 확인하세요.
+            {admin.displayName}님, 오늘의 운영 지표와 처리할 일을 확인하세요.
           </p>
         </div>
         <Link href="/" className={styles.outlineLink}>
           사용자 화면 보기
           <span aria-hidden="true">↗</span>
         </Link>
+      </section>
+
+      <section className={styles.summarySection} aria-labelledby="operation-kpi-title">
+        <div className={styles.sectionHeadingRow}>
+          <div>
+            <h2 id="operation-kpi-title">오늘의 운영</h2>
+            <p>모든 기간은 한국 시간 기준입니다.</p>
+          </div>
+        </div>
+
+        {!ordersReady && (
+          <p className={styles.kpiNotice} role="status">
+            {orderResult.message ?? "주문 정보를 불러오지 못했습니다."}
+          </p>
+        )}
+        {!membersReady && (
+          <p className={styles.kpiNotice} role="status">
+            {memberResult.message ?? "회원 정보를 불러오지 못했습니다."}
+          </p>
+        )}
+
+        <div className={styles.kpiGrid}>
+          {/* operator는 환불 권한이 없어 매출 수치로 할 수 있는 조치가 없다.
+              금액 카드는 owner에게만 보여준다. */}
+          {isOwner &&
+            revenueCards.map((card) => (
+              <article className={styles.kpiCard} key={card.label}>
+                <p>{card.label}</p>
+                <strong>{card.value}</strong>
+                <small>{card.note}</small>
+              </article>
+            ))}
+
+          {operationCards.map((card) => (
+            <Link className={styles.kpiCard} key={card.label} href={card.href}>
+              <p>{card.label}</p>
+              <strong>{card.value}</strong>
+              <small>{card.note}</small>
+            </Link>
+          ))}
+
+          <Link
+            className={attentionCount > 0 ? styles.kpiCardAlert : styles.kpiCard}
+            href="/admin/orders?attention=1"
+          >
+            <p>
+              이행 확인 필요
+              {attentionCount > 0 && <AlertIcon className={styles.kpiIcon} />}
+            </p>
+            <strong>{ordersReady ? `${attentionCount.toLocaleString("ko-KR")}건` : "—"}</strong>
+            <small>전체 기준입니다</small>
+          </Link>
+        </div>
       </section>
 
       <section className={styles.summarySection} aria-labelledby="content-summary-title">
@@ -86,29 +262,36 @@ export default async function AdminDashboardPage() {
           </span>
         </div>
 
-        <div className={styles.integrationStatus} aria-label="사용자 화면 연동 상태">
-          <IntegrationState label="상품·강의 DB" ready={productResult.databaseReady && courseResult.databaseReady} />
-          <IntegrationState label="공개 커리큘럼" ready={integrationHealth.publicOutlineReady} />
-          <IntegrationState
-            label="무료 신청·수강권"
-            ready={
-              integrationHealth.entitlementReady &&
-              integrationHealth.libraryReady &&
-              integrationHealth.ownedCourseReady
-            }
-          />
-          <IntegrationState
-            label={
-              integrationHealth.videoDelivery === "no-content"
-                ? "영상 저장·재생 (연결된 영상 없음)"
-                : "영상 저장·재생"
-            }
-            ready={
-              courseResult.videoStorageReady &&
-              integrationHealth.videoDelivery === "ready"
-            }
-          />
-        </div>
+        {/* 연동 점검은 매일 볼 지표가 아니다. 이상이 있을 때만 펼쳐 둔다. */}
+        <details className={styles.integrationDetails} open={!platformReady}>
+          <summary>사용자 화면 연동 상태</summary>
+          <div className={styles.integrationStatus}>
+            <IntegrationState
+              label="상품·강의 DB"
+              ready={productResult.databaseReady && courseResult.databaseReady}
+            />
+            <IntegrationState label="공개 커리큘럼" ready={integrationHealth.publicOutlineReady} />
+            <IntegrationState
+              label="무료 신청·수강권"
+              ready={
+                integrationHealth.entitlementReady &&
+                integrationHealth.libraryReady &&
+                integrationHealth.ownedCourseReady
+              }
+            />
+            <IntegrationState
+              label={
+                integrationHealth.videoDelivery === "no-content"
+                  ? "영상 저장·재생 (연결된 영상 없음)"
+                  : "영상 저장·재생"
+              }
+              ready={
+                courseResult.videoStorageReady &&
+                integrationHealth.videoDelivery === "ready"
+              }
+            />
+          </div>
+        </details>
 
         <div className={styles.summaryGrid}>
           {contentSummary.map((item) => (
@@ -123,7 +306,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      {admin.role === "owner" && (
+      {isOwner && (
         <section className={styles.auditPanel} aria-labelledby="recent-audit-title">
           <div className={styles.panelHeading}>
             <div>
@@ -153,17 +336,6 @@ export default async function AdminDashboardPage() {
           )}
         </section>
       )}
-
-      <section className={styles.securityNotice}>
-        <ShieldIcon />
-        <div>
-          <strong>관리자 권한은 서버와 데이터베이스에서 확인합니다.</strong>
-          <p>
-            이메일이나 화면 표시만으로 관리자 여부를 판단하지 않으며, 이후 모든 저장
-            작업도 같은 권한 검사를 거치게 됩니다.
-          </p>
-        </div>
-      </section>
     </div>
   );
 }
@@ -174,17 +346,5 @@ function IntegrationState({ label, ready }: { label: string; ready: boolean }) {
       <span aria-hidden="true">{ready ? "✓" : "!"}</span>
       {label}
     </span>
-  );
-}
-
-
-
-
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3 4.5 6v5.6c0 4.6 3.1 7.7 7.5 9.4 4.4-1.7 7.5-4.8 7.5-9.4V6L12 3Z" />
-      <path d="m8.5 12 2.2 2.2 4.8-5" />
-    </svg>
   );
 }

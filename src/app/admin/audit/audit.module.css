@@ -13,6 +13,34 @@
 .filterActive { border-color: #3b332b; background: #3b332b; color: #fbf8f3; }
 .filter:focus-visible, .filterActive:focus-visible { outline: 2px solid #b85c38; outline-offset: 2px; }
 
+.filterForm { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: end; padding: 16px 18px; border: 1px solid #ddd6ca; border-radius: 11px; background: #fbf8f3; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span { color: #8f867a; font-size: 12px; font-weight: 700; }
+.field input, .field select { min-width: 0; height: 40px; padding: 0 10px; border: 1px solid #d6cec1; border-radius: 8px; background: #fffdf9; color: #4a433c; font: inherit; font-size: 13px; }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid #c47757; outline-offset: 1px; }
+.filterActions { display: flex; align-items: center; gap: 10px; }
+.filterActions button { height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: #3b332b; color: #fbf8f3; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.filterActions button:hover { background: #2b241e; }
+.resetLink { color: #8f867a; font-size: 13px; font-weight: 600; text-decoration: underline; }
+.filterActions button:focus-visible, .resetLink:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+
+.tableHeader { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.tableCaption { margin: 0; color: #9a8e80; font-size: 13px; }
+.csvButton { min-height: 38px; padding: 0 13px; border: 1px solid #d3cabd; border-radius: 8px; background: #fbf8f3; color: #5c554c; display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.csvButton svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.csvButton:hover:not(:disabled) { border-color: #ad9f8e; color: #2b2620; }
+.csvButton:disabled { opacity: .5; cursor: not-allowed; }
+.csvButton:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+
+.details > summary { color: #8f6a55; font-size: 12px; font-weight: 700; cursor: pointer; }
+.details > summary:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.detailList { margin: 8px 0 0; display: grid; gap: 6px; }
+.detailList > div { display: grid; grid-template-columns: minmax(84px, 30%) minmax(0, 1fr); gap: 10px; }
+.detailList dt { color: #9a8e80; font-size: 12px; font-weight: 700; }
+.detailList dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; min-width: 0; color: #4a433c; font-size: 12px; overflow-wrap: anywhere; }
+.detailList s { color: #a29688; }
+.detailEmpty { color: #b5aca0; font-size: 12px; }
+
 .tableWrap { border: 1px solid #ddd6ca; border-radius: 11px; background: #fbf8f3; overflow-x: auto; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .table th { padding: 13px 16px; border-bottom: 1px solid #e7dfd3; color: #8f867a; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-align: left; white-space: nowrap; }
@@ -33,12 +61,20 @@
 
 .notice { margin: 0; padding: 40px 24px; border: 1px dashed #d4c9bb; border-radius: 11px; background: #fbf8f3; color: #8f867a; font-size: 14px; text-align: center; }
 
+@media (max-width: 1000px) {
+  .filterForm { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filterActions { grid-column: 1 / -1; }
+}
+
 @media (max-width: 760px) {
   .heading { flex-direction: column; }
 
-  .table thead { display: none; }
-  .table tr { display: grid; gap: 4px; padding: 13px 15px; border-bottom: 1px solid #efe9e0; }
-  .table td { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 2px 0; border: 0; }
-  .table td::before { content: attr(data-label); color: #9a8e80; font-size: 11px; font-weight: 700; }
+  /* 좁은 화면 카드 변환은 공용 .cardTable이 맡는다. */
+  .tableWrap { border: 0; background: transparent; }
   .targetLabel { max-width: 20ch; }
+  .detailList > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+@media (max-width: 520px) {
+  .filterForm { grid-template-columns: 1fr; }
 }

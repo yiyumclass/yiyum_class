@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import {
+  startTransition,
   useActionState,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
+  type FormEvent,
   type ReactNode,
-  type RefObject,
 } from "react";
 import {
   createCourseAction,
@@ -33,8 +34,26 @@ import {
   formatVideoFileSize,
   readVideoFileDuration,
   validateCourseVideoFile,
+  MAX_COURSE_VIDEO_BYTES,
 } from "@/lib/admin/video-file";
+import { useTableParams } from "@/lib/admin/use-table-params";
+import AdminDialog, { AdminDialogActions } from "./AdminDialog";
+import { useAdminFeedback } from "./AdminFeedback";
 import AdminLessonVideoDialog from "./AdminLessonVideoDialog";
+import {
+  AlertIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  ChevronIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  DatabaseIcon,
+  LayersIcon,
+  PlayIcon,
+  PlusIcon,
+  VideoIcon,
+} from "./icons";
 import styles from "./AdminCourseManager.module.css";
 
 type AdminCourseManagerProps = {
@@ -71,6 +90,14 @@ const initialFormState: CourseFormState = {
   fieldErrors: {},
 };
 
+/**
+ * 선택한 강의를 URL에 남긴다. useState로만 들고 있으면 새로고침이나 링크 공유에서
+ * 항상 첫 강의로 돌아가 어떤 강의를 보던 중이었는지 잃는다.
+ */
+const courseParamDefaults = { course: "" };
+
+const MAX_COURSE_VIDEO_MB = Math.floor(MAX_COURSE_VIDEO_BYTES / (1024 * 1024));
+
 export default function AdminCourseManager({
   courses,
   availableProducts,
@@ -78,12 +105,12 @@ export default function AdminCourseManager({
   videoStorageReady,
   sourceMessage,
 }: AdminCourseManagerProps) {
-  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id ?? "");
+  const { toast } = useAdminFeedback();
+  const { values, setValues } = useTableParams(courseParamDefaults);
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const selectedCourse =
-    courses.find((course) => course.id === selectedCourseId) ?? courses[0] ?? null;
+    courses.find((course) => course.id === values.course) ?? courses[0] ?? null;
   const allLessons = courses.flatMap((course) =>
     course.sections.flatMap((section) => section.lessons)
   );
@@ -101,12 +128,15 @@ export default function AdminCourseManager({
   ) => {
     if (!databaseReady || movingId) return;
     setMovingId(itemId);
-    setNotice(null);
     try {
+      // 순서 변경은 표 아래에서 일어나므로 화면 상단 배너로는 결과가 보이지 않는다.
       const result = await moveCourseContentAction(kind, itemId, direction);
-      setNotice(result.message);
+      toast(result.message, result.ok ? "success" : "error");
     } catch {
-      setNotice("순서를 변경하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.");
+      toast(
+        "순서를 변경하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+        "error"
+      );
     } finally {
       setMovingId(null);
     }
@@ -150,15 +180,6 @@ export default function AdminCourseManager({
               )}
             </p>
           </div>
-        </div>
-      )}
-
-      {notice && (
-        <div className={styles.actionNotice} role="status">
-          <span>{notice}</span>
-          <button type="button" onClick={() => setNotice(null)} aria-label="안내 닫기">
-            <CloseIcon />
-          </button>
         </div>
       )}
 
@@ -224,7 +245,7 @@ export default function AdminCourseManager({
                   type="button"
                   key={course.id}
                   className={selected ? styles.courseItemActive : styles.courseItem}
-                  onClick={() => setSelectedCourseId(course.id)}
+                  onClick={() => setValues({ course: course.id })}
                   aria-pressed={selected}
                 >
                   <span className={styles.courseItemIcon}><PlayIcon /></span>
@@ -305,7 +326,7 @@ export default function AdminCourseManager({
           onClose={() => setDialog(null)}
           onCreated={(lesson, videoFile) => {
             if (!videoFile) {
-              setNotice("새 차시를 작성 중 상태로 추가했습니다.");
+              toast("새 차시를 작성 중 상태로 추가했습니다.", "success");
               setDialog(null);
               return;
             }
@@ -338,7 +359,7 @@ export default function AdminCourseManager({
           autoStart={dialog.autoStart}
           onClose={() => setDialog(null)}
           onComplete={(message) => {
-            setNotice(message);
+            toast(message, "success");
             setDialog(null);
           }}
         />
@@ -772,15 +793,33 @@ function CourseCreateDialog({
           defaultShortTitle={defaultProduct?.title.slice(0, 80)}
         />
         <input type="hidden" name="status" value="draft" />
-        <DialogActions pending={pending} onClose={onClose} submitLabel="강의 연결" />
+        <AdminDialogActions busy={pending} onClose={onClose} submitLabel="강의 연결" />
       </form>
     </CourseDialogShell>
   );
 }
 
 function CourseEditDialog({ course, onClose }: { course: AdminCourse; onClose: () => void }) {
+  const { confirm } = useAdminFeedback();
   const action = useMemo(() => updateCourseAction.bind(null, course.id), [course.id]);
   const [state, formAction, pending] = useActionState(action, initialFormState);
+
+  /**
+   * 확인창이 비동기라 기본 제출을 항상 막고, 확인을 통과한 뒤 액션을 직접 호출한다.
+   * await 이후에는 event.preventDefault()로 제출을 되돌릴 수 없다.
+   */
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const nextStatus = String(formData.get("status")) as AdminCourseStatus;
+
+    if (nextStatus !== course.status) {
+      const confirmed = await confirm(getCourseStatusConfirmRequest(course, nextStatus));
+      if (!confirmed) return;
+    }
+
+    startTransition(() => formAction(formData));
+  };
 
   return (
     <CourseDialogShell
@@ -791,21 +830,7 @@ function CourseEditDialog({ course, onClose }: { course: AdminCourse; onClose: (
       state={state}
       onClose={onClose}
     >
-      <form
-        action={formAction}
-        className={styles.dialogForm}
-        onSubmit={(event) => {
-          const nextStatus = new FormData(event.currentTarget).get("status");
-          if (
-            nextStatus !== course.status &&
-            !window.confirm(
-              getCourseStatusConfirmMessage(course, String(nextStatus) as AdminCourseStatus)
-            )
-          ) {
-            event.preventDefault();
-          }
-        }}
-      >
+      <form className={styles.dialogForm} onSubmit={handleSubmit}>
         <FormMessage state={state} />
         <div className={styles.lockedMeta}>
           <span>연결 상품</span>
@@ -825,7 +850,7 @@ function CourseEditDialog({ course, onClose }: { course: AdminCourse; onClose: (
           </span>
           <FieldError message={state.fieldErrors.status} />
         </label>
-        <DialogActions pending={pending} onClose={onClose} submitLabel="변경 내용 저장" />
+        <AdminDialogActions busy={pending} onClose={onClose} submitLabel="변경 내용 저장" />
       </form>
     </CourseDialogShell>
   );
@@ -944,8 +969,8 @@ function SectionDialog(props:
           <FieldError message={state.fieldErrors.description} />
         </label>
         <StatusField defaultValue={section?.status ?? "draft"} label="챕터 상태" />
-        <DialogActions
-          pending={pending}
+        <AdminDialogActions
+          busy={pending}
           onClose={props.onClose}
           submitLabel={isCreate ? "챕터 추가" : "변경 내용 저장"}
         />
@@ -1071,8 +1096,16 @@ function LessonDialog(props:
                 <span id="lesson-video-label">강의 영상</span>
                 <small>선택 사항</small>
               </div>
-              <span>MP4 · 최대 50MB</span>
             </div>
+
+            {/* 제약을 파일 선택 뒤 오류로만 알리면 인코딩까지 마친 파일이 거부된다. */}
+            <p className={styles.videoCreateConstraint}>
+              <AlertIcon />
+              <span>
+                <strong>MP4 형식, 최대 {MAX_COURSE_VIDEO_MB}MB까지 올릴 수 있습니다.</strong>
+                <small>이 조건을 넘는 파일은 선택해도 업로드되지 않습니다.</small>
+              </span>
+            </p>
 
             {videoFile ? (
               <div className={styles.videoCreateSelected}>
@@ -1196,8 +1229,8 @@ function LessonDialog(props:
             <small>결제·체험 기능을 연결하기 전까지 영상은 관리자 또는 수강권 보유자만 재생할 수 있습니다.</small>
           </span>
         </div>
-        <DialogActions
-          pending={pending}
+        <AdminDialogActions
+          busy={pending}
           disabled={videoReading || Boolean(videoError)}
           onClose={props.onClose}
           submitLabel={
@@ -1230,73 +1263,27 @@ function CourseDialogShell({
   onClose: () => void;
   children: ReactNode;
 }) {
-  const dialogRef = useRef<HTMLElement>(null);
-  useDialogBehavior(dialogRef, pending, onClose);
-
   return (
-    <div
-      className={styles.dialogBackdrop}
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !pending) onClose();
-      }}
+    <AdminDialog
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      busy={pending}
+      size="medium"
+      onClose={onClose}
     >
-      <section
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="course-dialog-title"
-        aria-describedby="course-dialog-description"
-      >
-        <header className={styles.dialogHeader}>
-          <div>
-            <span>{eyebrow}</span>
-            <h2 id="course-dialog-title">{title}</h2>
-            <p id="course-dialog-description">{description}</p>
-          </div>
-          <button
-            autoFocus
-            type="button"
-            onClick={onClose}
-            disabled={pending}
-            aria-label={`${title} 창 닫기`}
-          >
-            <CloseIcon />
-          </button>
-        </header>
-        {state.status === "success" ? (
-          <div className={styles.successState} role="status">
-            <span><CheckIcon /></span>
-            <strong>{state.message}</strong>
-            <p>변경 내용이 강의 관리 화면에 반영되었습니다.</p>
-            <button type="button" onClick={onClose}>목록으로 돌아가기</button>
-          </div>
-        ) : children}
-      </section>
-    </div>
+      {state.status === "success" ? (
+        <div className={styles.successState} role="status">
+          <span><CheckIcon /></span>
+          <strong>{state.message}</strong>
+          <p>변경 내용이 강의 관리 화면에 반영되었습니다.</p>
+          <button type="button" onClick={onClose}>목록으로 돌아가기</button>
+        </div>
+      ) : children}
+    </AdminDialog>
   );
 }
 
-function DialogActions({
-  pending,
-  disabled = false,
-  onClose,
-  submitLabel,
-}: {
-  pending: boolean;
-  disabled?: boolean;
-  onClose: () => void;
-  submitLabel: string;
-}) {
-  return (
-    <div className={styles.dialogActions}>
-      <button type="button" onClick={onClose} disabled={pending}>취소</button>
-      <button type="submit" disabled={pending || disabled}>
-        {pending ? "저장 중..." : submitLabel}
-      </button>
-    </div>
-  );
-}
 
 function FormMessage({ state }: { state: CourseFormState }) {
   return state.status === "error" ? (
@@ -1371,55 +1358,6 @@ function FieldError({ message }: { message?: string }) {
   return message ? <small className={styles.fieldError}>{message}</small> : null;
 }
 
-function useDialogBehavior(
-  dialogRef: RefObject<HTMLElement | null>,
-  pending: boolean,
-  onClose: () => void
-) {
-  useEffect(() => {
-    const returnFocusTo = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    return () => returnFocusTo?.focus();
-  }, []);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pending) {
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-
-      const elements = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href]"
-        )
-      );
-      const first = elements[0];
-      const last = elements.at(-1);
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [dialogRef, onClose, pending]);
-}
-
 function ExposureState({
   label,
   ready,
@@ -1452,14 +1390,32 @@ function getClassroomBlocker(
   return "강의실 공개 조건을 확인해 주세요.";
 }
 
-function getCourseStatusConfirmMessage(course: AdminCourse, nextStatus: AdminCourseStatus) {
+function getCourseStatusConfirmRequest(
+  course: AdminCourse,
+  nextStatus: AdminCourseStatus
+) {
   if (nextStatus === "published") {
-    return `‘${course.title}’을 공개할까요?\n판매 중 상품이라면 수강권 보유자가 강의실에 입장할 수 있습니다.`;
+    return {
+      title: `‘${course.title}’을 공개할까요?`,
+      description: "판매 중 상품이라면 수강권 보유자가 강의실에 입장할 수 있습니다.",
+      confirmLabel: "강의 공개",
+    };
   }
   if (nextStatus === "archived") {
-    return `‘${course.title}’을 보관할까요?\n판매 페이지 커리큘럼과 수강생 강의실에서 모두 숨겨집니다.`;
+    return {
+      title: `‘${course.title}’을 보관할까요?`,
+      description: "판매 페이지 커리큘럼과 수강생 강의실에서 모두 숨겨집니다.",
+      confirmLabel: "보관",
+      tone: "danger" as const,
+    };
   }
-  return `‘${course.title}’을 작성 중으로 변경할까요?\n판매 페이지 목차는 유지되지만 수강생은 강의실에 입장할 수 없습니다.`;
+  return {
+    title: `‘${course.title}’을 작성 중으로 변경할까요?`,
+    description:
+      "판매 페이지 목차는 유지되지만 수강생은 강의실에 입장할 수 없습니다.",
+    confirmLabel: "작성 중으로 변경",
+    tone: "danger" as const,
+  };
 }
 
 function StatusDot({ status }: { status: AdminCourseStatus }) {
@@ -1491,15 +1447,3 @@ function formatDuration(seconds: number) {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
-function PlusIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>; }
-function CloseIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8M14 6l-8 8" /></svg>; }
-function PlayIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m10 9 5 3-5 3V9Z" /></svg>; }
-function VideoIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2" /><path d="m8 7.5 4 2.5-4 2.5v-5Z" /></svg>; }
-function DatabaseIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 10v6M12 7h.01" /></svg>; }
-function ChevronIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6.5 8 3.5 3.5L13.5 8" /></svg>; }
-function ChevronRightIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 6 4 4-4 4" /></svg>; }
-function ArrowUpIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 11 4-4 4 4M10 7v7" /></svg>; }
-function ArrowDownIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 9 4 4 4-4M10 13V6" /></svg>; }
-function AlertIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3 2.5 16h15L10 3Z" /><path d="M10 7v4M10 14h.01" /></svg>; }
-function CheckIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>; }
-function LayersIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 8 8-4 8 4-8 4-8-4Z" /><path d="m4 12 8 4 8-4M4 16l8 4 8-4" /></svg>; }

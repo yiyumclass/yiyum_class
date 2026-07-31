@@ -1,0 +1,204 @@
+.picker {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  color: #8f867a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d6cec1;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #25211c;
+  font: inherit;
+  font-size: 14px;
+}
+
+.input:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: 1px;
+}
+
+.searchField {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchField svg {
+  position: absolute;
+  left: 11px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #9a8e80;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.searchField .input {
+  padding-left: 34px;
+}
+
+.results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin: 4px 0 0;
+  padding: 4px;
+  border: 1px solid #ddd6ca;
+  border-radius: 10px;
+  background: #fffdf9;
+  box-shadow: 0 10px 22px rgba(53, 44, 35, 0.12);
+  list-style: none;
+  max-height: 288px;
+  overflow-y: auto;
+}
+
+.results button {
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #25211c;
+  display: grid;
+  gap: 2px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.results button:hover {
+  background: #f2ece2;
+}
+
+.results button:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: -2px;
+}
+
+.results strong {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.results span {
+  color: #9a8e80;
+  font-size: 12px;
+}
+
+.empty {
+  padding: 12px 10px;
+  color: #9a8e80;
+  font-size: 13px;
+}
+
+.selected {
+  min-height: 44px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid #d6cec1;
+  border-radius: 8px;
+  background: #fffdf9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selectedIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.selectedIdentity strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedIdentity span {
+  overflow: hidden;
+  color: #9a8e80;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clear {
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #8f867a;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.clear svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.clear:hover {
+  background: #f2ece2;
+  color: #25211c;
+}
+
+.clear:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: 1px;
+}
+
+.toggle {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9a8e80;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  color: #c47757;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 0;
+  color: #9a8e80;
+  font-size: 12px;
+  line-height: 1.5;
+}

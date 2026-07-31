@@ -1,37 +1,3 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  padding: 22px;
-  background: rgba(28, 25, 22, 0.66);
-  display: grid;
-  place-items: center;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-}
-
-.dialog {
-  width: min(100%, 760px);
-  max-height: calc(100dvh - 44px);
-  overflow-y: auto;
-  border: 1px solid #d9d0c4;
-  border-radius: 13px;
-  background: #fffaf4;
-  color: #37312b;
-  box-shadow: 0 30px 80px rgba(28, 23, 19, 0.32);
-}
-
-.header {
-  min-height: 112px;
-  padding: 24px 27px 20px;
-  border-bottom: 1px solid #e2d9ce;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-}
-
-.header > div > span,
 .sectionHeading > div > span {
   display: block;
   color: #a65a3c;
@@ -40,43 +6,8 @@
   letter-spacing: 0.14em;
 }
 
-.header h2 {
-  margin: 6px 0 0;
-  color: #2e2923;
-  font-size: 26px;
-  letter-spacing: -0.035em;
-}
-
-.header p {
-  max-width: 570px;
-  margin: 7px 0 0;
-  overflow: hidden;
-  color: #8d8479;
-  font-size: 14px;
-  line-height: 1.55;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.header > button {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: #f1ebe3;
-  color: #71675d;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-.header > button:hover:not(:disabled) { background: #e9e1d7; }
-.header > button:disabled { opacity: 0.5; cursor: default; }
-
-.header svg,
 .unavailable svg,
+.constraint > svg,
 .errorMessage svg {
   width: 18px;
   height: 18px;
@@ -88,9 +19,43 @@
 }
 
 .body {
-  padding: 22px 27px;
   display: grid;
   gap: 16px;
+}
+
+/* 파일을 고르기 전에 읽히도록 보조 문구가 아니라 배너로 세운다. */
+.constraint {
+  margin: 0;
+  padding: 11px 12px;
+  border: 1px solid #e2cfae;
+  border-radius: 8px;
+  background: #f9f2df;
+  color: #9c7c3c;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.constraint > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.constraint > span {
+  display: grid;
+  gap: 3px;
+}
+
+.constraint strong {
+  color: #6d5c33;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.constraint small {
+  color: #8d7d5d;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .unavailable {
@@ -245,31 +210,7 @@
   cursor: pointer;
 }
 
-.removeConfirm {
-  padding: 11px 12px;
-  border: 1px solid #dfc8ba;
-  border-radius: 8px;
-  background: #f8ede6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.removeConfirm p { margin: 0; color: #805948; font-size: 12px; line-height: 1.5; }
-.removeConfirm > span { flex: 0 0 auto; display: flex; gap: 6px; }
-.removeConfirm button {
-  min-height: 34px;
-  padding: 0 9px;
-  border: 1px solid #d0b9aa;
-  border-radius: 5px;
-  background: #fffaf5;
-  color: #7a5c4d;
-  font-family: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-.removeConfirm button:last-child { border-color: #a85d42; background: #a85d42; color: #fffaf5; }
+.removeButton:disabled { opacity: 0.45; cursor: default; }
 
 .dropzone {
   min-height: 230px;
@@ -373,10 +314,6 @@
 .errorMessage svg { flex: 0 0 auto; }
 
 .footer {
-  min-height: 72px;
-  padding: 15px 27px;
-  border-top: 1px solid #e2d9ce;
-  background: #fbf6ef;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -409,8 +346,8 @@
 .footer button:disabled { border-color: #ddd4c9; background: #e7e0d7; color: #a1998f; cursor: default; }
 
 .successState {
-  min-height: 330px;
-  padding: 32px;
+  min-height: 280px;
+  padding: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -441,27 +378,21 @@
   white-space: nowrap;
 }
 
-.dialog button:focus-visible,
-.dialog input:focus-visible,
-.dialog video:focus-visible {
+.body button:focus-visible,
+.body input:focus-visible,
+.body video:focus-visible,
+.footer button:focus-visible {
   outline: 2px solid #a65a3c;
   outline-offset: 3px;
 }
 
 @media (max-width: 640px) {
-  .backdrop { padding: 10px; }
-  .dialog { max-height: calc(100dvh - 20px); }
-  .header { min-height: 0; padding: 20px 18px 17px; }
-  .header p { max-width: 250px; }
-  .body { padding: 18px; }
   .currentVideo,
   .uploadSection { padding-top: 0 !important; }
   .dropzone { min-height: 200px; padding: 22px 15px; }
-  .footer { padding: 14px 18px; align-items: stretch; flex-direction: column; }
+  .footer { align-items: stretch; flex-direction: column; }
   .footer > div { display: grid; grid-template-columns: 1fr 1.5fr; }
   .footer button { width: 100%; }
-  .removeConfirm { align-items: stretch; flex-direction: column; }
-  .removeConfirm > span { justify-content: flex-end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

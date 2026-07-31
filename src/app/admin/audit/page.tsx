@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdminAuditCsvButton from "@/components/admin/AdminAuditCsvButton";
+import tableStyles from "@/components/admin/AdminTable.module.css";
 import {
   AUDIT_TARGET_TYPES,
-  isAuditTargetType,
   loadAdminAuditPage,
-  type AuditTargetType,
+  resolveAuditFilters,
+  type AdminAuditFilterInput,
 } from "@/lib/admin/audit";
 import {
+  AUDIT_ACTIONS,
+  describeAuditMetadata,
   formatAuditAction,
   formatAuditTarget,
   formatAuditTimestamp,
 } from "@/lib/admin/audit-labels";
+import { loadManagedAdminUsers } from "@/lib/admin/admin-users";
 import { requireOwnerAdmin } from "@/lib/admin/auth";
 import styles from "./audit.module.css";
 
@@ -19,27 +24,53 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+type AuditSearchParams = AdminAuditFilterInput & { page?: string };
+
 export default async function AdminAuditPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; target?: string }>;
+  searchParams: Promise<AuditSearchParams>;
 }) {
   await requireOwnerAdmin();
   const query = await searchParams;
 
-  const targetType: AuditTargetType | null = isAuditTargetType(query.target)
-    ? query.target
-    : null;
+  // 화면에 되돌려 줄 값과 실제 조회 조건을 나눈다. 조회 조건은 검증을 통과한 것만
+  // 남으므로, 잘못된 값이 들어와도 필터가 조용히 사라진 것처럼 보이지 않게 한다.
+  const filterInput: AdminAuditFilterInput = {
+    target: query.target,
+    action: query.action,
+    actor: query.actor,
+    from: query.from,
+    to: query.to,
+  };
+  const filters = resolveAuditFilters(filterInput);
   const requestedPage = Number.parseInt(query.page ?? "1", 10);
-  const result = await loadAdminAuditPage({
-    page: Number.isFinite(requestedPage) ? requestedPage : 1,
-    targetType,
-  });
 
+  const [result, actors] = await Promise.all([
+    loadAdminAuditPage({
+      ...filters,
+      page: Number.isFinite(requestedPage) ? requestedPage : 1,
+    }),
+    loadManagedAdminUsers(),
+  ]);
+
+  const hasFilter =
+    Boolean(filters.targetType) ||
+    Boolean(filters.action) ||
+    Boolean(filters.actorUserId) ||
+    Boolean(filters.from) ||
+    Boolean(filters.to);
+
+  // 페이지 이동으로 걸어 둔 조건이 날아가면 사고 조사 중 처음부터 다시 걸어야 한다.
   const buildHref = (next: { page?: number; target?: string | null }) => {
     const params = new URLSearchParams();
-    const resolvedTarget = next.target === undefined ? targetType : next.target;
+    const resolvedTarget =
+      next.target === undefined ? filters.targetType : next.target;
     if (resolvedTarget) params.set("target", resolvedTarget);
+    if (filters.action) params.set("action", filters.action);
+    if (filters.actorUserId) params.set("actor", filters.actorUserId);
+    if (query.from) params.set("from", query.from);
+    if (query.to) params.set("to", query.to);
     if (next.page && next.page > 1) params.set("page", String(next.page));
     const search = params.toString();
     return search ? `/admin/audit?${search}` : "/admin/audit";
@@ -68,7 +99,7 @@ export default async function AdminAuditPage({
           <div className={styles.filters} aria-label="대상 필터">
             <Link
               href={buildHref({ target: null, page: 1 })}
-              className={targetType === null ? styles.filterActive : styles.filter}
+              className={filters.targetType == null ? styles.filterActive : styles.filter}
             >
               전체
             </Link>
@@ -76,48 +107,141 @@ export default async function AdminAuditPage({
               <Link
                 key={type}
                 href={buildHref({ target: type, page: 1 })}
-                className={targetType === type ? styles.filterActive : styles.filter}
+                className={filters.targetType === type ? styles.filterActive : styles.filter}
               >
                 {formatAuditTarget(type)}
               </Link>
             ))}
           </div>
 
+          {/* 서버 렌더 화면이라 조건 입력은 GET 폼으로 둔다. 자바스크립트 없이도
+              동작하고, 걸어 둔 조건이 그대로 공유 가능한 URL이 된다. */}
+          <form className={styles.filterForm} method="get" action="/admin/audit">
+            {filters.targetType && (
+              <input type="hidden" name="target" value={filters.targetType} />
+            )}
+
+            <label className={styles.field}>
+              <span>시작일</span>
+              <input type="date" name="from" defaultValue={query.from ?? ""} />
+            </label>
+
+            <label className={styles.field}>
+              <span>종료일</span>
+              <input type="date" name="to" defaultValue={query.to ?? ""} />
+            </label>
+
+            <label className={styles.field}>
+              <span>수행자</span>
+              <select name="actor" defaultValue={filters.actorUserId ?? ""}>
+                <option value="">전체</option>
+                {actors.map((actor) => (
+                  <option key={actor.userId} value={actor.userId}>
+                    {actor.displayName || actor.email}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={styles.field}>
+              <span>변경 유형</span>
+              <select name="action" defaultValue={filters.action ?? ""}>
+                <option value="">전체</option>
+                {AUDIT_ACTIONS.map((action) => (
+                  <option key={action} value={action}>
+                    {formatAuditAction(action)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className={styles.filterActions}>
+              <button type="submit">조건 적용</button>
+              {hasFilter && (
+                <Link href="/admin/audit" className={styles.resetLink}>
+                  초기화
+                </Link>
+              )}
+            </div>
+          </form>
+
+          <div className={styles.tableHeader}>
+            <p className={styles.tableCaption}>
+              {hasFilter ? "조건이 걸린 기록입니다." : "전체 기록입니다."}
+            </p>
+            <AdminAuditCsvButton
+              filters={filterInput}
+              disabled={result.total === 0}
+              className={styles.csvButton}
+            />
+          </div>
+
           {result.entries.length > 0 ? (
             <>
               <div className={styles.tableWrap}>
-                <table className={styles.table}>
+                <table className={`${styles.table} ${tableStyles.cardTable}`}>
                   <thead>
                     <tr>
-                      <th>일시</th>
-                      <th>대상</th>
-                      <th>변경 내용</th>
-                      <th>식별자</th>
-                      <th>수행자</th>
+                      <th scope="col">일시</th>
+                      <th scope="col">대상</th>
+                      <th scope="col">변경 내용</th>
+                      <th scope="col">식별자</th>
+                      <th scope="col">수행자</th>
+                      <th scope="col">상세</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {result.entries.map((entry) => (
-                      <tr key={entry.id}>
-                        <td data-label="일시">
-                          <time dateTime={entry.createdAt}>
-                            {formatAuditTimestamp(entry.createdAt)}
-                          </time>
-                        </td>
-                        <td data-label="대상">
-                          <span className={styles.targetBadge}>
-                            {formatAuditTarget(entry.targetType)}
-                          </span>
-                        </td>
-                        <td data-label="변경 내용">{formatAuditAction(entry.action)}</td>
-                        <td data-label="식별자">
-                          <span className={styles.targetLabel} title={entry.targetLabel}>
-                            {entry.targetLabel}
-                          </span>
-                        </td>
-                        <td data-label="수행자">{entry.actorName}</td>
-                      </tr>
-                    ))}
+                    {result.entries.map((entry) => {
+                      const details = describeAuditMetadata(entry.metadata);
+                      return (
+                        <tr key={entry.id}>
+                          <td data-label="일시">
+                            <time dateTime={entry.createdAt}>
+                              {formatAuditTimestamp(entry.createdAt)}
+                            </time>
+                          </td>
+                          <td data-label="대상">
+                            <span className={styles.targetBadge}>
+                              {formatAuditTarget(entry.targetType)}
+                            </span>
+                          </td>
+                          <td data-label="변경 내용">{formatAuditAction(entry.action)}</td>
+                          <td data-label="식별자">
+                            <span className={styles.targetLabel} title={entry.targetLabel}>
+                              {entry.targetLabel}
+                            </span>
+                          </td>
+                          <td data-label="수행자">{entry.actorName}</td>
+                          <td data-label="상세">
+                            {details.length > 0 ? (
+                              <details className={styles.details}>
+                                <summary>{details.length}개 항목</summary>
+                                {/* 표 안에 표를 넣으면 좁은 화면 카드 변환 규칙이
+                                    중첩 표까지 잡아먹어, 목록으로 같은 정보를 낸다. */}
+                                <dl className={styles.detailList}>
+                                  {details.map((row) => (
+                                    <div key={row.key}>
+                                      <dt>{row.label}</dt>
+                                      <dd>
+                                        {row.before !== null && (
+                                          <>
+                                            <s>{row.before}</s>
+                                            <span aria-hidden="true">→</span>
+                                          </>
+                                        )}
+                                        <span>{row.after}</span>
+                                      </dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </details>
+                            ) : (
+                              <span className={styles.detailEmpty}>기록 없음</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -142,8 +266,8 @@ export default async function AdminAuditPage({
             </>
           ) : (
             <p className={styles.notice} role="status">
-              {targetType
-                ? "이 대상에 대한 기록이 아직 없습니다."
+              {hasFilter
+                ? "이 조건에 해당하는 기록이 없습니다."
                 : "아직 운영 변경 기록이 없습니다."}
             </p>
           )}

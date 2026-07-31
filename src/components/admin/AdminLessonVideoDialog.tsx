@@ -19,11 +19,17 @@ import {
   formatVideoFileSize,
   readVideoDuration,
   validateCourseVideoFile,
+  MAX_COURSE_VIDEO_BYTES,
 } from "@/lib/admin/video-file";
 import { createClient } from "@/lib/supabase/client";
+import AdminDialog from "./AdminDialog";
+import { useAdminFeedback } from "./AdminFeedback";
+import { AlertIcon, CheckIcon, VideoIcon } from "./icons";
 import styles from "./AdminLessonVideoDialog.module.css";
 
 const courseVideoBucket = "course-videos";
+
+const maxVideoMegabytes = Math.floor(MAX_COURSE_VIDEO_BYTES / (1024 * 1024));
 
 type UploadPhase =
   | "idle"
@@ -59,9 +65,9 @@ export default function AdminLessonVideoDialog({
   onClose: () => void;
   onComplete: (message: string) => void;
 }) {
+  const { confirm } = useAdminFeedback();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const uploadRef = useRef<tus.Upload | null>(null);
-  const dialogRef = useRef<HTMLElement | null>(null);
   const initialFileHandledRef = useRef(false);
   const autoUploadStartedRef = useRef(false);
   const [selected, setSelected] = useState<SelectedVideo | null>(null);
@@ -69,55 +75,11 @@ export default function AdminLessonVideoDialog({
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   const busy = phase === "reading" || phase === "uploading" || phase === "connecting";
   const currentPlaybackUrl = lesson.videoPath
     ? `/api/learning/video/${encodeURIComponent(courseSlug)}/${encodeURIComponent(lesson.key)}`
     : null;
-
-  useEffect(() => {
-    const returnFocusTo = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    return () => returnFocusTo?.focus();
-  }, []);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busy) {
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !dialogRef.current) return;
-
-      const elements = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          "button:not(:disabled), input:not(:disabled), video[controls]"
-        )
-      );
-      const first = elements[0];
-      const last = elements.at(-1);
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [busy, onClose]);
 
   useEffect(() => {
     return () => {
@@ -134,7 +96,6 @@ export default function AdminLessonVideoDialog({
   const selectFile = useCallback(async (file: File) => {
     if (busy) return;
     setMessage(null);
-    setConfirmingRemove(false);
 
     const validationMessage = validateCourseVideoFile(file);
     if (validationMessage) {
@@ -301,6 +262,15 @@ export default function AdminLessonVideoDialog({
 
   const removeVideo = async () => {
     if (busy) return;
+
+    const confirmed = await confirm({
+      title: "연결된 영상을 삭제할까요?",
+      description: "영상을 삭제하면 차시는 자동으로 작성 중 상태로 변경됩니다.",
+      confirmLabel: "영상 삭제",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
     setPhase("connecting");
     setMessage(null);
     const result = await removeLessonVideoAction(lesson.id);
@@ -314,40 +284,44 @@ export default function AdminLessonVideoDialog({
   };
 
   return (
-    <div
-      className={styles.backdrop}
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !busy) onClose();
-      }}
-    >
-      <section
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="video-dialog-title"
-        aria-describedby="video-dialog-description"
-      >
-        <header className={styles.header}>
-          <div>
-            <span>LESSON VIDEO</span>
-            <h2 id="video-dialog-title">강의 영상 관리</h2>
-            <p id="video-dialog-description">
-              {sectionTitle} · {lesson.title}
-            </p>
+    <AdminDialog
+      eyebrow="LESSON VIDEO"
+      title="강의 영상 관리"
+      description={`${sectionTitle} · ${lesson.title}`}
+      // 업로드 중 창이 닫히면 tus 업로드가 중단된다. busy 동안 ESC와 배경 클릭을 막는다.
+      busy={busy}
+      size="large"
+      onClose={onClose}
+      footer={
+        phase !== "success" ? (
+          <div className={styles.footer}>
+            <p>영상 파일은 비공개 저장소에 보관됩니다.</p>
+            <div>
+              {phase === "uploading" ? (
+                <button type="button" onClick={() => void cancelUpload()}>업로드 취소</button>
+              ) : (
+                <button type="button" onClick={onClose} disabled={busy}>닫기</button>
+              )}
+              <button
+                type="button"
+                className={styles.primaryButton}
+                disabled={!selected || busy || !storageReady}
+                onClick={() => void startUpload()}
+              >
+                {phase === "connecting"
+                  ? "연결 중..."
+                  : phase === "uploading"
+                    ? `${progress}% 업로드 중`
+                    : lesson.videoPath
+                      ? "새 영상으로 교체"
+                      : "영상 업로드"}
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="영상 관리 창 닫기"
-            autoFocus
-          >
-            <CloseIcon />
-          </button>
-        </header>
-
-        <div className={styles.body}>
+        ) : null
+      }
+    >
+      <div className={styles.body}>
           {!storageReady && (
             <div className={styles.unavailable} role="status">
               <AlertIcon />
@@ -391,7 +365,7 @@ export default function AdminLessonVideoDialog({
                   )}
                   <div className={styles.fileMeta}>
                     <span>
-                      <FileIcon />
+                      <VideoIcon />
                       <span>
                         <strong>{lesson.videoFileName ?? "연결된 강의 영상"}</strong>
                         <small>
@@ -410,23 +384,14 @@ export default function AdminLessonVideoDialog({
                     </button>
                   </div>
 
-                  {confirmingRemove ? (
-                    <div className={styles.removeConfirm} role="alert">
-                      <p>영상을 삭제하면 차시는 자동으로 작성 중 상태로 변경됩니다.</p>
-                      <span>
-                        <button type="button" onClick={() => setConfirmingRemove(false)}>취소</button>
-                        <button type="button" onClick={() => void removeVideo()}>삭제 확인</button>
-                      </span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className={styles.removeButton}
-                      onClick={() => setConfirmingRemove(true)}
-                    >
-                      현재 영상 삭제
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    disabled={busy}
+                    onClick={() => void removeVideo()}
+                  >
+                    현재 영상 삭제
+                  </button>
                 </section>
               )}
 
@@ -437,8 +402,16 @@ export default function AdminLessonVideoDialog({
                       <span>{lesson.videoPath ? "REPLACE VIDEO" : "UPLOAD VIDEO"}</span>
                       <h3>{lesson.videoPath ? "새 영상으로 교체" : "영상 파일 업로드"}</h3>
                     </div>
-                    <small>MP4 · 최대 50MB</small>
                   </div>
+
+                  {/* 제약을 작은 보조 문구로만 두면 파일을 고른 뒤에야 거부 사실을 알게 된다. */}
+                  <p className={styles.constraint}>
+                    <AlertIcon />
+                    <span>
+                      <strong>MP4 형식, 최대 {maxVideoMegabytes}MB까지 올릴 수 있습니다.</strong>
+                      <small>이 조건을 넘는 파일은 선택해도 업로드되지 않습니다.</small>
+                    </span>
+                  </p>
 
                   {!selected ? (
                     <div
@@ -478,7 +451,7 @@ export default function AdminLessonVideoDialog({
                         브라우저에서 영상을 재생할 수 없습니다.
                       </video>
                       <div className={styles.selectedMeta}>
-                        <span><FileIcon /></span>
+                        <span><VideoIcon /></span>
                         <div>
                           <strong>{selected.file.name}</strong>
                           <small>
@@ -529,34 +502,6 @@ export default function AdminLessonVideoDialog({
               )}
             </>
           )}
-        </div>
-
-        {phase !== "success" && (
-          <footer className={styles.footer}>
-            <p>영상 파일은 비공개 저장소에 보관됩니다.</p>
-            <div>
-              {phase === "uploading" ? (
-                <button type="button" onClick={() => void cancelUpload()}>업로드 취소</button>
-              ) : (
-                <button type="button" onClick={onClose} disabled={busy}>닫기</button>
-              )}
-              <button
-                type="button"
-                className={styles.primaryButton}
-                disabled={!selected || busy || !storageReady}
-                onClick={() => void startUpload()}
-              >
-                {phase === "connecting"
-                  ? "연결 중..."
-                  : phase === "uploading"
-                    ? `${progress}% 업로드 중`
-                    : lesson.videoPath
-                      ? "새 영상으로 교체"
-                      : "영상 업로드"}
-              </button>
-            </div>
-          </footer>
-        )}
 
         <input
           ref={inputRef}
@@ -566,8 +511,8 @@ export default function AdminLessonVideoDialog({
           onChange={handleInputChange}
           tabIndex={-1}
         />
-      </section>
-    </div>
+      </div>
+    </AdminDialog>
   );
 }
 
@@ -594,22 +539,7 @@ function formatUploadError(error: unknown) {
   return "영상을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
-function CloseIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8M14 6l-8 8" /></svg>;
-}
-
+/** 공용 아이콘 모음에는 아직 없는 모양이라 이 화면에서만 정의한다. */
 function UploadIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5m0 0L8 9m4-4 4 4" /><path d="M5 15v4h14v-4" /></svg>;
-}
-
-function FileIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2" /><path d="m8 7.5 4 2.5-4 2.5v-5Z" /></svg>;
-}
-
-function AlertIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3 2.5 16h15L10 3Z" /><path d="M10 7v4M10 14h.01" /></svg>;
-}
-
-function CheckIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>;
 }
