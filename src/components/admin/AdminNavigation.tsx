@@ -3,23 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "@/app/admin/admin.module.css";
-
-// ownerOnly 항목은 operator에게 보여도 클릭하면 접근 거부로 튕긴다.
-// 갈 수 없는 메뉴를 노출하지 않는 편이 낫다.
-const navigation = [
-  { label: "대시보드", icon: "dashboard", href: "/admin", ownerOnly: false },
-  { label: "상품 관리", icon: "product", href: "/admin/products", ownerOnly: false },
-  { label: "강의 관리", icon: "course", href: "/admin/courses", ownerOnly: false },
-  { label: "주문 · 결제", icon: "order", href: "/admin/orders", ownerOnly: false },
-  { label: "회원 · 수강권", icon: "member", href: "/admin/members", ownerOnly: false },
-  { label: "학습 현황", icon: "progress", href: "/admin/progress", ownerOnly: false },
-  { label: "운영 기록", icon: "audit", href: "/admin/audit", ownerOnly: true },
-  { label: "운영자 권한", icon: "settings", href: "/admin/settings", ownerOnly: true },
-] as const;
+import {
+  adminNavigation,
+  isActiveNavHref,
+  type AdminNavIconName,
+} from "./admin-navigation-items";
 
 export default function AdminNavigation({ role }: { role: "owner" | "operator" }) {
   const pathname = usePathname();
-  const visibleNavigation = navigation.filter(
+  const visibleNavigation = adminNavigation.filter(
     (item) => !item.ownerOnly || role === "owner"
   );
 
@@ -28,10 +20,7 @@ export default function AdminNavigation({ role }: { role: "owner" | "operator" }
       <p className={styles.navigationLabel}>MANAGEMENT</p>
       <div className={styles.navigationList}>
         {visibleNavigation.map((item) => {
-          const isActive =
-            item.href === "/admin"
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
+          const isActive = isActiveNavHref(item.href, pathname);
 
           return (
             <Link
@@ -49,8 +38,6 @@ export default function AdminNavigation({ role }: { role: "owner" | "operator" }
     </nav>
   );
 }
-
-type AdminNavIconName = (typeof navigation)[number]["icon"];
 
 function AdminNavIcon({ name }: { name: AdminNavIconName }) {
   const paths: Record<AdminNavIconName, React.ReactNode> = {

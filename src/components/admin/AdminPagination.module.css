@@ -1,0 +1,106 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 20px;
+  border-top: 1px solid #e6dfd4;
+}
+
+.range {
+  margin: 0;
+  color: #6c6257;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pageSize select {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #ddd5c9;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #40382f;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pager button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ddd5c9;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #40382f;
+  cursor: pointer;
+}
+
+.pager button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageState {
+  min-width: 62px;
+  text-align: center;
+  color: #40382f;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pageSize select:focus-visible,
+.pager button:focus-visible {
+  outline: 2px solid #c47757;
+  outline-offset: 2px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 15px;
+  }
+
+  .controls {
+    justify-content: space-between;
+  }
+}
