@@ -1,7 +1,12 @@
+/*
+ * 이 화면은 /learn/[courseSlug] 아래에서 렌더된다. admin-tokens.css는 admin
+ * layout에서만 import하므로 여기서는 토큰이 정의되지 않는다.
+ * 값은 admin 토큰과 같은 눈금으로 맞추되 fallback을 반드시 함께 적는다.
+ */
 .page {
   min-height: 100dvh;
-  padding: 32px;
-  background: #f3efe8;
+  padding: var(--admin-panel-pad, 22px);
+  background: var(--admin-canvas, #f3efe8);
   color: #332d27;
   display: grid;
   place-items: center;
@@ -9,9 +14,9 @@
 
 .card {
   width: min(620px, 100%);
-  padding: 46px;
+  padding: calc(var(--admin-panel-pad, 22px) * 2);
   border: 1px solid #ddd4c8;
-  border-radius: 14px;
+  border-radius: var(--admin-radius-lg, 14px);
   background: #fffaf4;
   box-shadow: 0 18px 50px rgba(55, 43, 33, 0.08);
   text-align: center;
@@ -19,29 +24,44 @@
 
 .card > span {
   color: #a06045;
-  font-size: 11px;
-  font-weight: 750;
+  font-size: var(--admin-text-eyebrow, 11px);
+  font-weight: 700;
   letter-spacing: 0.16em;
 }
 
-.card h1 { margin: 12px 0 28px; font-size: 28px; }
-.card strong { color: #5a5148; font-size: 18px; }
-.card p { margin: 10px auto 24px; max-width: 470px; color: #8b8176; font-size: 14px; line-height: 1.7; }
+.card h1 {
+  margin: var(--admin-gap-sm, 10px) 0 var(--admin-gap-lg, 24px);
+  font-size: var(--admin-text-display, 27px);
+}
+
+.card strong {
+  color: #5a5148;
+  font-size: var(--admin-text-lg, 16px);
+}
+
+.card p {
+  margin: var(--admin-gap-sm, 10px) auto var(--admin-gap-lg, 24px);
+  max-width: 470px;
+  color: #8b8176;
+  font-size: var(--admin-text-md, 14px);
+  line-height: 1.7;
+}
+
 .card a {
-  min-height: 44px;
-  padding: 0 16px;
+  min-height: var(--admin-control-lg, 44px);
+  padding: 0 var(--admin-pad-lg, 18px);
   border: 1px solid #cdb9aa;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md, 9px);
   color: #87523d;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--admin-text-md, 14px);
   font-weight: 700;
 }
 
 @media (max-width: 640px) {
-  .page { padding: 16px; }
-  .card { padding: 32px 20px; }
-  .card h1 { font-size: 23px; }
+  .page { padding: var(--admin-panel-pad-mobile, 16px); }
+  .card { padding: calc(var(--admin-panel-pad, 22px) * 1.5) var(--admin-panel-pad, 22px); }
+  .card h1 { font-size: var(--admin-text-page, 23px); }
 }

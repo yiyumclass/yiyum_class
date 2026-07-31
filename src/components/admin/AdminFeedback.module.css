@@ -5,7 +5,7 @@
   z-index: 60;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
   width: min(380px, calc(100vw - 32px));
   pointer-events: none;
 }
@@ -13,45 +13,46 @@
 .toast {
   display: flex;
   align-items: flex-start;
-  gap: 11px;
-  padding: 14px 14px 14px 15px;
-  border: 1px solid #e1dacf;
+  gap: var(--admin-gap-sm);
+  min-height: var(--admin-control-lg);
+  padding: var(--admin-pad-md);
+  border: 1px solid var(--admin-line);
   border-left-width: 3px;
-  border-radius: 11px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   box-shadow: 0 12px 30px rgb(40 32 24 / 16%);
   pointer-events: auto;
   animation: toastIn 180ms ease-out;
 }
 
-.success { border-left-color: #3f7d55; }
-.error { border-left-color: #a63f2c; }
-.info { border-left-color: #c47757; }
+.success { border-left-color: var(--admin-success); }
+.error { border-left-color: var(--admin-danger); }
+.info { border-left-color: var(--admin-accent); }
 
 .toastIcon {
   flex: 0 0 auto;
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   margin-top: 1px;
 }
 
 .toastIcon svg {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.success .toastIcon svg { stroke: #3f7d55; }
-.error .toastIcon svg { stroke: #a63f2c; }
-.info .toastIcon svg { stroke: #c47757; }
+.success .toastIcon svg { stroke: var(--admin-success); }
+.error .toastIcon svg { stroke: var(--admin-danger); }
+.info .toastIcon svg { stroke: var(--admin-accent); }
 
 .toastMessage {
   flex: 1;
-  color: #342d25;
-  font-size: 14px;
+  color: var(--admin-ink);
+  font-size: var(--admin-text-md);
   line-height: 1.55;
   word-break: keep-all;
 }
@@ -63,15 +64,15 @@
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--admin-radius-sm);
   background: transparent;
-  color: #9a8e80;
+  color: var(--admin-ink-muted);
   cursor: pointer;
 }
 
 .toastClose svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -79,14 +80,14 @@
 }
 
 .toastClose:focus-visible {
-  outline: 2px solid #c47757;
+  outline: 2px solid var(--admin-accent);
   outline-offset: 1px;
 }
 
 .confirmDescription {
   margin: 0;
-  color: #5f564c;
-  font-size: 14px;
+  color: var(--admin-ink-soft);
+  font-size: var(--admin-text-md);
   line-height: 1.65;
   white-space: pre-line;
   word-break: keep-all;

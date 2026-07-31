@@ -31,23 +31,27 @@
   .cardTable tbody {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--admin-gap-sm);
   }
 
   .cardTable tbody tr {
     display: grid;
-    gap: 9px;
-    padding: 15px 14px;
-    border: 1px solid #e4ddd2;
-    border-radius: 12px;
-    background: #fffdf9;
+    gap: var(--admin-gap-sm);
+    padding: var(--admin-panel-pad-mobile);
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius-lg);
+    background: var(--admin-surface);
   }
 
+  /*
+   * 라벨 열은 화면마다 라벨 길이가 달라도 흔들리지 않게 고정 폭으로 둔다.
+   * 이전 minmax(84px, 34%)는 카드 폭에 따라 값이 달라져 카드 안 세로선이 어긋났다.
+   */
   .cardTable tbody td {
     display: grid;
-    grid-template-columns: minmax(84px, 34%) minmax(0, 1fr);
+    grid-template-columns: 96px minmax(0, 1fr);
     align-items: start;
-    gap: 12px;
+    gap: var(--admin-gap-sm);
     padding: 0;
     border: 0;
     min-width: 0;
@@ -55,8 +59,8 @@
 
   .cardTable tbody td::before {
     content: attr(data-label);
-    color: #9a8e80;
-    font-size: 12px;
+    color: var(--admin-ink-muted);
+    font-size: var(--admin-text-xs);
     font-weight: 700;
     line-height: 1.5;
   }
@@ -71,7 +75,7 @@
   }
 
   .cardTable tbody td:first-child {
-    padding-bottom: 10px;
-    border-bottom: 1px solid #efe9df;
+    padding-bottom: var(--admin-gap-sm);
+    border-bottom: 1px solid var(--admin-line);
   }
 }

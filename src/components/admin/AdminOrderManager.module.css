@@ -1,48 +1,50 @@
 .page {
   display: grid;
-  gap: 22px;
+  gap: var(--admin-gap-lg);
 }
 
 .pageHeading {
-  min-height: 92px;
+  min-height: calc(var(--admin-control-lg) * 2);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 28px;
+  gap: var(--admin-gap-lg);
 }
 
 .eyebrow {
-  margin: 0 0 7px;
+  margin: 0 0 var(--admin-gap-xs);
   color: #a65a3c;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
   letter-spacing: 0.14em;
 }
 
 .pageHeading h1 {
   margin: 0;
-  color: #25211c;
-  font-size: clamp(30px, 2.5vw, 38px);
+  color: var(--admin-ink);
+  font-size: var(--admin-text-page);
   line-height: 1.2;
   letter-spacing: -0.035em;
 }
 
 .pageHeading > div > p:last-child {
-  margin: 9px 0 0;
+  margin: var(--admin-gap-sm) 0 0;
   color: #81796e;
-  font-size: 16px;
+  font-size: var(--admin-text-lg);
   line-height: 1.6;
 }
 
+/* 화면 상단 상태 칩. 표 안 배지와 같은 높이·반경을 쓴다. */
 .liveBadge,
 .pendingBadge {
-  margin-top: 6px;
-  padding: 7px 10px;
-  border-radius: 99px;
+  min-height: var(--admin-control-sm);
+  margin-top: var(--admin-gap-xs);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
+  gap: var(--admin-gap-xs);
+  font-size: var(--admin-text-xs);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -67,11 +69,11 @@
 
 .setupNotice,
 .modeNotice {
-  padding: 15px 17px;
-  border-radius: 9px;
+  padding: var(--admin-pad-md) var(--admin-pad-lg);
+  border-radius: var(--admin-radius-md);
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .setupNotice {
@@ -102,89 +104,93 @@
 .setupNotice strong,
 .modeNotice strong {
   color: #4f4a37;
-  font-size: 15px;
+  font-size: var(--admin-text-lg);
 }
 
 .setupNotice p,
 .modeNotice p {
   margin: 4px 0 0;
   color: #7a735e;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
 }
 
 .setupNotice code {
   display: inline-block;
-  margin-top: 8px;
+  margin-top: var(--admin-gap-xs);
   padding: 4px 7px;
   border: 1px solid #ddceaa;
-  border-radius: 5px;
+  border-radius: var(--admin-radius-sm);
   background: rgba(255, 253, 244, 0.55);
   color: #6d5d37;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .summarySection {
   display: grid;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .summaryCaption {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .summaryCaption h2 {
   margin: 0;
   color: #6f665c;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 /* 요약이 지금 화면의 필터 결과라는 것을 숨기면 매출을 잘못 읽는다. */
 .filterBadge {
-  padding: 3px 8px;
-  border-radius: 99px;
+  padding: 3px var(--admin-gap-xs);
+  border-radius: var(--admin-radius-pill);
   background: #efe1d5;
   color: #8e5335;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   font-weight: 700;
 }
 
 .summaryBar {
   border: 1px solid #ddd6ca;
-  border-radius: 10px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   overflow: hidden;
 }
 
-/* 라벨이 5칸으로 좁아지면서 값과 나란히 두면 줄이 깨진다. 세로로 쌓는다. */
+/*
+ * 요약 카드 규격은 회원 화면과 같은 값을 쓴다.
+ * 높이 = 수치 한 줄(lg 컨트롤) + 위아래 lg 여백.
+ */
 .summaryItem {
-  min-height: 84px;
-  padding: 15px 16px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-lg) * 2);
+  padding: var(--admin-pad-lg);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .summaryItem + .summaryItem {
-  border-left: 1px solid #e1dacf;
+  border-left: 1px solid var(--admin-line);
 }
 
 .summaryItem > span {
   color: #8c8377;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 600;
 }
 
 .summaryItem strong {
   color: #37312b;
-  font-size: 24px;
+  font-size: var(--admin-text-display);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   white-space: nowrap;
 }
@@ -192,30 +198,30 @@
 .summaryItem strong small {
   margin-left: 3px;
   color: #989084;
-  font-size: 12px;
-  font-weight: 550;
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
 }
 
-.summaryValueActive {
-  color: #68735a !important;
+.summaryItem strong.summaryValueActive {
+  color: #68735a;
 }
 
 /* 결제 후 이용권이 발급되지 않은 주문. 0건이 아니면 즉시 눈에 띄어야 한다. */
-.summaryValueAttention {
-  color: #a2412a !important;
+.summaryItem strong.summaryValueAttention {
+  color: #a2412a;
 }
 
 .attentionFilter,
 .attentionFilterActive {
-  min-height: 38px;
-  padding: 0 13px;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
   border: 1px solid #e2bfae;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #fbf1ea;
   color: #a2412a;
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -234,18 +240,6 @@
   background: #fdf6f2;
 }
 
-.attentionBadge {
-  display: inline-block;
-  margin-top: 5px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: #f3ddd2;
-  color: #a2412a;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .summaryValueGroup {
   display: flex;
   flex-direction: column;
@@ -255,70 +249,70 @@
 
 .summaryNote {
   padding: 2px 7px;
-  border-radius: 99px;
+  border-radius: var(--admin-radius-pill);
   background: #efe7d8;
   color: #8a7c5f;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .orderPanel {
   border: 1px solid #ddd6ca;
-  border-radius: 11px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   overflow: hidden;
 }
 
 .panelHeader {
-  min-height: 80px;
-  padding: 20px 23px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-panel-pad) * 2);
+  padding: var(--admin-panel-pad);
   border-bottom: 1px solid #e0d9ce;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--admin-gap-md);
 }
 
 .panelHeader h2 {
   margin: 0;
   color: #302b25;
-  font-size: 18px;
+  font-size: var(--admin-text-title);
   letter-spacing: -0.02em;
 }
 
 .panelHeader p {
   margin: 5px 0 0;
   color: #948b80;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .panelHeaderActions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .resultCount {
   color: #8d8377;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .exportButton {
-  min-height: 38px;
-  padding: 0 13px;
-  border: 1px solid #d8d0c4;
-  border-radius: 8px;
-  background: #fffdf9;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #5b5249;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -345,46 +339,46 @@
 /* 기간 기준이 서로 다른 것을 화면에서도 알 수 있어야 오해가 없다. */
 .periodHint {
   margin: 0;
-  padding: 9px 18px;
+  padding: var(--admin-pad-sm) var(--admin-panel-pad);
   border-bottom: 1px solid #e5ded4;
   background: #f7f3ed;
   color: #948b80;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.55;
 }
 
 .toolbar {
-  min-height: 68px;
-  padding: 12px 18px;
+  min-height: calc(var(--admin-control-md) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-md) var(--admin-panel-pad);
   border-bottom: 1px solid #e5ded4;
   background: #f7f3ed;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--admin-gap-md);
 }
 
 .sourceFilters,
 .toolbarControls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--admin-gap-xs);
 }
 
 .toolbarControls {
-  gap: 8px;
+  gap: var(--admin-gap-sm);
 }
 
 .filter,
 .filterActive {
-  min-height: 36px;
-  padding: 0 12px;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--admin-radius-md);
   background: transparent;
   color: #887f73;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -407,7 +401,7 @@
 }
 
 .searchField {
-  width: 230px;
+  width: 240px;
 }
 
 .searchField > svg {
@@ -424,17 +418,17 @@
 .searchField input,
 .selectField select {
   width: 100%;
-  min-height: 40px;
-  border: 1px solid #d8d0c4;
-  border-radius: 7px;
-  background: #fffdf9;
+  min-height: var(--admin-control-md);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #474038;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .searchField input {
-  padding: 0 11px 0 34px;
+  padding: 0 var(--admin-pad-md) 0 34px;
 }
 
 .searchField input::placeholder {
@@ -442,12 +436,12 @@
 }
 
 .selectField {
-  width: 112px;
+  width: 120px;
 }
 
 .selectField select {
   appearance: none;
-  padding: 0 31px 0 10px;
+  padding: 0 31px 0 var(--admin-pad-sm);
 }
 
 .selectField > svg {
@@ -475,13 +469,13 @@
 }
 
 .orderTable th {
-  height: 42px;
-  padding: 0 16px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-gap-md);
   border-bottom: 1px solid #e5ded4;
   background: #faf7f2;
-  color: #948b80;
-  font-size: 12px;
-  font-weight: 650;
+  color: var(--admin-ink-muted);
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -490,20 +484,27 @@
   padding: 0;
 }
 
+/* 처리 열은 오른쪽 고정 슬롯이므로 머리글도 같은 변으로 붙인다. */
+.orderTable th:last-child {
+  text-align: right;
+}
+
+/* 정렬 가능한 열(결제 금액·진도율·신청일)은 모두 숫자다. 오른쪽으로 붙인다. */
 .sortButton,
 .sortButtonActive {
   width: 100%;
-  height: 42px;
-  padding: 0 16px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-gap-md);
   border: 0;
   background: transparent;
   color: inherit;
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 5px;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -533,11 +534,10 @@
 }
 
 .orderTable td {
-  min-height: 72px;
-  padding: 15px 16px;
+  padding: var(--admin-pad-md) var(--admin-gap-md);
   border-bottom: 1px solid #e8e1d7;
   color: #5b544b;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   vertical-align: middle;
 }
 
@@ -547,6 +547,12 @@
 
 .orderTable tbody tr:hover {
   background: #fffdfa;
+}
+
+/* 숫자 열은 자릿수가 흔들리지 않아야 세로선이 생긴다. */
+.numericCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .clickableRow {
@@ -577,15 +583,15 @@
 .orderId {
   color: #7c7165;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
 }
 
 .crossLinks {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 10px;
+  gap: 4px var(--admin-gap-sm);
 }
 
 .crossLink {
@@ -593,8 +599,8 @@
   align-items: center;
   gap: 4px;
   color: #8e7f6e;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -619,19 +625,20 @@
   min-width: 190px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
+/* 아바타 원은 회원 화면과 같은 크기여야 두 표가 같은 리듬으로 읽힌다. */
 .customerAvatar {
-  width: 34px;
-  height: 34px;
+  width: var(--admin-avatar);
+  height: var(--admin-avatar);
   flex: 0 0 auto;
   border-radius: 50%;
   background: #ece3d8;
   color: #8e4c32;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
@@ -647,8 +654,8 @@
 .productCell strong {
   overflow: hidden;
   color: #39332d;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -657,25 +664,37 @@
 .productCell small,
 .dateCell small {
   color: #9a9185;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 600;
 }
 
 .productCell {
   width: 190px;
 }
 
+/*
+ * 표 안 배지는 글자 길이와 무관하게 같은 높이·반경을 갖는다.
+ * 24px는 규격이 지정한 배지 최소 높이다(sm 컨트롤보다 한 단계 낮다).
+ */
 .sourceBadge,
 .statusBadge,
-.paymentStatusBadge {
-  padding: 5px 8px;
-  border-radius: 99px;
+.paymentStatusBadge,
+.attentionBadge {
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--admin-gap-xs);
+  font-size: var(--admin-text-eyebrow);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.attentionBadge {
+  margin-top: 5px;
+  background: #f3ddd2;
+  color: #a2412a;
 }
 
 .paymentStatusBadge.pending {
@@ -731,16 +750,16 @@
   background: currentColor;
 }
 
-.priceCell {
-  color: #39332d !important;
-  font-weight: 650;
+.orderTable td.priceCell {
+  color: #39332d;
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .unavailableAmount {
   color: #9b9185;
-  font-size: 12px;
-  font-weight: 550;
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
 }
 
 .dateCell {
@@ -750,7 +769,7 @@
 
 .dateCell time {
   color: #5f574e;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .learningCell,
@@ -762,24 +781,42 @@
 
 .learningCell strong {
   color: #4e493f;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .learningCell small,
 .refundedLabel small {
   color: #9a9185;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
+}
+
+/*
+ * 처리 열 고정 슬롯.
+ * 행마다 "전액 환불 / 환불 재시도 / 환불 완료 / 환불 처리 중 / —" 로 내용이 달라
+ * 폭이 제각각이었다. 같은 폭 슬롯 하나에 담아 세로선을 만든다.
+ */
+.rowActions {
+  display: grid;
+  grid-template-columns: repeat(1, var(--admin-row-action-width));
+  justify-content: end;
+  align-items: center;
+  gap: var(--admin-gap-xs);
+}
+
+.rowActions > * {
+  width: 100%;
+  text-align: center;
 }
 
 .refundButton {
-  min-height: 34px;
-  padding: 0 11px;
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
   border: 1px solid #d5a692;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-sm);
   background: #fff8f4;
   color: #9a452b;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -790,51 +827,51 @@
 }
 
 .refundedLabel {
-  min-width: 82px;
+  min-width: 0;
   color: #6d6681;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   font-weight: 700;
 }
 
 .processingLabel {
   color: #8b7651;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 /* 상세 드로어: 표에서 잘라낸 식별자와 시각을 그대로 읽고 복사하는 자리다. */
 .detailIssue {
-  margin: 0 0 16px;
-  padding: 11px 13px;
+  margin: 0 0 var(--admin-gap-md);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #e1c5b8;
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   background: #fcf0e9;
   color: #7e4b39;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.6;
 }
 
 .detailIdentifiers {
   display: grid;
-  gap: 8px;
+  gap: var(--admin-gap-xs);
 }
 
 .copyRow {
-  padding: 10px 12px;
-  border: 1px solid #e1dacf;
-  border-radius: 9px;
-  background: #faf6ef;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-sunken);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .copyRow > span {
   flex: 0 0 auto;
   width: 66px;
-  color: #9a8e80;
-  font-size: 12px;
+  color: var(--admin-ink-muted);
+  font-size: var(--admin-text-xs);
   font-weight: 700;
 }
 
@@ -844,21 +881,21 @@
   overflow: hidden;
   color: #40382f;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .copyButton {
   flex: 0 0 auto;
-  min-height: 30px;
-  padding: 0 11px;
-  border: 1px solid #d8d0c4;
-  border-radius: 7px;
-  background: #fffdf9;
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
   color: #5b5249;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   font-weight: 700;
   cursor: pointer;
 }
@@ -868,31 +905,31 @@
 }
 
 .detailSection {
-  margin-top: 20px;
+  margin-top: var(--admin-gap-lg);
 }
 
 .detailSection h3 {
-  margin: 0 0 9px;
+  margin: 0 0 var(--admin-gap-sm);
   color: #6f665c;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
 }
 
 .detailGrid {
   margin: 0;
-  border: 1px solid #e1dacf;
-  border-radius: 9px;
-  background: #fffdf9;
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   overflow: hidden;
 }
 
 .detailRow {
-  padding: 10px 13px;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   display: grid;
   grid-template-columns: minmax(96px, 26%) minmax(0, 1fr);
   align-items: baseline;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .detailRow + .detailRow {
@@ -900,15 +937,15 @@
 }
 
 .detailRow dt {
-  color: #9a8e80;
-  font-size: 12px;
-  font-weight: 650;
+  color: var(--admin-ink-muted);
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
 }
 
 .detailRow dd {
   margin: 0;
   color: #40382f;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
   overflow-wrap: anywhere;
 }
@@ -917,17 +954,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: var(--admin-gap-md);
 }
 
 .refundOrderSummary {
-  padding: 15px;
+  padding: var(--admin-pad-md);
   border: 1px solid #e0d8cd;
-  border-radius: 10px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--admin-gap-md);
 }
 
 .refundOrderSummary > div {
@@ -940,14 +977,14 @@
 .refundOrderSummary span,
 .learningEvidence span {
   color: #958b80;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 600;
 }
 
 .refundOrderSummary strong {
   overflow: hidden;
   color: #3e3831;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -955,19 +992,19 @@
 .refundOrderSummary small {
   overflow: hidden;
   color: #9b9287;
-  font-size: 10px;
+  font-size: var(--admin-text-eyebrow);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .learningEvidence {
-  margin-top: 12px;
-  padding: 14px 16px;
-  border-radius: 10px;
+  margin-top: var(--admin-gap-sm);
+  padding: var(--admin-pad-md);
+  border-radius: var(--admin-radius-lg);
   background: #eee9e1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 13px;
+  gap: var(--admin-gap-md);
 }
 
 .learningEvidence > div {
@@ -977,61 +1014,62 @@
 
 .learningEvidence strong {
   color: #514a42;
-  font-size: 15px;
+  font-size: var(--admin-text-lg);
+  font-variant-numeric: tabular-nums;
 }
 
 .refundWarning {
-  margin-top: 14px;
-  padding: 12px 14px;
+  margin-top: var(--admin-gap-md);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #e1c5b8;
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   background: #fcf0e9;
   color: #7e4b39;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.65;
 }
 
 .refundReasonField {
   position: relative;
-  margin-top: 18px;
+  margin-top: var(--admin-gap-md);
   display: grid;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
 }
 
 .refundReasonField > span {
   color: #50483f;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 .refundReasonField textarea {
   width: 100%;
-  min-height: 92px;
-  padding: 12px 13px 25px;
+  min-height: calc(var(--admin-control-lg) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md) 25px;
   border: 1px solid #d7cec2;
-  border-radius: 8px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #433c35;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
   resize: vertical;
 }
 
 .refundReasonField > small {
   position: absolute;
-  right: 10px;
-  bottom: 8px;
+  right: var(--admin-pad-sm);
+  bottom: var(--admin-gap-xs);
   color: #a49a8f;
-  font-size: 10px;
+  font-size: var(--admin-text-eyebrow);
 }
 
 .refundSuccess,
 .refundError {
-  margin: 13px 0 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+  margin: var(--admin-gap-sm) 0 0;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
+  border-radius: var(--admin-radius-md);
+  font-size: var(--admin-text-xs);
   line-height: 1.55;
 }
 
@@ -1048,23 +1086,23 @@
 .dialogActions {
   display: flex;
   justify-content: flex-end;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .cancelButton,
 .confirmRefundButton {
-  min-height: 42px;
-  padding: 0 16px;
-  border-radius: 8px;
+  min-height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-lg);
+  border-radius: var(--admin-radius-md);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-md);
   font-weight: 700;
   cursor: pointer;
 }
 
 .cancelButton {
   border: 1px solid #d6cec2;
-  background: #fffdf9;
+  background: var(--admin-surface);
   color: #71685f;
 }
 
@@ -1090,13 +1128,13 @@
 .crossLink:focus-visible,
 .sortButton:focus-visible,
 .sortButtonActive:focus-visible {
-  outline: 2px solid #c47757;
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
 .emptyState {
-  min-height: 260px;
-  padding: 35px 20px;
+  min-height: var(--admin-empty-height);
+  padding: var(--admin-gap-lg) var(--admin-panel-pad);
   color: #a2978a;
   display: flex;
   flex-direction: column;
@@ -1108,18 +1146,18 @@
 .emptyState > svg {
   width: 30px;
   height: 30px;
-  margin-bottom: 13px;
+  margin-bottom: var(--admin-gap-sm);
 }
 
 .emptyState strong {
   color: #625a51;
-  font-size: 15px;
+  font-size: var(--admin-text-lg);
 }
 
 .emptyState p {
-  margin: 7px 0 0;
+  margin: var(--admin-gap-xs) 0 0;
   color: #999084;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .visuallyHidden {
@@ -1136,9 +1174,11 @@
 
 .filter:focus-visible,
 .filterActive:focus-visible,
+.attentionFilter:focus-visible,
+.attentionFilterActive:focus-visible,
 .searchField input:focus-visible,
 .selectField select:focus-visible {
-  outline: 2px solid #c47757;
+  outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
 }
 
@@ -1158,16 +1198,12 @@
 }
 
 @media (max-width: 760px) {
-  .page {
-    gap: 18px;
-  }
-
   .pageHeading {
     min-height: auto;
   }
 
   .pageHeading > div > p:last-child {
-    font-size: 14px;
+    font-size: var(--admin-text-md);
   }
 
   .summaryBar {
@@ -1179,23 +1215,28 @@
   }
 
   .summaryItem:nth-child(n + 3) {
-    border-top: 1px solid #e1dacf;
+    border-top: 1px solid var(--admin-line);
   }
 
   .panelHeader {
     align-items: flex-start;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--admin-gap-sm);
   }
 
   .panelHeader,
   .toolbar,
   .periodHint {
-    padding-inline: 15px;
+    padding-inline: var(--admin-panel-pad-mobile);
   }
 
   .panelHeader p {
     display: none;
+  }
+
+  .panelHeaderActions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .sourceFilters {
@@ -1222,6 +1263,15 @@
     width: 100%;
   }
 
+  .attentionFilter,
+  .attentionFilterActive {
+    grid-column: 1 / -1;
+  }
+
+  .tableWrap {
+    padding: var(--admin-gap-md) var(--admin-panel-pad-mobile) 0;
+  }
+
   .refundOrderSummary,
   .learningEvidence {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1237,8 +1287,15 @@
     width: auto;
   }
 
-  .orderTable td {
-    min-height: 0;
+  /* 라벨과 값이 좌우로 나뉘는 카드에서는 값을 왼쪽에 붙인다. */
+  .numericCell {
+    text-align: left;
+  }
+
+  /* 슬롯 폭이 100%가 되므로 버튼이 세로로 쌓인다. */
+  .rowActions {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .detailFooter {
@@ -1248,7 +1305,6 @@
 
   .detailFooter .refundButton {
     width: 100%;
-    min-height: 42px;
   }
 
   .dialogActions {
@@ -1263,7 +1319,7 @@
 @media (max-width: 520px) {
   .pageHeading {
     display: grid;
-    gap: 12px;
+    gap: var(--admin-gap-sm);
   }
 
   .liveBadge,
@@ -1277,15 +1333,11 @@
   }
 
   .summaryItem {
-    min-height: 76px;
-    padding: 14px;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 9px;
+    padding: var(--admin-pad-md);
   }
 
   .summaryItem strong {
-    font-size: 21px;
+    font-size: var(--admin-text-title);
   }
 }
 

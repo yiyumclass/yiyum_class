@@ -1,28 +1,27 @@
 .page {
   display: grid;
-  gap: 22px;
+  gap: var(--admin-gap-lg);
 }
 
 .pageHeading {
-  min-height: 92px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 28px;
+  gap: var(--admin-gap-lg);
 }
 
 .eyebrow {
   margin: 0 0 7px;
   color: #a65a3c;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
   letter-spacing: 0.14em;
 }
 
 .pageHeading h1 {
   margin: 0;
-  color: #25211c;
-  font-size: clamp(30px, 2.5vw, 38px);
+  color: var(--admin-ink);
+  font-size: var(--admin-text-page);
   line-height: 1.2;
   letter-spacing: -0.035em;
 }
@@ -30,18 +29,18 @@
 .pageHeading > div > p:last-child {
   margin: 9px 0 0;
   color: #81796e;
-  font-size: 16px;
+  font-size: var(--admin-text-lg);
   line-height: 1.6;
 }
 
 .createButton,
 .successState button {
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 7px;
+  min-height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-lg);
+  border-radius: var(--admin-radius-md);
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--admin-text-md);
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -49,16 +48,16 @@
   flex: 0 0 auto;
   border: 1px solid #b85c38;
   background: #b85c38;
-  color: #fffaf3;
+  color: var(--admin-solid-ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
 }
 
 .createButton svg {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
@@ -78,14 +77,14 @@
 }
 
 .setupNotice {
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   display: flex;
   align-items: flex-start;
-  padding: 15px 17px;
+  padding: var(--admin-pad-md) var(--admin-pad-lg);
   border: 1px solid #dfd0af;
   background: #f7f0da;
   color: #695c3b;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .setupNotice > svg {
@@ -101,97 +100,100 @@
 
 .setupNotice strong {
   color: #5b4d2e;
-  font-size: 15px;
+  font-size: var(--admin-text-md);
 }
 
 .setupNotice p {
   margin: 4px 0 8px;
   color: #887958;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
 }
 
 .setupNotice code {
   padding: 4px 7px;
   border: 1px solid #ddceaa;
-  border-radius: 5px;
+  border-radius: var(--admin-radius-sm);
   background: rgba(255, 253, 244, 0.55);
   color: #6d5d37;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .freeModeNotice {
-  padding: 15px 17px;
+  padding: var(--admin-pad-md) var(--admin-pad-lg);
   border: 1px solid #cfd9c5;
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   background: #f0f4ea;
   color: #59664e;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .freeModeNotice > span {
-  width: 24px;
-  height: 24px;
+  width: var(--admin-badge-height);
+  height: var(--admin-badge-height);
   flex: 0 0 auto;
   border-radius: 50%;
   background: #dce6d3;
   display: grid;
   place-items: center;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
 }
 
 .freeModeNotice strong {
   color: #4f5d45;
-  font-size: 15px;
+  font-size: var(--admin-text-md);
 }
 
 .freeModeNotice p {
   margin: 4px 0 0;
   color: #75816b;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
 }
 
 .summarySection {
   display: grid;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .summaryMeta {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--admin-gap-xs);
 }
 
 .summaryMeta h2 {
   margin: 0;
   color: #6f675e;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
 }
 
 /* 필터가 걸린 상태의 수치라는 점을 숫자 옆에서 바로 읽히게 한다. */
 .summaryHint {
-  color: #9a8e80;
-  font-size: 12px;
+  color: var(--admin-ink-muted);
+  font-size: var(--admin-text-xs);
 }
 
 .summarySourceBadge {
-  padding: 3px 8px;
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
   border: 1px solid #dfd0af;
-  border-radius: 99px;
+  border-radius: var(--admin-radius-pill);
   background: #f7f0da;
   color: #7d6c3f;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--admin-text-eyebrow);
   font-weight: 700;
 }
 
 .summaryBar {
   border: 1px solid #ddd6ca;
-  border-radius: 10px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -201,14 +203,14 @@
 /* 카드를 누르면 그 상태로 표를 거른다. 요약과 표가 같은 조건을 보게 하기 위함이다. */
 .summaryItem,
 .summaryItemActive {
-  min-height: 84px;
-  padding: 17px 20px;
+  min-height: calc(var(--admin-control-md) + var(--admin-panel-pad) * 2);
+  padding: var(--admin-pad-lg) var(--admin-panel-pad);
   border: 0;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--admin-gap-md);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -222,20 +224,21 @@
 .summaryItem + .summaryItemActive,
 .summaryItemActive + .summaryItem,
 .summaryItemActive + .summaryItemActive {
-  border-left: 1px solid #e1dacf;
+  border-left: 1px solid var(--admin-line);
 }
 
 .summaryItem > span,
 .summaryItemActive > span {
   color: #8c8377;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 600;
 }
 
 .summaryItem strong,
 .summaryItemActive strong {
   color: #37312b;
-  font-size: 26px;
+  font-size: var(--admin-text-display);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
@@ -243,63 +246,64 @@
 .summaryItemActive strong small {
   margin-left: 3px;
   color: #989084;
-  font-size: 12px;
-  font-weight: 550;
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
 }
 
-.summaryValueActive {
-  color: #9d4d30 !important;
+.summaryItem strong.summaryValueActive,
+.summaryItemActive strong.summaryValueActive {
+  color: #9d4d30;
 }
 
 .productPanel {
   border: 1px solid #ddd6ca;
-  border-radius: 11px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   overflow: hidden;
 }
 
 .panelHeader {
-  min-height: 80px;
-  padding: 20px 23px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-lg) * 2);
+  padding: var(--admin-pad-lg) var(--admin-panel-pad);
   border-bottom: 1px solid #e0d9ce;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--admin-gap-md);
 }
 
 .panelHeader h2 {
   margin: 0;
   color: #302b25;
-  font-size: 18px;
+  font-size: var(--admin-text-title);
   letter-spacing: -0.02em;
 }
 
 .panelHeader p {
   margin: 5px 0 0;
   color: #948b80;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .panelHeaderActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--admin-gap-sm);
 }
 
 .exportButton {
-  min-height: 36px;
-  padding: 0 11px;
-  border: 1px solid #d5ccc0;
-  border-radius: 7px;
-  background: #fffdf9;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #6e655b;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--admin-gap-xs);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -326,13 +330,14 @@
 
 .databaseBadge,
 .catalogBadge {
-  padding: 5px 8px;
-  border-radius: 99px;
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 650;
+  gap: var(--admin-gap-xs);
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -355,32 +360,31 @@
 }
 
 .toolbar {
-  min-height: 68px;
-  padding: 12px 18px;
+  padding: var(--admin-pad-md) var(--admin-panel-pad);
   border-bottom: 1px solid #e5ded4;
   background: #f7f3ed;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--admin-gap-md);
 }
 
 .typeFilters {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--admin-gap-xs);
 }
 
 .filter,
 .filterActive {
-  min-height: 36px;
-  padding: 0 12px;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--admin-radius-sm);
   background: transparent;
   color: #887f73;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -398,7 +402,7 @@
 .toolbarControls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--admin-gap-sm);
 }
 
 .searchField,
@@ -429,17 +433,17 @@
 .searchField input,
 .statusSelect select {
   width: 100%;
-  min-height: 40px;
+  min-height: var(--admin-control-md);
   border: 1px solid #d8d0c4;
-  border-radius: 7px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #474038;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .searchField input {
-  padding: 0 11px 0 34px;
+  padding: 0 var(--admin-pad-md) 0 34px;
 }
 
 .searchField input::placeholder {
@@ -453,7 +457,7 @@
 .statusSelect select,
 .selectControl select {
   appearance: none;
-  padding: 0 32px 0 11px;
+  padding: 0 32px 0 var(--admin-pad-md);
 }
 
 .statusSelect > svg,
@@ -474,27 +478,36 @@
   overflow-x: auto;
 }
 
+/*
+ * 액션 열은 82px 슬롯 4개 + 슬롯 간격이라 고정 폭이 필요하다.
+ * 표 최소 폭을 그만큼 확보해야 슬롯이 눌리지 않고 세로선이 유지된다.
+ */
 .productTable {
   width: 100%;
-  min-width: 900px;
+  min-width: 1120px;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .productTable th {
-  height: 48px;
-  padding: 0 12px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-md);
   border-bottom: 1px solid #e1dad0;
   background: #f1ede6;
-  color: #8b8276;
-  font-size: 12px;
-  font-weight: 650;
+  color: var(--admin-ink-muted);
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   text-align: left;
+}
+
+/* 숫자·날짜 열은 오른쪽 정렬해야 자릿수가 흔들려도 세로선이 남는다. */
+.productTable th.numericHeader {
+  text-align: right;
 }
 
 .sortButton,
 .sortButtonActive {
-  height: 48px;
+  height: var(--admin-control-lg);
   padding: 0;
   border: 0;
   background: transparent;
@@ -503,8 +516,8 @@
   align-items: center;
   gap: 5px;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -515,7 +528,7 @@
 .sortButton > span,
 .sortButtonActive > span {
   color: #b0a89c;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
 }
 
 .sortButtonActive > span {
@@ -524,23 +537,23 @@
 
 .productTable th:first-child,
 .productTable td:first-child {
-  width: 26%;
-  padding-left: 22px;
+  width: 22%;
+  padding-left: var(--admin-panel-pad);
 }
 
-.productTable th:nth-child(2) { width: 9%; }
-.productTable th:nth-child(3) { width: 11%; }
-.productTable th:nth-child(4) { width: 11%; }
-.productTable th:nth-child(5) { width: 9%; }
-.productTable th:nth-child(6) { width: 10%; }
-.productTable th:last-child { width: 24%; }
+.productTable th:nth-child(2) { width: 8%; }
+.productTable th:nth-child(3) { width: 10%; }
+.productTable th:nth-child(4) { width: 10%; }
+.productTable th:nth-child(5) { width: 8%; }
+.productTable th:nth-child(6) { width: 9%; }
+.productTable th:last-child { width: 33%; }
 
 .productTable td {
-  height: 78px;
-  padding: 12px;
+  height: calc(var(--admin-control-lg) + var(--admin-gap-md) * 2);
+  padding: var(--admin-gap-sm) var(--admin-pad-md);
   border-bottom: 1px solid #e5ded4;
   color: #675f55;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   vertical-align: middle;
 }
 
@@ -556,15 +569,15 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--admin-gap-sm);
 }
 
 .productThumbnail {
-  width: 44px;
-  height: 44px;
+  width: var(--admin-control-lg);
+  height: var(--admin-control-lg);
   flex: 0 0 auto;
   border: 1px solid #ded3c5;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #e9dfd2;
   color: #85513d;
   display: grid;
@@ -591,8 +604,8 @@
 .productCopy strong {
   overflow: hidden;
   color: #39332d;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--admin-text-md);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -600,26 +613,36 @@
 .productCopy > span {
   overflow: hidden;
   color: #a0988d;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.priceCell {
-  color: #3f3932 !important;
-  font-weight: 650;
+.productTable td.priceCell,
+.productTable td.periodCell,
+.productTable td.dateCell {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
   white-space: nowrap;
 }
 
-.dateCell {
-  color: #91887c !important;
-  white-space: nowrap;
+.productTable td.priceCell {
+  color: #3f3932;
+  font-weight: 700;
+}
+
+.productTable td.dateCell {
+  color: #91887c;
 }
 
 .statusBadge {
-  padding: 5px 8px;
-  border-radius: 99px;
-  font-size: 12px;
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--admin-text-xs);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -644,32 +667,37 @@
   color: #88837c;
 }
 
-.actionCell {
-  padding-right: 20px !important;
-  text-align: right;
+.productTable td.actionCell {
+  padding-right: var(--admin-panel-pad);
 }
 
+/*
+ * 액션 열은 라벨 길이가 아니라 고정 슬롯이 폭을 정한다.
+ * 슬롯 순서는 [상태 전환][수정·보기][주문 보기][강의 구성]로 모든 행에서 같고,
+ * 해당하는 액션이 없는 행은 빈 슬롯을 렌더해 열을 유지한다.
+ */
 .rowActions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: repeat(4, var(--admin-row-action-width));
+  justify-content: end;
+  gap: var(--admin-gap-xs);
 }
 
 .rowAction,
 .rowLink {
-  min-height: 32px;
-  padding: 0 9px;
-  border: 1px solid #d5ccc0;
-  border-radius: 6px;
+  width: 100%;
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-sm);
   background: transparent;
   color: #6e655b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -685,15 +713,15 @@
   cursor: wait;
 }
 
+/* 수정은 강조하되 폭·높이는 다른 슬롯과 같아야 열이 맞는다. */
 .editAction {
   border-color: #c9b6a5;
-  background: #f6ede5;
-  color: #7e4a36;
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-ink);
 }
 
 .emptyState {
-  min-height: 240px;
-  padding: 44px 20px;
+  padding: calc(var(--admin-panel-pad) * 2) var(--admin-panel-pad);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -704,7 +732,7 @@
 .emptyState > svg {
   width: 28px;
   height: 28px;
-  margin-bottom: 13px;
+  margin-bottom: var(--admin-gap-sm);
   fill: none;
   stroke: #b7aea3;
   stroke-width: 1.3;
@@ -713,27 +741,27 @@
 
 .emptyState strong {
   color: #5b544c;
-  font-size: 15px;
+  font-size: var(--admin-text-md);
 }
 
 .emptyState p {
-  margin: 6px 0 0;
+  margin: var(--admin-gap-xs) 0 0;
   color: #9b9287;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .productForm {
   display: grid;
-  gap: 19px;
+  gap: var(--admin-gap-md);
 }
 
 .formError {
-  padding: 11px 12px;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #e6c8bc;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #fbefea;
   color: #984c37;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.5;
 }
 
@@ -747,16 +775,16 @@
 .typeChoice legend,
 .accessFieldset legend,
 .formField > span:first-child {
-  margin-bottom: 8px;
+  margin-bottom: var(--admin-gap-xs);
   color: #5c554d;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
 }
 
 .typeChoice {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--admin-gap-sm);
 }
 
 .typeChoice legend {
@@ -775,17 +803,17 @@
 }
 
 .typeChoice label > span {
-  min-height: 72px;
-  padding: 12px 14px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-md);
   border: 1px solid #dcd3c7;
-  border-radius: 8px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #81776c;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto auto;
   align-items: center;
-  column-gap: 11px;
+  column-gap: var(--admin-gap-sm);
 }
 
 .typeChoice svg {
@@ -794,12 +822,12 @@
 
 .typeChoice strong {
   color: #4d463f;
-  font-size: 14px;
+  font-size: var(--admin-text-md);
 }
 
 .typeChoice small {
   color: #9b9287;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .typeChoice input:checked + span {
@@ -812,17 +840,17 @@
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px 13px;
+  gap: var(--admin-gap-md) var(--admin-gap-sm);
 }
 
 .lockedProductMeta {
-  padding: 14px 15px;
+  padding: var(--admin-pad-md);
   border: 1px solid #e0d8cd;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #f6f1ea;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 18px;
+  gap: var(--admin-gap-sm) var(--admin-gap-md);
 }
 
 .lockedProductMeta > div {
@@ -833,15 +861,15 @@
 
 .lockedProductMeta span {
   color: #948b80;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
 }
 
 .lockedProductMeta strong {
   overflow: hidden;
   color: #534b43;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -849,7 +877,7 @@
 .lockedProductMeta small {
   grid-column: 1 / -1;
   color: #9b9287;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   line-height: 1.5;
 }
 
@@ -865,23 +893,23 @@
 .durationField input {
   width: 100%;
   border: 1px solid #d8d0c5;
-  border-radius: 7px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #3e3832;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--admin-text-md);
 }
 
 .formField input,
 .selectControl select,
 .durationField input {
-  height: 46px;
-  padding: 0 12px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-md);
 }
 
 .formField textarea {
-  min-height: 94px;
-  padding: 12px;
+  min-height: calc(var(--admin-control-lg) * 2);
+  padding: var(--admin-pad-md);
   line-height: 1.55;
   resize: vertical;
 }
@@ -892,10 +920,10 @@
 }
 
 .formField small {
-  min-height: 14px;
+  min-height: var(--admin-text-md);
   margin-top: 5px;
   color: #9e9589;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   line-height: 1.45;
 }
 
@@ -907,7 +935,7 @@
   position: absolute;
   right: 11px;
   color: #8e8579;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   pointer-events: none;
 }
 
@@ -923,14 +951,14 @@
 }
 
 .accessFieldset {
-  padding: 14px 15px 15px;
+  padding: var(--admin-pad-md);
   border: 1px solid #e1d9ce;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #f7f3ed;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 9px 16px;
+  gap: var(--admin-gap-sm) var(--admin-gap-md);
 }
 
 .editAccessFieldset {
@@ -947,25 +975,25 @@
 }
 
 .editAccessFieldset legend {
-  margin: 0 0 8px;
+  margin: 0 0 var(--admin-gap-xs);
   padding: 0;
 }
 
 .editAccessControl {
   min-width: 0;
-  min-height: 46px;
-  padding-left: 12px;
+  min-height: var(--admin-control-lg);
+  padding-left: var(--admin-pad-md);
   border: 1px solid #d8d0c5;
-  border-radius: 7px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .editAccessControl .accessChoices {
-  gap: 12px;
+  gap: var(--admin-gap-sm);
   white-space: nowrap;
 }
 
@@ -973,12 +1001,13 @@
   flex: 0 0 108px;
 }
 
+/* 입력이 테두리 안쪽을 그대로 채우도록 높이를 컨테이너에 맡긴다. */
 .editAccessControl .durationField input {
-  height: 44px;
+  height: 100%;
   border-top: 0;
   border-right: 0;
   border-bottom: 0;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 var(--admin-radius-md) var(--admin-radius-md) 0;
 }
 
 .accessFieldset legend {
@@ -988,15 +1017,15 @@
 .accessChoices {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--admin-gap-md);
 }
 
 .accessChoices label {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--admin-gap-xs);
   color: #6f675e;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   cursor: pointer;
 }
 
@@ -1019,12 +1048,12 @@
   position: absolute;
   right: 11px;
   color: #8e8579;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .accessFieldset > .fieldError {
   grid-column: 1 / -1;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
 }
 
 .advancedFields {
@@ -1033,12 +1062,12 @@
 }
 
 .advancedFields summary {
-  min-height: 48px;
+  min-height: var(--admin-control-lg);
   color: #6f675e;
   display: flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   cursor: pointer;
   list-style: none;
 }
@@ -1051,7 +1080,7 @@
   content: "+";
   margin-left: auto;
   color: #9b9185;
-  font-size: 19px;
+  font-size: var(--admin-text-title);
   font-weight: 400;
 }
 
@@ -1060,18 +1089,17 @@
 }
 
 .advancedFields .formGrid {
-  padding-bottom: 16px;
+  padding-bottom: var(--admin-gap-md);
 }
 
 .successState button {
   border: 1px solid #b85c38;
   background: #b85c38;
-  color: #fffaf3;
+  color: var(--admin-solid-ink);
 }
 
 .successState {
-  min-height: 320px;
-  padding: 40px 20px;
+  padding: calc(var(--admin-panel-pad) * 2) var(--admin-panel-pad);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1080,9 +1108,9 @@
 }
 
 .successState > span {
-  width: 45px;
-  height: 45px;
-  margin-bottom: 17px;
+  width: var(--admin-control-lg);
+  height: var(--admin-control-lg);
+  margin-bottom: var(--admin-gap-md);
   border-radius: 50%;
   background: #e3e9dc;
   color: #66735a;
@@ -1102,14 +1130,14 @@
 
 .successState strong {
   color: #39332d;
-  font-size: 20px;
+  font-size: var(--admin-text-title);
 }
 
 .successState p {
   max-width: 360px;
-  margin: 9px 0 21px;
+  margin: 9px 0 var(--admin-gap-lg);
   color: #8c8378;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.6;
 }
 
@@ -1148,6 +1176,33 @@
   outline-offset: 2px;
 }
 
+/*
+ * 슬롯 4개를 한 줄에 두려면 표에 1120px가 필요하고, 사이드바(268px)를 빼면
+ * 1440px 미만 화면에서는 가로 스크롤이 생긴다. 이 구간에서는 슬롯을 2열 2행으로
+ * 접는다. 슬롯 순서와 폭은 그대로라 행끼리 열은 계속 맞는다.
+ */
+@media (max-width: 1440px) {
+  .productTable {
+    min-width: 900px;
+  }
+
+  .productTable th:first-child,
+  .productTable td:first-child {
+    width: 26%;
+  }
+
+  .productTable th:nth-child(2) { width: 9%; }
+  .productTable th:nth-child(3) { width: 11%; }
+  .productTable th:nth-child(4) { width: 11%; }
+  .productTable th:nth-child(5) { width: 9%; }
+  .productTable th:nth-child(6) { width: 10%; }
+  .productTable th:last-child { width: 24%; }
+
+  .rowActions {
+    grid-template-columns: repeat(2, var(--admin-row-action-width));
+  }
+}
+
 @media (max-width: 1240px) {
   .summaryBar {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1158,14 +1213,14 @@
   }
 
   .summaryBar > *:nth-child(n + 4) {
-    border-top: 1px solid #e1dacf;
+    border-top: 1px solid var(--admin-line);
   }
 }
 
 @media (max-width: 1120px) {
   .summaryItem,
   .summaryItemActive {
-    padding-inline: 15px;
+    padding-inline: var(--admin-pad-lg);
   }
 }
 
@@ -1175,7 +1230,7 @@
   }
 
   .summaryBar > *:nth-child(2n) {
-    border-left: 1px solid #e1dacf;
+    border-left: 1px solid var(--admin-line);
   }
 
   .summaryBar > *:nth-child(2n + 1) {
@@ -1183,7 +1238,7 @@
   }
 
   .summaryBar > *:nth-child(n + 3) {
-    border-top: 1px solid #e1dacf;
+    border-top: 1px solid var(--admin-line);
   }
 
   .toolbar {
@@ -1213,7 +1268,7 @@
 
   /* 카드 변환은 공용 .cardTable이 맡는다. 여기서는 표 고유의 여백만 손본다. */
   .productTable tbody {
-    padding: 15px;
+    padding: var(--admin-panel-pad-mobile);
   }
 
   .productTable td,
@@ -1222,30 +1277,35 @@
     padding-left: 0;
   }
 
-  .productTable .actionCell {
-    padding-right: 0 !important;
+  .productTable td.actionCell {
+    padding-right: 0;
+  }
+
+  /* 카드에서는 라벨 옆에 값이 붙으므로 오른쪽 정렬이 오히려 어긋나 보인다. */
+  .productTable td.priceCell,
+  .productTable td.periodCell,
+  .productTable td.dateCell {
     text-align: left;
   }
 
+  /* 카드 표에서는 슬롯 폭이 100%가 되므로 세로로 쌓고 빈 슬롯은 감춘다. */
   .rowActions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rowActionSlot {
+    display: none;
   }
 
   .productCopy strong {
     white-space: normal;
   }
-
-  .rowAction,
-  .rowLink {
-    min-height: 44px;
-    padding-inline: 12px;
-  }
 }
 
 @media (max-width: 640px) {
   .page {
-    gap: 18px;
+    gap: var(--admin-gap-md);
   }
 
   .pageHeading {
@@ -1257,27 +1317,26 @@
   }
 
   .setupNotice {
-    padding: 14px;
+    padding: var(--admin-pad-md);
   }
 
   .summaryItem,
   .summaryItemActive {
-    min-height: 88px;
-    padding: 16px;
+    padding: var(--admin-panel-pad-mobile);
     align-items: flex-start;
     flex-direction: column;
-    gap: 9px;
+    gap: var(--admin-gap-sm);
   }
 
   .panelHeader {
-    padding: 17px;
+    padding: var(--admin-panel-pad-mobile);
     align-items: flex-end;
   }
 
   .panelHeaderActions {
     align-items: flex-end;
     flex-direction: column;
-    gap: 7px;
+    gap: var(--admin-gap-xs);
   }
 
   .panelHeader p {
@@ -1285,7 +1344,7 @@
   }
 
   .toolbar {
-    padding: 11px 13px;
+    padding: var(--admin-pad-sm) var(--admin-panel-pad-mobile);
   }
 
   .typeFilters {
@@ -1295,7 +1354,7 @@
 
   .filter,
   .filterActive {
-    padding-inline: 7px;
+    padding-inline: var(--admin-pad-sm);
   }
 
   .toolbarControls {
@@ -1316,7 +1375,7 @@
   }
 
   .editAccessControl {
-    padding: 10px 11px;
+    padding: var(--admin-pad-sm);
     align-items: stretch;
     flex-direction: column;
   }
@@ -1327,9 +1386,9 @@
   }
 
   .editAccessControl .durationField input {
-    height: 46px;
+    height: var(--admin-control-lg);
     border: 1px solid #d8d0c5;
-    border-radius: 7px;
+    border-radius: var(--admin-radius-md);
   }
 
   .accessFieldset {

@@ -742,7 +742,7 @@ function OrderRow({
           {formatSource(order.source)}
         </span>
       </td>
-      <td data-label="결제 금액" className={styles.priceCell}>
+      <td data-label="결제 금액" className={`${styles.numericCell} ${styles.priceCell}`}>
         {order.amountKrw === null ? (
           <span className={styles.unavailableAmount}>연동 대기</span>
         ) : (
@@ -760,7 +760,7 @@ function OrderRow({
           {order.status === "active" ? "이용 가능" : "회수됨"}
         </span>
       </td>
-      <td data-label="학습 기록">
+      <td data-label="학습 기록" className={styles.numericCell}>
         {order.productType === "course" ? (
           <span className={styles.learningCell}>
             <strong>{formatProgress(order.learning.progressPercent)}</strong>
@@ -773,32 +773,35 @@ function OrderRow({
           <span className={styles.unavailableAmount}>해당 없음</span>
         )}
       </td>
-      <td data-label="신청일" className={styles.dateCell}>
+      <td data-label="신청일" className={`${styles.numericCell} ${styles.dateCell}`}>
         <time dateTime={order.createdAt}>{formatDateTime(order.createdAt)}</time>
         <small>{formatExpiration(order.expiresAt)}</small>
       </td>
       <td>
-        {refundAction === "available" || refundAction === "retry" ? (
-          <button
-            type="button"
-            className={styles.refundButton}
-            onClick={(event) => {
-              stopRowClick(event);
-              onRefund();
-            }}
-          >
-            {refundAction === "retry" ? "환불 재시도" : "전액 환불"}
-          </button>
-        ) : refundAction === "complete" ? (
-          <span className={styles.refundedLabel}>
-            환불 완료
-            {order.refundedAt && <small>{formatDate(order.refundedAt)}</small>}
-          </span>
-        ) : refundAction === "pending" ? (
-          <span className={styles.processingLabel}>환불 처리 중</span>
-        ) : (
-          <span className={styles.unavailableAmount}>—</span>
-        )}
+        {/* 행마다 내용이 달라도 폭이 같아야 열이 맞는다. 고정 슬롯 하나에 담는다. */}
+        <span className={styles.rowActions}>
+          {refundAction === "available" || refundAction === "retry" ? (
+            <button
+              type="button"
+              className={styles.refundButton}
+              onClick={(event) => {
+                stopRowClick(event);
+                onRefund();
+              }}
+            >
+              {refundAction === "retry" ? "환불 재시도" : "전액 환불"}
+            </button>
+          ) : refundAction === "complete" ? (
+            <span className={styles.refundedLabel}>
+              환불 완료
+              {order.refundedAt && <small>{formatDate(order.refundedAt)}</small>}
+            </span>
+          ) : refundAction === "pending" ? (
+            <span className={styles.processingLabel}>환불 처리 중</span>
+          ) : (
+            <span className={styles.unavailableAmount}>—</span>
+          )}
+        </span>
       </td>
     </tr>
   );

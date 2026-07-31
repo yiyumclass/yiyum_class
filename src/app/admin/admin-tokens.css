@@ -1,0 +1,88 @@
+/**
+ * 관리자 화면 디자인 토큰.
+ *
+ * 화면별 CSS가 각자 값을 정하면서 컨트롤 높이가 30~48px 사이 13종, 모서리 반경이
+ * 12종, UI 글자 크기가 6종으로 갈라졌다. 버튼마다 높이와 폭이 다르면 눈이 기댈
+ * 기준선이 없어 아무리 정렬해도 정돈돼 보이지 않는다.
+ *
+ * :root에 두는 이유: 네이티브 <dialog>는 top layer로 올라가 admin shell의
+ * 자식이 아니게 되므로, shell에 선언하면 모달에 토큰이 닿지 않는다.
+ */
+
+:root {
+  /* 컨트롤 높이 — 세 단계만 쓴다 */
+  --admin-control-sm: 32px;  /* 표 안 인라인 액션, 필터 칩 */
+  --admin-control-md: 38px;  /* 툴바 입력·셀렉트·보조 버튼 */
+  --admin-control-lg: 44px;  /* 주요 버튼, 폼 입력 */
+
+  /* 컨트롤 좌우 여백 */
+  --admin-pad-sm: 10px;
+  --admin-pad-md: 14px;
+  --admin-pad-lg: 18px;
+
+  /* 표 안 액션 버튼의 공통 폭. 행마다 버튼 수가 달라도 열이 맞는다 */
+  --admin-row-action-width: 82px;
+
+  /* 상태 배지. 글자 길이가 달라도 높이는 고정이어야 한 행에서 세로선이 맞는다 */
+  --admin-badge-height: 24px;
+
+  /* 회원 이니셜 아바타. 화면 간 동일해야 표 첫 열의 시작선이 맞는다 */
+  --admin-avatar: 32px;
+
+  /* 빈 상태 안내 영역의 최소 높이 */
+  --admin-empty-height: 260px;
+
+  /* 모서리 반경 */
+  --admin-radius-sm: 6px;   /* 배지, 칩, 작은 액션 */
+  --admin-radius-md: 9px;   /* 버튼, 입력, 셀렉트 */
+  --admin-radius-lg: 14px;  /* 패널, 카드, 모달 */
+  --admin-radius-pill: 999px;
+
+  /* 글자 크기 */
+  --admin-text-eyebrow: 11px; /* 섹션 위 대문자 라벨 */
+  --admin-text-xs: 12px;      /* 보조 설명, 표 안 small */
+  --admin-text-sm: 13px;      /* UI 기본 */
+  --admin-text-md: 14px;      /* 본문, 버튼 */
+  --admin-text-lg: 16px;
+  --admin-text-title: 19px;   /* 패널 제목 */
+  /* 화면 제목(h1). 화면을 옮길 때 제목 크기가 들썩이지 않도록 한 값만 쓴다 */
+  --admin-text-page: clamp(30px, 2.5vw, 38px);
+  --admin-text-display: 27px; /* 요약 카드 수치 */
+
+  /* 간격 */
+  --admin-gap-xs: 6px;
+  --admin-gap-sm: 10px;
+  --admin-gap-md: 16px;
+  --admin-gap-lg: 24px;
+
+  /* 패널 안쪽 여백 */
+  --admin-panel-pad: 22px;
+  --admin-panel-pad-mobile: 16px;
+
+  /* 색 — 기존 팔레트를 이름으로 고정한다 */
+  --admin-ink: #25211c;          /* 기본 글자 */
+  --admin-ink-soft: #5f564c;     /* 보조 글자 */
+  --admin-ink-muted: #9a8e80;    /* 라벨, 비활성 */
+  --admin-line: #e1dacf;         /* 경계선 */
+  --admin-line-strong: #d5ccc0;  /* 컨트롤 테두리 */
+  --admin-surface: #fffdf9;      /* 카드·모달 바탕 */
+  --admin-surface-sunken: #faf6ef;
+  --admin-canvas: #f3efe8;       /* 화면 바탕 */
+  --admin-accent: #c47757;       /* 포커스, 강조 */
+  --admin-accent-soft: #f6ede5;  /* 강조 버튼 바탕 */
+  --admin-accent-ink: #7e4a36;
+  --admin-danger: #a63f2c;
+  --admin-success: #3f7d55;
+  --admin-solid: #2b2119;        /* 주요 버튼 바탕 */
+  --admin-solid-ink: #fffaf3;
+}
+
+/* 좁은 화면에서는 손가락이 닿아야 하므로 모든 컨트롤을 44px로 올린다 */
+@media (max-width: 760px) {
+  :root {
+    --admin-control-sm: 40px;
+    --admin-control-md: 44px;
+    --admin-control-lg: 46px;
+    --admin-row-action-width: 100%;
+  }
+}

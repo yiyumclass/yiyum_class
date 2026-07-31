@@ -392,14 +392,16 @@ export default function AdminProductManager({
                       sortKey="price"
                       sort={sort}
                       onSort={toggleSort}
+                      numeric
                     />
-                    <th scope="col">이용 기간</th>
+                    <th scope="col" className={styles.numericHeader}>이용 기간</th>
                     <th scope="col">상태</th>
                     <SortableHeader
                       label="최근 수정"
                       sortKey="recent"
                       sort={sort}
                       onSort={toggleSort}
+                      numeric
                     />
                     <th scope="col">
                       <span className={styles.visuallyHidden}>상품 작업</span>
@@ -485,17 +487,20 @@ function SortableHeader({
   sortKey,
   sort,
   onSort,
+  numeric,
 }: {
   label: string;
   sortKey: SortKey;
   sort: { key: SortKey; direction: SortDirection };
   onSort: (key: SortKey) => void;
+  numeric?: boolean;
 }) {
   const isActive = sort.key === sortKey;
 
   return (
     <th
       scope="col"
+      className={numeric ? styles.numericHeader : undefined}
       aria-sort={
         isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
       }
@@ -549,7 +554,9 @@ function ProductRow({
       <td data-label="판매가" className={styles.priceCell}>
         {formatPrice(product.priceKrw)}
       </td>
-      <td data-label="이용 기간">{formatAccessPeriod(product.accessPeriodDays)}</td>
+      <td data-label="이용 기간" className={styles.periodCell}>
+        {formatAccessPeriod(product.accessPeriodDays)}
+      </td>
       <td data-label="상태">
         <span className={`${styles.statusBadge} ${styles[product.status]}`}>
           {formatStatus(product.status)}
@@ -559,33 +566,40 @@ function ProductRow({
         {formatUpdatedAt(product.updatedAt)}
       </td>
       <td className={styles.actionCell}>
+        {/*
+         * 액션 슬롯은 [상태 전환][수정·보기][주문 보기][강의 구성] 순서로 고정한다.
+         * 해당 액션이 없는 행도 빈 슬롯을 렌더해야 행마다 열이 어긋나지 않는다.
+         */}
         <span className={styles.rowActions}>
+          {canUpdateStatus ? (
+            <button
+              type="button"
+              className={styles.rowAction}
+              disabled={saving}
+              onClick={() => onStatusChange(product, nextAction.status)}
+            >
+              {saving ? "변경 중" : nextAction.label}
+            </button>
+          ) : (
+            <span className={styles.rowActionSlot} aria-hidden="true" />
+          )}
+
           {canEdit ? (
-            <>
-              {canUpdateStatus && (
-                <button
-                  type="button"
-                  className={styles.rowAction}
-                  disabled={saving}
-                  onClick={() => onStatusChange(product, nextAction.status)}
-                >
-                  {saving ? "변경 중" : nextAction.label}
-                </button>
-              )}
-              <button
-                type="button"
-                className={`${styles.rowAction} ${styles.editAction}`}
-                disabled={saving}
-                onClick={() => onEdit(product)}
-              >
-                수정
-              </button>
-            </>
+            <button
+              type="button"
+              className={`${styles.rowAction} ${styles.editAction}`}
+              disabled={saving}
+              onClick={() => onEdit(product)}
+            >
+              수정
+            </button>
           ) : product.detailPath ? (
             <Link href={product.detailPath} className={styles.rowLink}>
               보기
             </Link>
-          ) : null}
+          ) : (
+            <span className={styles.rowActionSlot} aria-hidden="true" />
+          )}
 
           {/* 상품에서 곧바로 판매 실적과 콘텐츠 구성으로 넘어갈 수 있게 한다. */}
           <Link
@@ -594,10 +608,13 @@ function ProductRow({
           >
             주문 보기
           </Link>
-          {product.productType === "course" && (
+
+          {product.productType === "course" ? (
             <Link href="/admin/courses" className={styles.rowLink}>
               강의 구성
             </Link>
+          ) : (
+            <span className={styles.rowActionSlot} aria-hidden="true" />
           )}
         </span>
       </td>

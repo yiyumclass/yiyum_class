@@ -1,123 +1,133 @@
-.page { display: grid; gap: 22px; }
-.pageHeading { min-height: 92px; display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; }
-.eyebrow { margin: 0 0 7px; color: #a65a3c; font-size: 12px; font-weight: 750; letter-spacing: .14em; }
-.pageHeading h1 { margin: 0; color: #25211c; font-size: clamp(30px, 2.5vw, 38px); line-height: 1.2; letter-spacing: -.035em; }
-.pageHeading > div > p:last-child { margin: 9px 0 0; color: #81796e; font-size: 16px; line-height: 1.6; }
-.liveBadge, .pendingBadge { margin-top: 6px; padding: 7px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.page { display: grid; gap: var(--admin-gap-lg); }
+.pageHeading { min-height: calc(var(--admin-control-lg) + var(--admin-gap-lg) * 2); display: flex; align-items: flex-start; justify-content: space-between; gap: var(--admin-gap-lg); }
+.eyebrow { margin: 0 0 var(--admin-gap-xs); color: #a65a3c; font-size: var(--admin-text-xs); font-weight: 700; letter-spacing: .14em; }
+.pageHeading h1 { margin: 0; color: var(--admin-ink); font-size: var(--admin-text-page); line-height: 1.2; letter-spacing: -.035em; }
+.pageHeading > div > p:last-child { margin: var(--admin-gap-sm) 0 0; color: #81796e; font-size: var(--admin-text-lg); line-height: 1.6; }
+.liveBadge, .pendingBadge { min-height: var(--admin-control-sm); margin-top: var(--admin-gap-xs); padding: 0 var(--admin-pad-sm); border-radius: var(--admin-radius-pill); display: inline-flex; align-items: center; gap: var(--admin-gap-xs); font-size: var(--admin-text-xs); font-weight: 700; white-space: nowrap; }
 .liveBadge { background: #e7ebe0; color: #68735a; }
 .pendingBadge { background: #eee8dd; color: #887c6d; }
-.liveBadge > span, .pendingBadge > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.liveBadge > span, .pendingBadge > span { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }
 
-.setupNotice { padding: 15px 17px; border: 1px solid #dfd0af; border-radius: 9px; background: #f7f0da; color: #695c3b; display: flex; align-items: flex-start; gap: 12px; }
+.setupNotice { padding: var(--admin-pad-md) var(--admin-pad-lg); border: 1px solid #dfd0af; border-radius: var(--admin-radius-md); background: #f7f0da; color: #695c3b; display: flex; align-items: flex-start; gap: var(--admin-gap-sm); }
 .setupNotice > svg { width: 22px; height: 22px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.setupNotice strong { color: #5b4d2e; font-size: 15px; }
-.setupNotice p { margin: 4px 0 8px; color: #887958; font-size: 13px; line-height: 1.55; }
-.setupNotice code { padding: 4px 7px; border: 1px solid #ddceaa; border-radius: 5px; background: rgba(255,253,244,.55); color: #6d5d37; font-size: 12px; }
+.setupNotice strong { color: #5b4d2e; font-size: var(--admin-text-md); }
+.setupNotice p { margin: 4px 0 var(--admin-gap-sm); color: #887958; font-size: var(--admin-text-sm); line-height: 1.55; }
+.setupNotice code { padding: 4px var(--admin-gap-xs); border: 1px solid #ddceaa; border-radius: var(--admin-radius-sm); background: rgba(255,253,244,.55); color: #6d5d37; font-size: var(--admin-text-xs); }
 
-.summarySection { display: grid; gap: 8px; }
-.summaryScope { margin: 0; color: #9a8e80; font-size: 12px; font-weight: 600; }
-.summaryBar { border: 1px solid #ddd6ca; border-radius: 10px; background: #fbf8f3; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); overflow: hidden; }
-.summaryItem { min-height: 84px; padding: 17px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.summaryItem + .summaryItem { border-left: 1px solid #e1dacf; }
-.summaryItem > span { color: #8c8377; font-size: 13px; font-weight: 600; }
+.summarySection { display: grid; gap: var(--admin-gap-sm); }
+.summaryScope { margin: 0; color: var(--admin-ink-muted); font-size: var(--admin-text-xs); font-weight: 600; }
+.summaryBar { border: 1px solid #ddd6ca; border-radius: var(--admin-radius-lg); background: #fbf8f3; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); overflow: hidden; }
+/* 요약 카드 높이·여백·수치 크기는 다른 관리자 화면과 같은 토큰 조합에서 파생시킨다. */
+.summaryItem { min-height: calc(var(--admin-control-lg) * 2); padding: var(--admin-gap-md) var(--admin-panel-pad); display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-md); }
+.summaryItem + .summaryItem { border-left: 1px solid var(--admin-line); }
+.summaryItem > span { color: #8c8377; font-size: var(--admin-text-sm); font-weight: 600; }
 .summaryLabel { min-width: 0; display: grid; gap: 3px; }
-.summaryLabel small { color: #a49a8c; font-size: 11px; font-weight: 550; line-height: 1.45; }
-.summaryItem strong { color: #37312b; font-size: 24px; line-height: 1; white-space: nowrap; }
-.summaryItem strong small { margin-left: 3px; color: #989084; font-size: 12px; font-weight: 550; }
-.summary_active { color: #68735a !important; }
-.summary_progress { color: #9d4d30 !important; }
-.summary_warning { color: #a87338 !important; }
+.summaryLabel small { color: #a49a8c; font-size: var(--admin-text-eyebrow); font-weight: 600; line-height: 1.45; }
+.summaryItem strong { color: #37312b; font-size: var(--admin-text-display); font-weight: 700; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.summaryItem strong small { margin-left: 3px; color: #989084; font-size: var(--admin-text-xs); font-weight: 600; }
+/* .summaryItem strong 보다 한 단계 높은 특정도로 두어 !important 없이 색만 덮는다. */
+.summaryItem strong.summary_active { color: #68735a; }
+.summaryItem strong.summary_progress { color: #9d4d30; }
+.summaryItem strong.summary_warning { color: #a87338; }
 
-.courseSection, .progressPanel { border: 1px solid #ddd6ca; border-radius: 11px; background: #fbf8f3; overflow: hidden; }
-.courseSection { padding: 20px 22px 22px; }
-.sectionHeading, .panelHeader { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.sectionHeading { margin-bottom: 16px; }
-.sectionHeading h2, .panelHeader h2 { margin: 0; color: #302b25; font-size: 18px; letter-spacing: -.02em; }
-.sectionHeading p, .panelHeader p { margin: 5px 0 0; color: #948b80; font-size: 13px; }
-.sectionHeading > span, .resultCount { color: #8d8377; font-size: 12px; font-weight: 650; white-space: nowrap; }
-.courseGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
-.courseCard, .courseCardActive { padding: 16px; border: 1px solid #ded6cb; border-radius: 9px; background: #fffdf9; color: inherit; font-family: inherit; text-align: left; cursor: pointer; }
+.courseSection, .progressPanel { border: 1px solid #ddd6ca; border-radius: var(--admin-radius-lg); background: #fbf8f3; overflow: hidden; }
+.courseSection { padding: var(--admin-panel-pad); }
+.sectionHeading, .panelHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-md); }
+.sectionHeading { margin-bottom: var(--admin-gap-md); }
+.sectionHeading h2, .panelHeader h2 { margin: 0; color: #302b25; font-size: var(--admin-text-title); letter-spacing: -.02em; }
+.sectionHeading p, .panelHeader p { margin: var(--admin-gap-xs) 0 0; color: #948b80; font-size: var(--admin-text-sm); }
+.sectionHeading > span, .resultCount { color: #8d8377; font-size: var(--admin-text-xs); font-weight: 600; white-space: nowrap; }
+.courseGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: var(--admin-gap-sm); }
+/* 지표 줄을 카드 바닥에 붙여, 제목 길이가 달라도 카드끼리 지표 세로선이 맞는다. */
+.courseCard, .courseCardActive { padding: var(--admin-pad-md); border: 1px solid #ded6cb; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: inherit; display: flex; flex-direction: column; font-family: inherit; text-align: left; cursor: pointer; }
 .courseCard:hover { border-color: #cbbcaf; }
 .courseCardActive { border-color: #c48368; box-shadow: inset 0 0 0 1px #c48368; background: #fbf1eb; }
-.courseCardTop { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.courseCardTop strong { min-width: 0; overflow: hidden; color: #3c362f; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
-.courseCardTop > span { color: #958b7f; font-size: 11px; white-space: nowrap; }
-.courseProgressTrack, .progressTrack { border-radius: 99px; background: #e6dfd5; display: block; overflow: hidden; }
-.courseProgressTrack { height: 5px; margin: 14px 0 12px; }
+.courseCardTop { display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-sm); }
+.courseCardTop strong { min-width: 0; overflow: hidden; color: #3c362f; font-size: var(--admin-text-md); text-overflow: ellipsis; white-space: nowrap; }
+.courseCardTop > span { color: #958b7f; font-size: var(--admin-text-eyebrow); white-space: nowrap; }
+.courseProgressTrack, .progressTrack { height: var(--admin-gap-xs); border-radius: var(--admin-radius-pill); background: #e6dfd5; display: block; overflow: hidden; }
+.courseProgressTrack { margin: var(--admin-gap-md) 0 var(--admin-gap-sm); }
 .courseProgressTrack > span, .progressTrack > span { height: 100%; border-radius: inherit; background: #b85c38; display: block; }
-.courseMetrics { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 7px; }
-.courseMetrics > span { color: #998f83; display: grid; gap: 4px; font-size: 10px; }
-.courseMetrics strong { color: #5c544b; font-size: 13px; }
-.courseAttention strong { color: #a63f2c; }
+.courseMetrics { margin-top: auto; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: var(--admin-gap-xs); }
+.courseMetrics > span { color: #998f83; display: grid; gap: 4px; font-size: var(--admin-text-eyebrow); }
+.courseMetrics strong { color: #5c544b; font-size: var(--admin-text-sm); font-variant-numeric: tabular-nums; }
+.courseAttention strong { color: var(--admin-danger); }
 
-.panelHeader { min-height: 80px; padding: 20px 23px; border-bottom: 1px solid #e0d9ce; }
-.panelActions { display: flex; align-items: center; gap: 12px; }
-.exportButton { min-height: 34px; padding: 0 12px; border: 1px solid #d8d0c4; border-radius: 7px; background: #fffdf9; color: #5f574d; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
-.exportButton:hover:not(:disabled) { border-color: #c47757; color: #8e4930; }
+.panelHeader { min-height: calc(var(--admin-control-lg) + var(--admin-gap-md) * 2); padding: var(--admin-gap-md) var(--admin-panel-pad); border-bottom: 1px solid #e0d9ce; }
+.panelActions { display: flex; align-items: center; gap: var(--admin-gap-sm); }
+.exportButton { min-height: var(--admin-control-md); padding: 0 var(--admin-pad-md); border: 1px solid #d8d0c4; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: #5f574d; display: inline-flex; align-items: center; gap: var(--admin-gap-xs); font-family: inherit; font-size: var(--admin-text-sm); font-weight: 600; white-space: nowrap; cursor: pointer; }
+.exportButton:hover:not(:disabled) { border-color: var(--admin-accent); color: #8e4930; }
 .exportButton:disabled { opacity: .5; cursor: not-allowed; }
 .exportButton > svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.toolbar { min-height: 68px; padding: 12px 18px; border-bottom: 1px solid #e5ded4; background: #f7f3ed; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.statusFilters, .toolbarControls { display: flex; align-items: center; gap: 4px; }
-.toolbarControls { gap: 8px; }
-.filter, .filterActive { min-height: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #887f73; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.toolbar { min-height: calc(var(--admin-control-md) + var(--admin-gap-md) * 2); padding: var(--admin-gap-md) var(--admin-panel-pad); border-bottom: 1px solid #e5ded4; background: #f7f3ed; display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-md); }
+.statusFilters, .toolbarControls { display: flex; align-items: center; gap: var(--admin-gap-xs); }
+.toolbarControls { gap: var(--admin-gap-sm); }
+.filter, .filterActive { min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-sm); border: 0; border-radius: var(--admin-radius-sm); background: transparent; color: #887f73; font-family: inherit; font-size: var(--admin-text-xs); font-weight: 600; cursor: pointer; }
 .filter:hover { background: #ede6dc; color: #514a42; }
 .filterActive { background: #e5d8ca; color: #7e402b; }
 .searchField, .selectField { position: relative; display: flex; align-items: center; }
 .searchField { width: 210px; }
 .searchField > svg { position: absolute; left: 11px; width: 16px; height: 16px; fill: none; stroke: #958c80; stroke-width: 1.5; pointer-events: none; }
-.searchField input, .selectField select { width: 100%; min-height: 40px; border: 1px solid #d8d0c4; border-radius: 7px; background: #fffdf9; color: #474038; font-family: inherit; font-size: 12px; }
-.searchField input { padding: 0 11px 0 34px; }
+.searchField input, .selectField select { width: 100%; min-height: var(--admin-control-md); border: 1px solid #d8d0c4; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: #474038; font-family: inherit; font-size: var(--admin-text-sm); }
+.searchField input { padding: 0 var(--admin-pad-md) 0 34px; }
 .searchField input::placeholder { color: #aaa196; }
 .selectField { width: 120px; }
-.selectField select { appearance: none; padding: 0 30px 0 10px; overflow: hidden; text-overflow: ellipsis; }
+.selectField select { appearance: none; padding: 0 30px 0 var(--admin-pad-sm); overflow: hidden; text-overflow: ellipsis; }
 .selectField > svg { position: absolute; right: 8px; width: 16px; height: 16px; fill: none; stroke: #8f867a; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 
 .tableWrap { overflow-x: auto; }
 .progressTable { width: 100%; min-width: 1040px; border-collapse: collapse; text-align: left; }
-.progressTable th { height: 42px; padding: 0 16px; border-bottom: 1px solid #e5ded4; background: #faf7f2; color: #948b80; font-size: 12px; font-weight: 650; white-space: nowrap; }
-.sortButton, .sortButtonActive { padding: 0; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+.progressTable th { height: var(--admin-control-lg); padding: 0 var(--admin-gap-md); border-bottom: 1px solid #e5ded4; background: #faf7f2; color: var(--admin-ink-muted); font-size: var(--admin-text-xs); font-weight: 700; white-space: nowrap; }
+.sortButton, .sortButtonActive { padding: 0; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: var(--admin-gap-xs); font-family: inherit; font-size: var(--admin-text-xs); font-weight: 700; cursor: pointer; }
 .sortButton:hover { color: #6b6257; }
 .sortButtonActive { color: #8e4930; }
 .sortButton > svg, .sortButtonActive > svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .sortButton > svg { opacity: .45; }
-.progressTable td { padding: 15px 16px; border-bottom: 1px solid #e8e1d7; color: #5b544b; font-size: 13px; vertical-align: middle; }
+.progressTable td { padding: var(--admin-gap-md); border-bottom: 1px solid #e8e1d7; color: #5b544b; font-size: var(--admin-text-sm); vertical-align: middle; }
 .progressTable tbody tr:last-child td { border-bottom: 0; }
 .progressTable tbody tr:hover { background: #fffdfa; }
-.memberIdentity { min-width: 195px; display: flex; align-items: center; gap: 10px; }
-.memberAvatar { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; background: #ece3d8; color: #8e4c32; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+
+/* 진도·완료 차시·최근 학습은 숫자 열이다. 오른쪽 정렬 + 고정폭 숫자로 두어야
+   행마다 자릿수가 달라도 세로선이 흔들리지 않는다. */
+.progressTable th:nth-child(3), .progressTable td:nth-child(3),
+.progressTable th:nth-child(4), .progressTable td:nth-child(4),
+.progressTable th:nth-child(5), .progressTable td:nth-child(5) { text-align: right; font-variant-numeric: tabular-nums; }
+
+.memberIdentity { min-width: 195px; display: flex; align-items: center; gap: var(--admin-gap-sm); }
+.memberAvatar { width: var(--admin-avatar); height: var(--admin-avatar); flex: 0 0 auto; border-radius: 50%; background: #ece3d8; color: #8e4c32; display: grid; place-items: center; font-size: var(--admin-text-sm); font-weight: 700; }
 .memberIdentity > span:last-child, .courseIdentity, .lastActivity { min-width: 0; display: grid; gap: 4px; }
-.memberIdentity strong, .courseIdentity strong, .lastActivity strong { color: #39332d; font-size: 13px; font-weight: 650; }
-.memberIdentity small, .courseIdentity small, .lastActivity small { color: #948b80; font-size: 11px; }
+.memberIdentity strong, .courseIdentity strong, .lastActivity strong { color: #39332d; font-size: var(--admin-text-sm); font-weight: 600; }
+.memberIdentity small, .courseIdentity small, .lastActivity small { color: #948b80; font-size: var(--admin-text-xs); }
 .memberIdentity small { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .courseIdentity { width: 180px; }
-.rowLinks { margin-top: 2px; display: flex; align-items: center; gap: 8px; }
-.rowLinks a { color: #9a8e80; font-size: 11px; font-weight: 600; text-decoration: none; white-space: nowrap; }
-.rowLinks a:hover { color: #c47757; text-decoration: underline; }
+.rowLinks { margin-top: 2px; display: flex; align-items: center; gap: var(--admin-gap-sm); }
+.rowLinks a { color: var(--admin-ink-muted); font-size: var(--admin-text-xs); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.rowLinks a:hover { color: var(--admin-accent); text-decoration: underline; }
 .courseLink { min-width: 0; color: inherit; text-decoration: none; display: block; }
 .courseLink:hover strong { color: #8e4930; text-decoration: underline; }
 .courseIdentity strong, .lastActivity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.progressCell { width: 155px; display: grid; gap: 8px; }
-.progressCell > span:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.progressCell strong { color: #8e4930; font-size: 14px; }
-.progressCell small { color: #9a9185; font-size: 10px; }
-.progressTrack { height: 5px; }
-.lessonCount { color: #4c453d; font-size: 15px; white-space: nowrap; }
-.lessonCount small { color: #9b9287; font-size: 11px; font-weight: 550; }
-.lastActivity { width: 145px; }
-.noActivity { color: #aaa196; font-size: 12px; }
-.statusBadge { padding: 5px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-.statusBadge > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.progressCell { width: 155px; margin-left: auto; display: grid; gap: var(--admin-gap-sm); }
+.progressCell > span:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: var(--admin-gap-sm); }
+.progressCell strong { color: #8e4930; font-size: var(--admin-text-md); }
+.progressCell small { color: #9a9185; font-size: var(--admin-text-eyebrow); }
+.lessonCount { color: #4c453d; font-size: var(--admin-text-md); white-space: nowrap; }
+.lessonCount small { color: #9b9287; font-size: var(--admin-text-xs); font-weight: 600; }
+.lastActivity { width: 145px; margin-left: auto; }
+.noActivity { color: #aaa196; font-size: var(--admin-text-xs); }
+/* 배지 높이는 글자 길이와 무관하게 고정한다. */
+.statusBadge { min-height: var(--admin-badge-height); padding: 0 var(--admin-pad-sm); border-radius: var(--admin-radius-pill); display: inline-flex; align-items: center; gap: var(--admin-gap-xs); font-size: var(--admin-text-xs); font-weight: 700; white-space: nowrap; }
+.statusBadge > span { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }
 .statusBadge.not_started { background: #eee8e0; color: #887c70; }
 .statusBadge.in_progress { background: #f1dfd6; color: #a65335; }
 .statusBadge.completed { background: #e5eadf; color: #667359; }
 .statusBadge.attention { background: #f3e6cf; color: #9a6b32; }
 
-.emptyState { min-height: 260px; padding: 35px 20px; color: #a2978a; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.emptyState > svg { width: 31px; height: 31px; margin-bottom: 13px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
-.emptyState strong { color: #625a51; font-size: 15px; }
-.emptyState p { margin: 7px 0 0; color: #999084; font-size: 13px; }
+.emptyState { padding: calc(var(--admin-panel-pad) * 2) var(--admin-panel-pad); color: #a2978a; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.emptyState > svg { width: 31px; height: 31px; margin-bottom: var(--admin-gap-sm); fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
+.emptyState strong { color: #625a51; font-size: var(--admin-text-md); }
+.emptyState p { margin: var(--admin-gap-xs) 0 0; color: #999084; font-size: var(--admin-text-sm); }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-.filter:focus-visible, .filterActive:focus-visible, .searchField input:focus-visible, .selectField select:focus-visible, .courseCard:focus-visible, .courseCardActive:focus-visible, .exportButton:focus-visible, .sortButton:focus-visible, .sortButtonActive:focus-visible, .rowLinks a:focus-visible, .courseLink:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.filter:focus-visible, .filterActive:focus-visible, .searchField input:focus-visible, .selectField select:focus-visible, .courseCard:focus-visible, .courseCardActive:focus-visible, .exportButton:focus-visible, .sortButton:focus-visible, .sortButtonActive:focus-visible, .rowLinks a:focus-visible, .courseLink:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 
 @media (max-width: 1300px) {
   .toolbar { align-items: stretch; flex-direction: column; }
@@ -127,13 +137,13 @@
 @media (max-width: 1050px) { .courseGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 900px) { .courseMetrics { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media (max-width: 760px) {
-  .page { gap: 18px; }
+  .page { gap: var(--admin-gap-md); }
   .pageHeading { min-height: auto; }
-  .pageHeading > div > p:last-child { font-size: 14px; }
+  .pageHeading > div > p:last-child { font-size: var(--admin-text-md); }
   .summaryBar { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .summaryItem:nth-child(3) { border-left: 0; }
-  .summaryItem:nth-child(n+3) { border-top: 1px solid #e1dacf; }
-  .courseSection, .panelHeader, .toolbar { padding-inline: 15px; }
+  .summaryItem:nth-child(n+3) { border-top: 1px solid var(--admin-line); }
+  .courseSection, .panelHeader, .toolbar { padding-inline: var(--admin-panel-pad-mobile); }
   .courseGrid { grid-template-columns: 1fr; }
   .panelHeader p { display: none; }
   /* 카드 표에서는 셀 폭이 카드 너비를 따라야 한다. */
@@ -146,11 +156,9 @@
   .selectField { width: 100%; }
 }
 @media (max-width: 520px) {
-  .pageHeading { display: grid; gap: 12px; }
+  .pageHeading { display: grid; gap: var(--admin-gap-sm); }
   .liveBadge, .pendingBadge { width: fit-content; margin-top: 0; }
   .setupNotice code { display: none; }
-  .summaryItem { min-height: 76px; padding: 14px; align-items: flex-start; flex-direction: column; gap: 9px; }
-  .summaryItem strong { font-size: 22px; }
+  .summaryItem { padding: var(--admin-panel-pad-mobile); align-items: flex-start; flex-direction: column; gap: var(--admin-gap-sm); }
   .courseMetrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
-@media (prefers-reduced-motion: reduce) { .filter, .filterActive { transition: none; } }

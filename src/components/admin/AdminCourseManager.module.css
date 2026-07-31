@@ -1,28 +1,27 @@
 .page {
   display: grid;
-  gap: 22px;
+  gap: var(--admin-gap-lg);
 }
 
 .pageHeading {
-  min-height: 92px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 28px;
+  gap: var(--admin-gap-lg);
 }
 
 .eyebrow {
   margin: 0 0 7px;
   color: #a65a3c;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
   letter-spacing: 0.14em;
 }
 
 .pageHeading h1 {
   margin: 0;
-  color: #25211c;
-  font-size: clamp(30px, 2.5vw, 38px);
+  color: var(--admin-ink);
+  font-size: var(--admin-text-page);
   line-height: 1.2;
   letter-spacing: -0.035em;
 }
@@ -30,33 +29,43 @@
 .pageHeading > div > p:last-child {
   margin: 9px 0 0;
   color: #81796e;
-  font-size: 16px;
+  font-size: var(--admin-text-lg);
   line-height: 1.6;
 }
 
-.primaryButton,
-.secondaryButton,
-.previewLink,
-.addSectionButton {
-  min-height: 44px;
-  padding: 0 15px;
-  border-radius: 7px;
+.primaryButton {
+  min-height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-lg);
+  border: 1px solid #b85c38;
+  border-radius: var(--admin-radius-md);
+  background: #b85c38;
+  color: var(--admin-solid-ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-md);
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
 
-.primaryButton {
-  min-height: 44px;
-  border: 1px solid #b85c38;
-  background: #b85c38;
-  color: #fffaf3;
+.secondaryButton,
+.previewLink,
+.addSectionButton {
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
+  border-radius: var(--admin-radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--admin-gap-xs);
+  font-family: inherit;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .primaryButton:hover:not(:disabled) {
@@ -83,14 +92,14 @@
 }
 
 .setupNotice {
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   display: flex;
   align-items: flex-start;
-  padding: 15px 17px;
+  padding: var(--admin-pad-md) var(--admin-pad-lg);
   border: 1px solid #dfd0af;
   background: #f7f0da;
   color: #695c3b;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
 }
 
 .setupNotice > svg {
@@ -106,28 +115,28 @@
 
 .setupNotice strong {
   color: #5b4d2e;
-  font-size: 15px;
+  font-size: var(--admin-text-md);
 }
 
 .setupNotice p {
   margin: 4px 0 8px;
   color: #887958;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.55;
 }
 
 .setupNotice code {
   padding: 4px 7px;
   border: 1px solid #ddceaa;
-  border-radius: 5px;
+  border-radius: var(--admin-radius-sm);
   background: rgba(255, 253, 244, 0.55);
   color: #6d5d37;
-  font-size: 13px;
+  font-size: var(--admin-text-xs);
 }
 
 .summaryBar {
   border: 1px solid #ddd6ca;
-  border-radius: 10px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -135,44 +144,44 @@
 }
 
 .summaryItem {
-  min-height: 84px;
-  padding: 17px 20px;
+  min-height: calc(var(--admin-control-md) + var(--admin-panel-pad) * 2);
+  padding: var(--admin-pad-lg) var(--admin-panel-pad);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--admin-gap-md);
 }
 
 .summaryItem + .summaryItem {
-  border-left: 1px solid #e1dacf;
+  border-left: 1px solid var(--admin-line);
 }
 
 .summaryItem > span {
   color: #8c8377;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 600;
 }
 
 .summaryItem strong {
   color: #37312b;
-  font-size: 26px;
+  font-size: var(--admin-text-display);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .summaryItem strong small {
   margin-left: 3px;
   color: #989084;
-  font-size: 13px;
-  font-weight: 550;
+  font-size: var(--admin-text-xs);
+  font-weight: 600;
 }
 
 .summaryItem .ready { color: #66735a; }
 .summaryItem .warning { color: #a45839; }
 
 .courseWorkspace {
-  min-height: 650px;
   border: 1px solid #dcd4c8;
-  border-radius: 11px;
+  border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   display: grid;
   grid-template-columns: 304px minmax(0, 1fr);
@@ -186,20 +195,20 @@
 }
 
 .railHeader {
-  min-height: 82px;
-  padding: 18px 18px 16px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-lg) * 2);
+  padding: var(--admin-pad-lg);
   border-bottom: 1px solid #dfd8cd;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: var(--admin-gap-md);
 }
 
 .railHeader h2,
 .curriculumHeader h3 {
   margin: 0;
   color: #35302a;
-  font-size: 17px;
+  font-size: var(--admin-text-title);
   letter-spacing: -0.02em;
 }
 
@@ -207,24 +216,24 @@
 .curriculumHeader p {
   margin: 5px 0 0;
   color: #988f84;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .railHeader > span {
-  min-width: 27px;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 99px;
+  min-width: var(--admin-control-sm);
+  height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   background: #e4dbcf;
   color: #765747;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 .pendingProducts {
-  padding: 14px 12px;
+  padding: var(--admin-pad-md) var(--admin-pad-sm);
   border-bottom: 1px solid #dfd8cd;
   background: #eee8df;
 }
@@ -234,30 +243,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .pendingHeader > span {
   color: #7d4c38;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
 }
 
 .pendingHeader > strong {
-  min-width: 20px;
-  height: 20px;
-  border-radius: 99px;
+  min-width: var(--admin-badge-height);
+  height: var(--admin-badge-height);
+  border-radius: var(--admin-radius-pill);
   background: #d9b9a8;
   color: #753f2b;
   display: grid;
   place-items: center;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .pendingProducts > p {
   margin: 4px 3px 9px;
   color: #9a8e82;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   line-height: 1.45;
 }
 
@@ -268,25 +277,25 @@
 
 .pendingList > button {
   width: 100%;
-  min-height: 68px;
-  padding: 11px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-sm);
   border: 1px solid #d5c4b6;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #fffaf4;
   color: #6d6258;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
+  gap: var(--admin-gap-xs);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
 }
 
 .pendingList > button > span:first-child {
-  width: 29px;
-  height: 29px;
-  border-radius: 6px;
+  width: var(--admin-control-sm);
+  height: var(--admin-control-sm);
+  border-radius: var(--admin-radius-sm);
   background: #f0dfd4;
   color: #99583d;
   display: grid;
@@ -317,18 +326,18 @@
 
 .pendingList > button strong {
   color: #4f463e;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 .pendingList > button small {
   color: #a0968b;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
 }
 
 .pendingList > button em {
   color: #98583d;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   font-style: normal;
   font-weight: 700;
   white-space: nowrap;
@@ -336,7 +345,7 @@
 
 .pendingList > button:hover:not(:disabled) {
   border-color: #bc9d8b;
-  background: #fffdf9;
+  background: var(--admin-surface);
 }
 
 .pendingList > button:disabled {
@@ -345,24 +354,28 @@
 }
 
 .courseList {
-  padding: 12px;
+  padding: var(--admin-pad-sm);
   display: grid;
   gap: 5px;
 }
 
+/*
+ * 강의명·차시 수 길이에 따라 카드 높이가 흔들리면 좌측 목록의 세로 리듬이 깨진다.
+ * 높이를 고정하고 각 줄은 말줄임으로 처리한다.
+ */
 .courseItem,
 .courseItemActive {
   width: 100%;
-  min-height: 88px;
-  padding: 12px 11px;
+  height: calc(var(--admin-control-lg) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: transparent;
   color: #696158;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
@@ -379,10 +392,10 @@
 }
 
 .courseItemIcon {
-  width: 42px;
-  height: 42px;
+  width: var(--admin-control-lg);
+  height: var(--admin-control-lg);
   border: 1px solid #ddd1c3;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #e8ddd0;
   color: #895039;
   display: grid;
@@ -408,18 +421,23 @@
   gap: 4px;
 }
 
-.courseItemCopy strong {
+.courseItemCopy strong,
+.courseItemCopy small,
+.courseItemCopy > span {
   overflow: hidden;
-  color: #403a34;
-  font-size: 14px;
-  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.courseItemCopy strong {
+  color: #403a34;
+  font-size: var(--admin-text-md);
+  font-weight: 700;
+}
+
 .courseItemCopy small {
   color: #958c81;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .courseItemCopy > span {
@@ -427,7 +445,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .courseItemCopy i {
@@ -440,6 +458,7 @@
 .statusDot {
   width: 6px;
   height: 6px;
+  flex: 0 0 auto;
   border-radius: 50%;
   background: #8d857b;
 }
@@ -462,8 +481,8 @@
 .railEmpty,
 .editorEmpty,
 .curriculumEmpty {
-  min-height: 260px;
-  padding: 28px 20px;
+  min-height: var(--admin-empty-height);
+  padding: var(--admin-panel-pad);
   color: #a1988d;
   display: flex;
   flex-direction: column;
@@ -475,9 +494,9 @@
 .railEmpty strong,
 .editorEmpty strong,
 .curriculumEmpty strong {
-  margin-top: 12px;
+  margin-top: var(--admin-gap-sm);
   color: #5f574e;
-  font-size: 14px;
+  font-size: var(--admin-text-md);
 }
 
 .railEmpty p,
@@ -485,22 +504,22 @@
 .curriculumEmpty p {
   margin: 5px 0 0;
   color: #9a9186;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.5;
 }
 
 .editorPanel {
   min-width: 0;
-  padding: 24px 25px 28px;
+  padding: var(--admin-panel-pad);
 }
 
 .editorHeader {
-  padding-bottom: 20px;
+  padding-bottom: var(--admin-pad-lg);
   border-bottom: 1px solid #e0d9ce;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--admin-gap-lg);
 }
 
 .editorTitle {
@@ -511,31 +530,34 @@
   margin-bottom: 9px;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
 }
 
 .productConnection > span {
   color: #9b9186;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
 }
 
 .productConnection > strong {
   overflow: hidden;
   max-width: 240px;
   color: #6b6258;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .productConnection em {
-  padding: 3px 6px;
-  border-radius: 99px;
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   background: #ece6dd;
   color: #7b7165;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--admin-text-eyebrow);
   font-style: normal;
   font-weight: 700;
 }
@@ -548,42 +570,45 @@
   overflow-wrap: anywhere;
   margin: 0;
   color: #2e2923;
-  font-size: 25px;
+  font-size: var(--admin-text-display);
   letter-spacing: -0.03em;
 }
 
 .editorTitle > p {
   margin: 7px 0 0;
   color: #948b80;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .editorHeaderActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
 }
 
 .statusBadge,
 .compactStatus {
-  border-radius: 99px;
+  border-radius: var(--admin-radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   white-space: nowrap;
 }
 
+/* 헤더 안 보조 버튼과 같은 줄에 서므로 md 높이로 맞춘다. */
 .statusBadge {
-  padding: 7px 9px;
-  font-size: 12px;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
+  font-size: var(--admin-text-xs);
 }
 
+/* 차시 행·챕터 요약에서 액션 버튼과 같은 줄에 서므로 sm 높이로 맞춘다. */
 .compactStatus {
-  min-height: 26px;
-  padding: 0 9px;
-  font-size: 11px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
+  font-size: var(--admin-text-xs);
 }
 
 .statusBadge.published,
@@ -595,7 +620,7 @@
 
 .secondaryButton,
 .previewLink {
-  border: 1px solid #d5ccc0;
+  border: 1px solid var(--admin-line-strong);
   background: transparent;
   color: #6e655b;
 }
@@ -606,19 +631,22 @@
   color: #3e3831;
 }
 
+/* 두 카드는 설명 길이가 달라도 같은 높이여야 아래 블록의 시작선이 맞는다. */
 .exposureGrid {
-  margin-top: 18px;
+  margin-top: var(--admin-gap-md);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  align-items: stretch;
+  gap: var(--admin-gap-sm);
 }
 
 .exposureReady,
 .exposureWarning {
-  min-height: 112px;
-  padding: 13px 14px;
+  min-height: calc(var(--admin-control-lg) * 2 + var(--admin-gap-lg));
+  height: 100%;
+  padding: var(--admin-pad-md);
   border: 1px solid #d6dfcd;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #f2f5ee;
   display: flex;
   flex-direction: column;
@@ -632,7 +660,7 @@
 .exposureReady > span,
 .exposureWarning > span {
   color: #8d9485;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   font-weight: 700;
 }
 
@@ -644,8 +672,8 @@
   color: #58654e;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: var(--admin-gap-xs);
+  font-size: var(--admin-text-md);
 }
 
 .exposureWarning strong { color: #936147; }
@@ -654,6 +682,7 @@
 .exposureWarning strong svg {
   width: 15px;
   height: 15px;
+  flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
@@ -663,9 +692,9 @@
 
 .exposureReady small,
 .exposureWarning small {
-  margin-top: 6px;
+  margin-top: var(--admin-gap-xs);
   color: #7e8975;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
   line-height: 1.45;
 }
 
@@ -673,12 +702,12 @@
 
 .readinessWarning,
 .readinessReady {
-  margin-top: 18px;
-  padding: 13px 15px;
-  border-radius: 8px;
+  margin-top: var(--admin-gap-md);
+  padding: var(--admin-pad-md);
+  border-radius: var(--admin-radius-md);
   display: flex;
   align-items: flex-start;
-  gap: 11px;
+  gap: var(--admin-gap-sm);
 }
 
 .readinessWarning {
@@ -708,7 +737,7 @@
 .readinessWarning strong,
 .readinessReady strong {
   color: #65483b;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .readinessReady strong { color: #536047; }
@@ -717,22 +746,21 @@
 .readinessReady p {
   margin: 3px 0 0;
   color: #9e7564;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.5;
 }
 
 .readinessReady p { color: #7b8970; }
 
 .curriculumHeader {
-  min-height: 76px;
+  min-height: calc(var(--admin-control-md) + var(--admin-pad-lg) * 2);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: var(--admin-gap-md);
 }
 
 .addSectionButton {
-  min-height: 36px;
   border: 1px solid #cdbbad;
   background: #f6ece4;
   color: #87513a;
@@ -740,23 +768,27 @@
 
 .sectionList {
   display: grid;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .sectionCard {
   border: 1px solid #ddd5ca;
-  border-radius: 8px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   overflow: hidden;
 }
 
+/*
+ * 번호 박스(md), 제목, 상태 칩(sm), 액션 버튼(sm)이 한 줄에 선다.
+ * 각 요소의 높이를 토큰으로 고정해야 챕터마다 세로 정렬이 흔들리지 않는다.
+ */
 .sectionCard > summary {
-  min-height: 64px;
-  padding: 11px 14px;
+  min-height: calc(var(--admin-control-md) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: 11px;
+  gap: var(--admin-gap-sm);
   cursor: pointer;
   list-style: none;
 }
@@ -777,15 +809,15 @@
 .sectionCard[open] > summary > svg { transform: rotate(180deg); }
 
 .sectionNumber {
-  width: 36px;
-  height: 36px;
-  border-radius: 7px;
+  width: var(--admin-control-md);
+  height: var(--admin-control-md);
+  border-radius: var(--admin-radius-md);
   background: #eee5dc;
   color: #8a563f;
   display: grid;
   place-items: center;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
 }
 
 .sectionTitle {
@@ -797,7 +829,7 @@
 .sectionTitle strong {
   overflow: hidden;
   color: #443d36;
-  font-size: 14px;
+  font-size: var(--admin-text-md);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -805,7 +837,7 @@
 
 .sectionTitle small {
   color: #9b9287;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .sectionBody {
@@ -814,8 +846,8 @@
 }
 
 .sectionMeta {
-  min-height: 58px;
-  padding: 10px 14px;
+  min-height: calc(var(--admin-control-sm) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border-bottom: 1px solid #e6dfd5;
   display: flex;
   align-items: center;
@@ -825,57 +857,52 @@
   max-width: 520px;
   margin: 0;
   color: #8b8278;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.5;
 }
 
-.sectionActions,
-.lessonActions {
+.sectionActions {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
+  gap: var(--admin-gap-xs);
 }
 
+/*
+ * 차시 액션도 고정 슬롯이다. [순서 이동][영상][수정] 폭을 토큰으로 못 박아야
+ * 챕터가 달라도 행 오른쪽 끝의 세로선이 유지된다.
+ */
 .lessonActions {
-  width: 205px;
   display: grid;
-  grid-template-columns: 67px 82px 42px;
+  grid-template-columns:
+    var(--lesson-order-col)
+    var(--lesson-video-action-col)
+    var(--admin-control-sm);
+  gap: var(--admin-gap-xs);
   justify-content: end;
 }
 
-.lessonActions .orderButtonsCompact {
-  width: 67px;
-}
-
-.lessonActions .videoAction,
-.lessonActions .videoActionReady {
-  width: 82px;
-  padding-inline: 0;
-}
-
-.lessonActions > button:last-child {
-  width: 42px;
-  padding-inline: 0;
+.lessonActions > * {
+  width: 100%;
 }
 
 .sectionActions > button,
 .lessonActions > button,
 .orderButtons button,
 .orderButtonsCompact button {
-  min-height: 32px;
-  padding: 0 9px;
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
   border: 1px solid #d6cdc1;
-  border-radius: 5px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
   color: #756b61;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -908,18 +935,16 @@
 .orderButtonsCompact {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--admin-gap-xs);
 }
 
+/* 아이콘 전용 버튼은 가로·세로를 같은 토큰으로 두어 정사각을 유지한다. */
 .orderButtons button,
 .orderButtonsCompact button {
-  width: 32px;
+  width: var(--admin-control-sm);
+  min-width: var(--admin-control-sm);
+  height: var(--admin-control-sm);
   padding: 0;
-}
-
-.orderButtonsCompact button {
-  width: 32px;
-  min-height: 32px;
 }
 
 .orderButtons svg,
@@ -944,27 +969,43 @@
 }
 
 .lessonRow {
-  min-height: 62px;
-  padding: 9px 14px;
+  /* 순서 이동 2칸 + 간격 */
+  --lesson-order-col: calc(var(--admin-control-sm) * 2 + var(--admin-gap-xs));
+  /* "영상 업로드" 라벨이 들어가는 폭 */
+  --lesson-video-action-col: calc(var(--admin-control-sm) * 2 + var(--admin-pad-lg));
+  --lesson-actions-col: calc(
+    var(--lesson-order-col) + var(--lesson-video-action-col) +
+    var(--admin-control-sm) + var(--admin-gap-xs) * 2
+  );
+  --lesson-video-col: calc(var(--admin-control-lg) * 2 + var(--admin-gap-md));
+  --lesson-status-col: calc(var(--admin-control-lg) + var(--admin-gap-lg));
+
+  min-height: calc(var(--admin-control-sm) + var(--admin-pad-md) * 2);
+  padding: var(--admin-gap-sm) var(--admin-pad-md);
   border-bottom: 1px solid #e9e2d8;
   display: grid;
-  grid-template-columns: 28px minmax(220px, 1fr) 112px 80px 205px;
+  grid-template-columns:
+    var(--admin-control-sm)
+    minmax(200px, 1fr)
+    var(--lesson-video-col)
+    var(--lesson-status-col)
+    var(--lesson-actions-col);
   align-items: center;
-  gap: 9px;
+  gap: var(--admin-gap-sm);
 }
 
 .lessonRow:last-child { border-bottom: 0; }
 
 .lessonRow > .compactStatus {
-  width: 76px;
-  justify-self: start;
+  justify-self: stretch;
 }
 
-.lessonRow:hover { background: #fffdf9; }
+.lessonRow:hover { background: var(--admin-surface); }
 
 .lessonIndex {
   color: #a0978c;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
@@ -977,25 +1018,26 @@
 .lessonMain strong {
   overflow: hidden;
   color: #4a433c;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .lessonMain small {
   color: #aaa196;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
 }
 
+/* 상태 칩과 같은 줄에 서므로 높이를 맞춘다. */
 .videoReady,
 .videoMissing {
-  width: 108px;
+  min-height: var(--admin-control-sm);
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -1006,6 +1048,7 @@
 .videoMissing svg {
   width: 14px;
   height: 14px;
+  flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.45;
@@ -1014,22 +1057,22 @@
 }
 
 .lessonEmpty {
-  padding: 25px 14px;
+  padding: var(--admin-panel-pad) var(--admin-pad-md);
   color: #9f968b;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   text-align: center;
 }
 
 .videoManagementHint {
-  min-height: 64px;
-  padding: 12px 14px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-sm) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #d9d0c4;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #f7f1e9;
   color: #7b6e63;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--admin-gap-sm);
 }
 
 .videoManagementHint > svg {
@@ -1051,62 +1094,65 @@
 
 .videoManagementHint strong {
   color: #5d534b;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .videoManagementHint small {
   color: #958a7f;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.45;
 }
 
 .videoCreateField {
-  padding: 16px;
+  padding: var(--admin-pad-md);
   border: 1px solid #d9cfc3;
-  border-radius: 9px;
+  border-radius: var(--admin-radius-md);
   background: #f8f2eb;
   display: grid;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .videoCreateHeading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--admin-gap-md);
 }
 
 .videoCreateHeading > div {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--admin-gap-xs);
 }
 
 .videoCreateHeading > div > span {
   color: #554d45;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 .videoCreateHeading > div > small {
-  padding: 2px 6px;
-  border-radius: 99px;
+  min-height: var(--admin-badge-height);
+  padding: 0 var(--admin-pad-sm);
+  border-radius: var(--admin-radius-pill);
   background: #e9dfd3;
   color: #817568;
-  font-size: 11px;
-  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--admin-text-eyebrow);
+  font-weight: 700;
 }
 
 /* 파일을 고르기 전에 읽히도록 안내 문구 수준이 아니라 경고 배너로 세운다. */
 .videoCreateConstraint {
   margin: 0;
-  padding: 11px 12px;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #e2cfae;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #f9f2df;
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: var(--admin-gap-xs);
 }
 
 .videoCreateConstraint > svg {
@@ -1128,35 +1174,35 @@
 
 .videoCreateConstraint strong {
   color: #6d5c33;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   font-weight: 700;
 }
 
 .videoCreateConstraint small {
   color: #8d7d5d;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.45;
 }
 
 .videoCreatePicker {
   width: 100%;
-  min-height: 80px;
-  padding: 12px 14px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-gap-md) * 2);
+  padding: var(--admin-pad-md);
   border: 1px dashed #c8b7a9;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #fffaf4;
   color: inherit;
   font-family: inherit;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--admin-gap-sm);
   text-align: left;
   cursor: pointer;
 }
 
 .videoCreatePicker:hover:not(:disabled) {
   border-color: #ac765d;
-  background: #fffdf9;
+  background: var(--admin-surface);
 }
 
 .videoCreatePicker:disabled {
@@ -1166,8 +1212,8 @@
 
 .videoCreatePicker > span:first-child,
 .videoCreateIcon {
-  width: 38px;
-  height: 38px;
+  width: var(--admin-control-md);
+  height: var(--admin-control-md);
   flex: 0 0 auto;
   border-radius: 50%;
   background: #eee2d7;
@@ -1195,25 +1241,25 @@
 
 .videoCreatePicker strong {
   color: #574e46;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
 }
 
 .videoCreatePicker small {
   color: #94897e;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.45;
 }
 
 .videoCreateSelected {
-  min-height: 80px;
-  padding: 11px 12px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-gap-md) * 2);
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #d6c9bc;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
   background: #fffaf4;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .videoCreateSelected > span:nth-child(2) {
@@ -1225,31 +1271,31 @@
 .videoCreateSelected strong {
   overflow: hidden;
   color: #514940;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .videoCreateSelected small {
   color: #978c81;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
 }
 
 .videoCreateSelected button {
-  min-height: 36px;
-  padding: 0 9px;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-sm);
   border: 1px solid #cfbcae;
-  border-radius: 6px;
+  border-radius: var(--admin-radius-sm);
   background: transparent;
   color: #815744;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .videoCreateSelected button:last-child {
-  width: 31px;
+  width: var(--admin-control-md);
   padding: 0;
   border-color: transparent;
   color: #8c8176;
@@ -1269,7 +1315,7 @@
 .videoCreateHelp,
 .videoCreateError {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--admin-text-xs);
   line-height: 1.45;
 }
 
@@ -1287,56 +1333,56 @@
 }
 
 .draftStatusField {
-  height: 44px;
-  padding: 0 11px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-md);
   border: 1px solid #d8d0c5;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #f3eee7;
   color: #786e64;
   display: flex;
   align-items: center;
-  font-size: 13px;
+  font-size: var(--admin-text-md);
 }
 
 .curriculumEmpty {
-  min-height: 300px;
+  min-height: calc(var(--admin-empty-height) + var(--admin-gap-lg));
   border: 1px dashed #d8cfc3;
-  border-radius: 8px;
+  border-radius: var(--admin-radius-md);
 }
 
 .curriculumEmpty button {
-  min-height: 34px;
-  margin-top: 15px;
-  padding: 0 12px;
+  min-height: var(--admin-control-md);
+  margin-top: var(--admin-gap-md);
+  padding: 0 var(--admin-pad-md);
   border: 1px solid #cdbbad;
-  border-radius: 6px;
+  border-radius: var(--admin-radius-sm);
   background: #f6ece4;
   color: #87513a;
   font: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .dialogForm {
   display: grid;
-  gap: 17px;
+  gap: var(--admin-gap-md);
 }
 
 .formError {
-  padding: 11px 12px;
+  padding: var(--admin-pad-sm) var(--admin-pad-md);
   border: 1px solid #e6c8bc;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #fbefea;
   color: #984c37;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   line-height: 1.5;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 12px;
+  gap: var(--admin-gap-md) var(--admin-gap-sm);
 }
 
 .formField {
@@ -1346,10 +1392,10 @@
 }
 
 .formField > span:first-child {
-  margin-bottom: 7px;
+  margin-bottom: var(--admin-gap-xs);
   color: #5c554d;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-sm);
+  font-weight: 700;
 }
 
 .formField input,
@@ -1357,22 +1403,22 @@
 .selectControl select {
   width: 100%;
   border: 1px solid #d8d0c5;
-  border-radius: 7px;
-  background: #fffdf9;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
   color: #3e3832;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--admin-text-md);
 }
 
 .formField input,
 .selectControl select {
-  height: 44px;
-  padding: 0 12px;
+  height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-md);
 }
 
 .formField textarea {
-  min-height: 92px;
-  padding: 12px;
+  min-height: calc(var(--admin-control-lg) * 2);
+  padding: var(--admin-pad-md);
   line-height: 1.55;
   resize: vertical;
 }
@@ -1381,10 +1427,10 @@
 .formField textarea::placeholder { color: #b0a79b; }
 
 .formField small {
-  min-height: 12px;
+  min-height: var(--admin-text-md);
   margin-top: 5px;
   color: #9e9589;
-  font-size: 12px;
+  font-size: var(--admin-text-eyebrow);
   line-height: 1.45;
 }
 
@@ -1415,45 +1461,45 @@
 }
 
 .lockedMeta {
-  min-height: 68px;
-  padding: 14px 16px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-md);
   border: 1px solid #dfd7cc;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #f5f0e9;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .lockedMeta > span {
   color: #978e83;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--admin-text-xs);
+  font-weight: 700;
 }
 
 .lockedMeta strong {
   overflow: hidden;
   color: #534b43;
-  font-size: 13px;
+  font-size: var(--admin-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .lockedMeta small {
   color: #aaa096;
-  font-size: 11px;
+  font-size: var(--admin-text-eyebrow);
 }
 
 .checkboxField {
-  min-height: 68px;
-  padding: 15px 16px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-md);
   border: 1px solid #e0d8cd;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #f6f1ea;
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: var(--admin-gap-xs);
   cursor: pointer;
 }
 
@@ -1467,19 +1513,19 @@
   gap: 4px;
 }
 
-.checkboxField strong { color: #574f47; font-size: 13px; }
-.checkboxField small { color: #978e83; font-size: 12px; line-height: 1.45; }
+.checkboxField strong { color: #574f47; font-size: var(--admin-text-sm); }
+.checkboxField small { color: #978e83; font-size: var(--admin-text-xs); line-height: 1.45; }
 
 .previewUnavailable {
-  min-height: 68px;
-  padding: 14px 15px;
+  min-height: calc(var(--admin-control-lg) + var(--admin-pad-md) * 2);
+  padding: var(--admin-pad-md);
   border: 1px solid #e1d3c6;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #f8f2ec;
   color: #94654e;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--admin-gap-sm);
 }
 
 .previewUnavailable > svg {
@@ -1494,25 +1540,25 @@
 }
 
 .previewUnavailable > span { display: grid; gap: 4px; }
-.previewUnavailable strong { color: #795342; font-size: 13px; }
-.previewUnavailable small { color: #9b7d6c; font-size: 12px; line-height: 1.45; }
+.previewUnavailable strong { color: #795342; font-size: var(--admin-text-sm); }
+.previewUnavailable small { color: #9b7d6c; font-size: var(--admin-text-xs); line-height: 1.45; }
 
 .successState button {
-  min-height: 44px;
-  padding: 0 16px;
+  min-height: var(--admin-control-lg);
+  padding: 0 var(--admin-pad-lg);
   border: 1px solid #b85c38;
-  border-radius: 7px;
+  border-radius: var(--admin-radius-md);
   background: #b85c38;
-  color: #fffaf3;
+  color: var(--admin-solid-ink);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--admin-text-md);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .successState {
-  min-height: 300px;
-  padding: 36px 20px;
+  min-height: calc(var(--admin-empty-height) + var(--admin-gap-lg));
+  padding: calc(var(--admin-panel-pad) * 2) var(--admin-panel-pad);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1521,9 +1567,9 @@
 }
 
 .successState > span {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 16px;
+  width: var(--admin-control-lg);
+  height: var(--admin-control-lg);
+  margin-bottom: var(--admin-gap-md);
   border-radius: 50%;
   background: #e3e9dc;
   color: #66735a;
@@ -1541,8 +1587,12 @@
   stroke-linejoin: round;
 }
 
-.successState strong { color: #39332d; font-size: 19px; }
-.successState p { margin: 7px 0 18px; color: #90877d; font-size: 13px; }
+.successState strong { color: #39332d; font-size: var(--admin-text-title); }
+.successState p {
+  margin: 7px 0 var(--admin-gap-md);
+  color: #90877d;
+  font-size: var(--admin-text-sm);
+}
 
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible,
@@ -1569,11 +1619,18 @@
   .courseWorkspace { grid-template-columns: 290px minmax(0, 1fr); }
   .editorHeader { align-items: flex-start; flex-direction: column; }
   .editorHeaderActions { justify-content: flex-start; flex-wrap: wrap; }
-  .lessonRow { grid-template-columns: 28px minmax(180px, 1fr) 104px 68px; }
+
+  /* 액션이 아래 줄로 내려가므로 앞의 네 열만 남긴다. */
+  .lessonRow {
+    grid-template-columns:
+      var(--admin-control-sm)
+      minmax(160px, 1fr)
+      var(--lesson-video-col)
+      var(--lesson-status-col);
+  }
+
   .lessonActions {
-    width: auto;
     grid-column: 2 / -1;
-    justify-content: end;
   }
 }
 
@@ -1584,18 +1641,18 @@
     border-bottom: 1px solid #ded7cc;
   }
   .courseList {
-    padding: 10px 14px 14px;
+    padding: var(--admin-pad-sm) var(--admin-pad-md) var(--admin-pad-md);
     grid-auto-columns: minmax(280px, 320px);
     grid-auto-flow: column;
     overflow-x: auto;
   }
-  .railEmpty { min-height: 170px; }
+  .railEmpty { min-height: calc(var(--admin-empty-height) - var(--admin-gap-lg) * 3); }
 }
 
 @media (max-width: 900px) {
   .summaryBar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .summaryItem:nth-child(3) { border-top: 1px solid #e1dacf; border-left: 0; }
-  .summaryItem:nth-child(4) { border-top: 1px solid #e1dacf; }
+  .summaryItem:nth-child(3) { border-top: 1px solid var(--admin-line); border-left: 0; }
+  .summaryItem:nth-child(4) { border-top: 1px solid var(--admin-line); }
   .exposureGrid { grid-template-columns: 1fr; }
   .exposureReady,
   .exposureWarning { min-height: 0; }
@@ -1616,26 +1673,25 @@
 }
 
 @media (max-width: 640px) {
-  .page { gap: 18px; }
+  .page { gap: var(--admin-gap-md); }
   .pageHeading { display: grid; }
   .primaryButton { width: 100%; }
   .summaryItem {
-    min-height: 88px;
-    padding: 16px;
+    padding: var(--admin-panel-pad-mobile);
     align-items: flex-start;
     flex-direction: column;
-    gap: 9px;
+    gap: var(--admin-gap-sm);
   }
-  .railHeader { min-height: 70px; padding: 15px; }
-  .editorPanel { padding: 19px 15px 22px; }
-  .editorTitle h2 { font-size: 22px; }
+  .railHeader { padding: var(--admin-panel-pad-mobile); }
+  .editorPanel { padding: var(--admin-panel-pad-mobile); }
+  .editorTitle h2 { font-size: var(--admin-text-title); }
   .editorHeaderActions { width: 100%; }
   .secondaryButton,
   .previewLink { flex: 1; }
   .readinessWarning,
-  .readinessReady { padding: 12px; }
-  .curriculumHeader { min-height: 70px; }
+  .readinessReady { padding: var(--admin-pad-sm); }
   .sectionCard > summary {
+    padding-inline: var(--admin-panel-pad-mobile);
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
   .sectionCard > summary .compactStatus { display: none; }
@@ -1649,9 +1705,9 @@
     grid-row: 1;
   }
   .lessonRow {
-    padding: 11px 12px;
-    grid-template-columns: 23px minmax(0, 1fr) auto;
-    gap: 7px;
+    padding: var(--admin-gap-sm) var(--admin-panel-pad-mobile);
+    grid-template-columns: var(--admin-control-sm) minmax(0, 1fr) auto;
+    gap: var(--admin-gap-xs);
   }
   .lessonMain strong {
     display: -webkit-box;
@@ -1664,23 +1720,6 @@
   .videoMissing { grid-column: 2; }
   .lessonRow > .compactStatus { grid-column: 3; grid-row: 1 / 3; }
   .lessonActions { grid-column: 2 / -1; padding-top: 4px; }
-  .sectionActions > button,
-  .lessonActions > button,
-  .orderButtons button,
-  .orderButtonsCompact button {
-    min-height: 40px;
-  }
-  .orderButtons button,
-  .orderButtonsCompact button {
-    width: 40px;
-  }
-  .lessonActions {
-    grid-template-columns: 83px 88px 44px;
-  }
-  .lessonActions .orderButtonsCompact { width: 83px; }
-  .lessonActions .videoAction,
-  .lessonActions .videoActionReady { width: 88px; }
-  .lessonActions > button:last-child { width: 44px; }
   .formGrid { grid-template-columns: 1fr; }
   .lockedMeta { grid-template-columns: 1fr; gap: 5px; }
   .videoCreateSelected {
@@ -1698,7 +1737,7 @@
 
 @media (max-width: 400px) {
   .sectionActions { flex-wrap: wrap; }
-  .addSectionButton { padding-inline: 9px; }
+  .addSectionButton { padding-inline: var(--admin-pad-sm); }
 }
 
 @media (prefers-reduced-motion: reduce) {

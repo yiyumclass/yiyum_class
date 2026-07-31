@@ -517,7 +517,7 @@ function MemberRow({
           </span>
         </span>
       </td>
-      <td data-label="가입일" className={styles.dateCell}>
+      <td data-label="가입일" className={`${styles.numericCell} ${styles.dateCell}`}>
         {formatDate(member.joinedAt)}
       </td>
       <td data-label="보유 콘텐츠">
@@ -532,13 +532,13 @@ function MemberRow({
           <span className={styles.emptyValue}>없음</span>
         )}
       </td>
-      <td data-label="활성 수강권">
+      <td data-label="활성 수강권" className={styles.numericCell}>
         <strong className={activeEntitlements.length > 0 ? styles.activeCount : styles.zeroCount}>
           {activeEntitlements.length}
           <small>개</small>
         </strong>
       </td>
-      <td data-label="최근 로그인" className={styles.dateCell}>
+      <td data-label="최근 로그인" className={`${styles.numericCell} ${styles.dateCell}`}>
         {member.lastSignInAt ? formatDateTime(member.lastSignInAt) : "기록 없음"}
       </td>
       <td className={styles.actionCell}>

@@ -1,53 +1,71 @@
-.page { display: grid; gap: 24px; }
-.heading h1 { margin: 0 0 8px; font-size: 23px; font-weight: 700; color: #25211c; }
-.heading p { margin: 0; color: #8f867a; font-size: 14px; line-height: 1.6; }
+.page { display: grid; gap: var(--admin-gap-lg); }
+.heading h1 { margin: 0 0 var(--admin-gap-sm); font-size: var(--admin-text-page); font-weight: 700; color: var(--admin-ink); }
+.heading p { margin: 0; color: #8f867a; font-size: var(--admin-text-md); line-height: 1.6; }
 
-.notice, .error { margin: 0; padding: 12px 16px; border-radius: 10px; display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; }
+.notice, .error { min-height: var(--admin-control-lg); margin: 0; padding: var(--admin-pad-sm) var(--admin-pad-lg); border-radius: var(--admin-radius-md); display: flex; align-items: center; gap: var(--admin-gap-sm); font-size: var(--admin-text-md); font-weight: 600; }
 .notice { border: 1px solid #cfe0ca; background: #edf5ea; color: #31532d; }
-.error { border: 1px solid #e8c6bd; background: #fff0ec; color: #a63f2c; }
+.error { border: 1px solid #e8c6bd; background: #fff0ec; color: var(--admin-danger); }
 .notice svg, .error svg { width: 17px; height: 17px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-.panel { padding: 24px; border: 1px solid #ddd6ca; border-radius: 14px; background: #fbf8f3; }
-.panel h2 { margin: 0 0 18px; font-size: 18px; font-weight: 700; color: #25211c; }
+.panel { padding: var(--admin-panel-pad); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-lg); background: #fbf8f3; }
+.panel h2 { margin: 0 0 var(--admin-gap-md); font-size: var(--admin-text-title); font-weight: 700; color: var(--admin-ink); }
 
-.form { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, .7fr) minmax(0, 1fr) auto; gap: 12px; align-items: start; }
-.field { display: grid; gap: 6px; min-width: 0; }
-.field > span { color: #8f867a; font-size: 12px; font-weight: 700; }
-.field input, .field select { min-width: 0; height: 44px; padding: 0 12px; border: 1px solid #d6cec1; border-radius: 8px; background: #fffdf9; color: #25211c; font: inherit; font-size: 14px; }
-.field input:focus-visible, .field select:focus-visible { outline: 2px solid #c47757; outline-offset: 1px; }
-.submit { align-self: start; margin-top: 24px; height: 44px; padding: 0 18px; border: 0; border-radius: 8px; background: #3b332b; color: #fffdf9; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+/* 한 줄에 놓이는 폼 컨트롤은 전부 lg 등급이다. 제출 버튼은 라벨 한 줄만큼 내려
+   입력들과 바닥선을 맞춘다(라벨 글자 + 필드 gap). */
+.form { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 1fr) auto; gap: var(--admin-gap-sm); align-items: start; }
+.field { display: grid; gap: var(--admin-gap-xs); min-width: 0; }
+.field > span { color: #8f867a; font-size: var(--admin-text-xs); font-weight: 700; }
+.field input, .field select { min-width: 0; height: var(--admin-control-lg); padding: 0 var(--admin-pad-md); border: 1px solid #d6cec1; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: var(--admin-ink); font: inherit; font-size: var(--admin-text-md); }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 1px; }
+.submit { align-self: start; margin-top: calc(var(--admin-text-md) + var(--admin-gap-sm)); height: var(--admin-control-lg); padding: 0 var(--admin-pad-lg); border: 0; border-radius: var(--admin-radius-md); background: #3b332b; color: var(--admin-surface); font: inherit; font-size: var(--admin-text-md); font-weight: 700; cursor: pointer; }
 .submit:hover { background: #2b241e; }
-.submit:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.submit:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 
 .list { display: grid; gap: 4px; }
-.row, .rowInactive { display: grid; grid-template-columns: minmax(0, 1.5fr) auto auto auto; gap: 14px; align-items: center; padding: 15px 0; border-bottom: 1px solid #e7dfd3; }
+/* 상태·역할·해제 열을 고정 폭으로 잡아야 행마다 컨트롤이 같은 세로선에 놓인다.
+   좁은 화면(≤900px)에서는 아래 미디어 쿼리가 2열로 되접는다. */
+.row, .rowInactive {
+  min-height: calc(var(--admin-control-lg) + var(--admin-gap-lg));
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--admin-row-action-width)
+    calc(var(--admin-row-action-width) * 2 + var(--admin-gap-md) * 2)
+    var(--admin-row-action-width);
+  gap: var(--admin-gap-md);
+  align-items: center;
+  padding: var(--admin-gap-md) 0;
+  border-bottom: 1px solid #e7dfd3;
+}
 .row:last-child, .rowInactive:last-child { border-bottom: 0; }
 .rowInactive { opacity: .62; }
 
 .identity { display: grid; gap: 3px; min-width: 0; }
-.identity strong { display: flex; align-items: center; gap: 7px; overflow: hidden; color: #25211c; font-size: 15px; font-weight: 650; text-overflow: ellipsis; }
-.identity > span { overflow: hidden; color: #8f867a; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.meta { color: #b0a496 !important; font-size: 12px !important; font-variant-numeric: tabular-nums; }
+.identity strong { display: flex; align-items: center; gap: var(--admin-gap-xs); overflow: hidden; color: var(--admin-ink); font-size: var(--admin-text-md); font-weight: 700; text-overflow: ellipsis; }
+.identity > span { overflow: hidden; color: #8f867a; font-size: var(--admin-text-sm); text-overflow: ellipsis; white-space: nowrap; }
+/* .identity > span 보다 한 단계 높은 특정도로 두어 !important 없이 덮는다. */
+.identity .meta { color: #b0a496; font-size: var(--admin-text-xs); font-variant-numeric: tabular-nums; }
 
-.selfBadge { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: #e9e0d4; color: #7a6f63; font-size: 11px; font-weight: 700; }
+.selfBadge { flex: 0 0 auto; min-height: var(--admin-badge-height); padding: 0 var(--admin-pad-sm); border-radius: var(--admin-radius-pill); background: #e9e0d4; color: #7a6f63; display: inline-flex; align-items: center; font-size: var(--admin-text-eyebrow); font-weight: 700; }
 
-.active, .inactive { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.active, .inactive { width: 100%; min-height: var(--admin-badge-height); padding: 0 var(--admin-pad-sm); border-radius: var(--admin-radius-pill); display: inline-flex; align-items: center; justify-content: center; font-size: var(--admin-text-xs); font-weight: 700; white-space: nowrap; }
 .active { background: #e7efe4; color: #31532d; }
 .inactive { background: #f2ece6; color: #8f867a; }
 
-.roleForm { display: flex; align-items: center; gap: 7px; }
-.roleForm select { height: 36px; padding: 0 8px; border: 1px solid #d6cec1; border-radius: 7px; background: #fffdf9; color: #25211c; font: inherit; font-size: 13px; }
-.roleForm button { height: 36px; padding: 0 12px; border: 1px solid #d3cabd; border-radius: 7px; background: #fffdf9; color: #5c554c; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
-.roleForm button:hover:not(:disabled) { border-color: #ad9f8e; color: #25211c; }
+.roleForm { display: flex; align-items: center; gap: var(--admin-gap-xs); }
+.roleForm label { flex: 1; min-width: 0; display: block; }
+.roleForm select { width: 100%; height: var(--admin-control-md); padding: 0 var(--admin-pad-sm); border: 1px solid #d6cec1; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: var(--admin-ink); font: inherit; font-size: var(--admin-text-sm); }
+.roleForm button { flex: 0 0 auto; height: var(--admin-control-md); padding: 0 var(--admin-pad-md); border: 1px solid #d3cabd; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: #5c554c; font: inherit; font-size: var(--admin-text-sm); font-weight: 600; cursor: pointer; }
+.roleForm button:hover:not(:disabled) { border-color: #ad9f8e; color: var(--admin-ink); }
 .roleForm button:disabled, .roleForm select:disabled { opacity: .45; cursor: not-allowed; }
-.roleForm select:focus-visible, .roleForm button:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.roleForm select:focus-visible, .roleForm button:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 
-.deactivate { height: 36px; padding: 0 14px; border: 1px solid #d8b4a9; border-radius: 7px; background: #fffdf9; color: #a63f2c; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.deactivate:hover:not(:disabled) { border-color: #a63f2c; background: #fdf1ed; }
+.deactivate { width: 100%; height: var(--admin-control-md); padding: 0 var(--admin-pad-sm); border: 1px solid #d8b4a9; border-radius: var(--admin-radius-md); background: var(--admin-surface); color: var(--admin-danger); font: inherit; font-size: var(--admin-text-sm); font-weight: 700; cursor: pointer; }
+.deactivate:hover:not(:disabled) { border-color: var(--admin-danger); background: #fdf1ed; }
 .deactivate:disabled { opacity: .4; cursor: not-allowed; }
-.deactivate:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.deactivate:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 
-.rowReason { grid-column: 1 / -1; margin: 0; color: #9a8e80; font-size: 12px; line-height: 1.5; }
+.rowReason { grid-column: 1 / -1; margin: 0; color: var(--admin-ink-muted); font-size: var(--admin-text-xs); line-height: 1.5; }
 
 .visuallyHidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
@@ -55,6 +73,7 @@
   .form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .submit { grid-column: 1 / -1; margin-top: 0; width: fit-content; }
   .row, .rowInactive { grid-template-columns: minmax(0, 1fr) auto; }
+  .active, .inactive { width: fit-content; }
   .roleForm { grid-column: 1 / -1; }
   .deactivate { grid-column: 1 / -1; width: fit-content; }
 }

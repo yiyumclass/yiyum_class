@@ -7,6 +7,7 @@ import AdminNavigation from "@/components/admin/AdminNavigation";
 import { ExternalIcon } from "@/components/admin/icons";
 import { requireAdmin, type AdminRole } from "@/lib/admin/auth";
 import { createClient } from "@/lib/supabase/server";
+import "./admin-tokens.css";
 import styles from "./admin.module.css";
 
 export const metadata: Metadata = {
