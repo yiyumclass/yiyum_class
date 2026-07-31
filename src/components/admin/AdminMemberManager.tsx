@@ -1,23 +1,37 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-  type RefObject,
-} from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   grantMemberEntitlementAction,
   updateMemberEntitlementAction,
 } from "@/app/admin/members/actions";
+import AdminDialog from "@/components/admin/AdminDialog";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
+import AdminPagination, {
+  DEFAULT_ADMIN_PAGE_SIZE,
+} from "@/components/admin/AdminPagination";
+import tableStyles from "@/components/admin/AdminTable.module.css";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  BookIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  ExternalIcon,
+  MemberIcon,
+  PlayIcon,
+  SearchIcon,
+  SortIcon,
+} from "@/components/admin/icons";
+import { exportRowsToCsv } from "@/lib/admin/csv";
 import type {
   AdminEntitlementStatus,
   AdminMember,
   AdminMemberEntitlement,
   AdminMemberProductOption,
 } from "@/lib/admin/members";
+import { useTableParams } from "@/lib/admin/use-table-params";
 import styles from "./AdminMemberManager.module.css";
 
 type AdminMemberManagerProps = {
@@ -31,6 +45,15 @@ type AdminMemberManagerProps = {
 
 type MemberFilter = "all" | "entitled" | "unentitled" | "expiring";
 type ExpiryMode = "product" | "unlimited" | "custom";
+type SortKey = "joined" | "name" | "active" | "signin";
+type SortDirection = "asc" | "desc";
+
+/** 표에 뿌리기 전에 한 번만 계산해 두는 회원별 파생값. */
+type MemberRowData = {
+  member: AdminMember;
+  activeEntitlements: AdminMemberEntitlement[];
+  hasExpiring: boolean;
+};
 
 const memberFilters: Array<{ value: MemberFilter; label: string }> = [
   { value: "all", label: "전체 회원" },
@@ -38,6 +61,24 @@ const memberFilters: Array<{ value: MemberFilter; label: string }> = [
   { value: "unentitled", label: "미보유" },
   { value: "expiring", label: "30일 내 만료" },
 ];
+
+/** 정렬 버튼을 처음 누를 때의 방향. 날짜·개수는 큰 값부터 보는 편이 쓸모 있다. */
+const defaultSortDirection: Record<SortKey, SortDirection> = {
+  joined: "desc",
+  name: "asc",
+  active: "desc",
+  signin: "desc",
+};
+
+const DEFAULT_SORT = "joined_desc";
+
+const memberTableDefaults = {
+  q: "",
+  filter: "all",
+  sort: DEFAULT_SORT,
+  page: 1,
+  size: DEFAULT_ADMIN_PAGE_SIZE,
+};
 
 export default function AdminMemberManager({
   members,
@@ -47,22 +88,51 @@ export default function AdminMemberManager({
   referenceTime,
   canManageEntitlements,
 }: AdminMemberManagerProps) {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<MemberFilter>("all");
+  const { toast } = useAdminFeedback();
+  const { values, setValues, numberOf } = useTableParams(memberTableDefaults);
+  const [searchInput, setSearchInput] = useState(values.q);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const query = values.q;
+  const filter = toMemberFilter(values.filter);
+  const { sortKey, sortDirection } = parseSort(values.sort);
+  const page = numberOf("page");
+  const pageSize = numberOf("size");
+
   const selectedMember = members.find((member) => member.id === selectedMemberId) ?? null;
   const canOpenEntitlementManager = databaseReady && canManageEntitlements;
   const referenceDate = useMemo(() => new Date(referenceTime), [referenceTime]);
 
-  const filteredMembers = useMemo(() => {
+  // 검색은 타이핑마다 router.replace를 돌리면 무거우므로 입력만 로컬로 받는다.
+  useEffect(() => {
+    if (searchInput === query) return;
+    const timer = window.setTimeout(() => setValues({ q: searchInput }), 300);
+    return () => window.clearTimeout(timer);
+  }, [query, searchInput, setValues]);
+
+  const rows = useMemo<MemberRowData[]>(
+    () =>
+      members.map((member) => {
+        const activeEntitlements = member.entitlements.filter((entitlement) =>
+          isEffectivelyActive(entitlement, referenceDate)
+        );
+        return {
+          member,
+          activeEntitlements,
+          hasExpiring: activeEntitlements.some((entitlement) =>
+            isExpiringSoon(entitlement, referenceDate)
+          ),
+        };
+      }),
+    [members, referenceDate]
+  );
+
+  const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
 
-    return members.filter((member) => {
-      const activeEntitlements = member.entitlements.filter((entitlement) =>
-        isEffectivelyActive(entitlement, referenceDate)
-      );
+    return rows.filter((row) => {
+      const { member, activeEntitlements, hasExpiring } = row;
       const matchesQuery =
         !normalizedQuery ||
         member.name.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
@@ -72,44 +142,114 @@ export default function AdminMemberManager({
         filter === "all" ||
         (filter === "entitled" && activeEntitlements.length > 0) ||
         (filter === "unentitled" && activeEntitlements.length === 0) ||
-        (filter === "expiring" &&
-          activeEntitlements.some((entitlement) =>
-            isExpiringSoon(entitlement, referenceDate)
-          ));
+        (filter === "expiring" && hasExpiring);
 
       return matchesQuery && matchesFilter;
     });
-  }, [filter, members, query, referenceDate]);
+  }, [filter, query, rows]);
 
+  const sortedRows = useMemo(() => {
+    const direction = sortDirection === "asc" ? 1 : -1;
+    return [...filteredRows].sort((left, right) => {
+      const gap = compareRows(left, right, sortKey);
+      // 값이 같으면 이름으로 묶어 페이지 사이에서 순서가 흔들리지 않게 한다.
+      if (gap !== 0) return gap * direction;
+      return left.member.name.localeCompare(right.member.name, "ko-KR");
+    });
+  }, [filteredRows, sortDirection, sortKey]);
+
+  // 필터를 좁히면 URL에 남아 있던 페이지 번호가 범위를 넘어 빈 표가 보일 수 있다.
+  const pageCount = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  const currentPage = Math.min(Math.max(1, page), pageCount);
+  const pagedRows = sortedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const isFiltered = filter !== "all" || query.trim().length > 0;
+
+  // 요약은 표와 같은 조건을 봐야 한다. 필터를 걸어둔 채 전체 수치를 보면 오독한다.
   const summary = useMemo(() => {
-    const activeEntitlements = members
-      .flatMap((member) => member.entitlements)
-      .filter((entitlement) => isEffectivelyActive(entitlement, referenceDate));
+    const activeEntitlements = filteredRows.flatMap((row) => row.activeEntitlements);
     const thirtyDaysAgo = new Date(referenceDate.getTime() - 30 * 24 * 60 * 60 * 1000);
     return {
-      members: members.length,
+      members: filteredRows.length,
       active: activeEntitlements.length,
-      newMembers: members.filter((member) => new Date(member.joinedAt) >= thirtyDaysAgo).length,
+      newMembers: filteredRows.filter(
+        (row) => new Date(row.member.joinedAt) >= thirtyDaysAgo
+      ).length,
       expiring: activeEntitlements.filter((entitlement) =>
         isExpiringSoon(entitlement, referenceDate)
       ).length,
     };
-  }, [members, referenceDate]);
+  }, [filteredRows, referenceDate]);
 
   const runMutation = async (mutation: () => Promise<{ ok: boolean; message: string }>) => {
     setPending(true);
-    setNotice(null);
     try {
       const result = await mutation();
-      setNotice(result.message);
+      toast(result.message, result.ok ? "success" : "error");
       return result.ok;
     } catch {
-      setNotice("요청을 처리하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.");
+      toast(
+        "요청을 처리하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+        "error"
+      );
       return false;
     } finally {
       setPending(false);
     }
   };
+
+  const copyMemberId = async (member: AdminMember) => {
+    try {
+      if (!navigator.clipboard) throw new Error("clipboard unavailable");
+      await navigator.clipboard.writeText(member.id);
+      toast("회원 ID를 복사했습니다.", "success");
+    } catch {
+      toast(
+        "회원 ID를 복사하지 못했습니다. 표시된 ID를 직접 선택해 복사해 주세요.",
+        "error"
+      );
+    }
+  };
+
+  const exportCsv = () => {
+    exportRowsToCsv({
+      fileName: "이윰-회원수강권",
+      columns: [
+        { header: "회원 ID", value: (row: MemberRowData) => row.member.id },
+        { header: "이름", value: (row: MemberRowData) => row.member.name },
+        { header: "이메일", value: (row: MemberRowData) => row.member.email },
+        { header: "가입일", value: (row: MemberRowData) => formatDate(row.member.joinedAt) },
+        {
+          header: "최근 로그인",
+          value: (row: MemberRowData) =>
+            row.member.lastSignInAt ? formatDateTime(row.member.lastSignInAt) : "기록 없음",
+        },
+        {
+          header: "활성 수강권 수",
+          value: (row: MemberRowData) => row.activeEntitlements.length,
+        },
+        {
+          header: "보유 콘텐츠",
+          value: (row: MemberRowData) =>
+            row.activeEntitlements.map((entitlement) => entitlement.productTitle).join(";"),
+        },
+        { header: "만료 예정", value: (row: MemberRowData) => (row.hasExpiring ? "Y" : "N") },
+      ],
+      rows: sortedRows,
+    });
+    toast(`${formatNumber(sortedRows.length)}건을 내보냈습니다.`, "success");
+  };
+
+  const toggleSort = (key: SortKey) => {
+    const next =
+      sortKey === key
+        ? `${key}_${sortDirection === "asc" ? "desc" : "asc"}`
+        : `${key}_${defaultSortDirection[key]}`;
+    setValues({ sort: next });
+  };
+
+  const ariaSortFor = (key: SortKey) =>
+    sortKey !== key ? "none" : sortDirection === "asc" ? "ascending" : "descending";
 
   return (
     <div className={styles.page}>
@@ -140,20 +280,18 @@ export default function AdminMemberManager({
         </div>
       )}
 
-      {notice && (
-        <div className={styles.actionNotice} role="status">
-          <span>{notice}</span>
-          <button type="button" onClick={() => setNotice(null)} aria-label="안내 닫기">
-            <CloseIcon />
-          </button>
+      <section className={styles.summarySection} aria-label="회원과 수강권 요약">
+        {isFiltered && <p className={styles.summaryScope}>지금 걸린 조건 기준입니다 (필터 적용됨)</p>}
+        <div className={styles.summaryBar}>
+          <SummaryItem
+            label={isFiltered ? "조회된 회원" : "전체 회원"}
+            value={summary.members}
+            unit="명"
+          />
+          <SummaryItem label="활성 수강권" value={summary.active} unit="개" tone="active" />
+          <SummaryItem label="최근 30일 가입" value={summary.newMembers} unit="명" />
+          <SummaryItem label="30일 내 만료" value={summary.expiring} unit="개" tone="warning" />
         </div>
-      )}
-
-      <section className={styles.summaryBar} aria-label="회원과 수강권 요약">
-        <SummaryItem label="전체 회원" value={summary.members} unit="명" />
-        <SummaryItem label="활성 수강권" value={summary.active} unit="개" tone="active" />
-        <SummaryItem label="최근 30일 가입" value={summary.newMembers} unit="명" />
-        <SummaryItem label="30일 내 만료" value={summary.expiring} unit="개" tone="warning" />
       </section>
 
       <section className={styles.memberPanel} aria-labelledby="member-list-title">
@@ -162,7 +300,18 @@ export default function AdminMemberManager({
             <h2 id="member-list-title">회원 목록</h2>
             <p>콘텐츠 접근은 로그인 여부가 아닌 유효한 수강권을 기준으로 합니다.</p>
           </div>
-          <span className={styles.resultCount}>총 {formatNumber(filteredMembers.length)}명</span>
+          <div className={styles.panelHeaderActions}>
+            <span className={styles.resultCount}>총 {formatNumber(sortedRows.length)}명</span>
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={exportCsv}
+              disabled={sortedRows.length === 0}
+            >
+              <DownloadIcon />
+              CSV 내보내기
+            </button>
+          </div>
         </div>
 
         <div className={styles.toolbar}>
@@ -172,7 +321,7 @@ export default function AdminMemberManager({
                 type="button"
                 key={item.value}
                 className={filter === item.value ? styles.filterActive : styles.filter}
-                onClick={() => setFilter(item.value)}
+                onClick={() => setValues({ filter: item.value })}
                 aria-pressed={filter === item.value}
               >
                 {item.label}
@@ -184,44 +333,93 @@ export default function AdminMemberManager({
             <span className={styles.visuallyHidden}>회원 검색</span>
             <input
               type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
               placeholder="이름, 이메일 또는 회원 ID"
             />
           </label>
         </div>
 
-        {filteredMembers.length > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.memberTable}>
-              <thead>
-                <tr>
-                  <th>회원</th>
-                  <th>가입일</th>
-                  <th>보유 콘텐츠</th>
-                  <th>활성 수강권</th>
-                  <th>최근 로그인</th>
-                  <th><span className={styles.visuallyHidden}>회원 작업</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMembers.map((member) => (
-                  <MemberRow
-                    key={member.id}
-                    member={member}
-                    canManage={canOpenEntitlementManager}
-                    referenceDate={referenceDate}
-                    onManage={() => setSelectedMemberId(member.id)}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {sortedRows.length > 0 ? (
+          <>
+            <div className={styles.tableWrap}>
+              <table className={`${styles.memberTable} ${tableStyles.cardTable}`}>
+                <thead>
+                  <tr>
+                    <th scope="col" aria-sort={ariaSortFor("name")}>
+                      <SortButton
+                        label="회원"
+                        active={sortKey === "name"}
+                        direction={sortDirection}
+                        onClick={() => toggleSort("name")}
+                      />
+                    </th>
+                    <th scope="col" aria-sort={ariaSortFor("joined")}>
+                      <SortButton
+                        label="가입일"
+                        active={sortKey === "joined"}
+                        direction={sortDirection}
+                        onClick={() => toggleSort("joined")}
+                      />
+                    </th>
+                    <th scope="col">보유 콘텐츠</th>
+                    <th scope="col" aria-sort={ariaSortFor("active")}>
+                      <SortButton
+                        label="활성 수강권"
+                        active={sortKey === "active"}
+                        direction={sortDirection}
+                        onClick={() => toggleSort("active")}
+                      />
+                    </th>
+                    <th scope="col" aria-sort={ariaSortFor("signin")}>
+                      <SortButton
+                        label="최근 로그인"
+                        active={sortKey === "signin"}
+                        direction={sortDirection}
+                        onClick={() => toggleSort("signin")}
+                      />
+                    </th>
+                    <th scope="col">
+                      <span className={styles.visuallyHidden}>회원 작업</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedRows.map((row) => (
+                    <MemberRow
+                      key={row.member.id}
+                      row={row}
+                      canManage={canOpenEntitlementManager}
+                      onManage={() => setSelectedMemberId(row.member.id)}
+                      onCopyId={() => copyMemberId(row.member)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <AdminPagination
+              page={currentPage}
+              pageSize={pageSize}
+              totalCount={sortedRows.length}
+              unit="명"
+              onPageChange={(next) => setValues({ page: next })}
+              onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
+            />
+          </>
         ) : (
           <div className={styles.emptyState}>
             <MemberIcon />
-            <strong>{members.length === 0 ? "아직 가입한 회원이 없습니다." : "조건에 맞는 회원이 없습니다."}</strong>
-            <p>{members.length === 0 ? "회원 가입이 완료되면 이곳에서 확인할 수 있습니다." : "검색어 또는 필터를 변경해 보세요."}</p>
+            <strong>
+              {members.length === 0
+                ? "아직 가입한 회원이 없습니다."
+                : "조건에 맞는 회원이 없습니다."}
+            </strong>
+            <p>
+              {members.length === 0
+                ? "회원 가입이 완료되면 이곳에서 확인할 수 있습니다."
+                : "검색어 또는 필터를 변경해 보세요."}
+            </p>
           </div>
         )}
       </section>
@@ -233,8 +431,11 @@ export default function AdminMemberManager({
           pending={pending}
           referenceDate={referenceDate}
           onClose={() => setSelectedMemberId(null)}
+          onCopyId={() => copyMemberId(selectedMember)}
           onGrant={(productId, expiresAt) =>
-            runMutation(() => grantMemberEntitlementAction(selectedMember.id, productId, expiresAt))
+            runMutation(() =>
+              grantMemberEntitlementAction(selectedMember.id, productId, expiresAt)
+            )
           }
           onUpdate={(entitlementId, status, expiresAt) =>
             runMutation(() => updateMemberEntitlementAction(entitlementId, status, expiresAt))
@@ -245,33 +446,80 @@ export default function AdminMemberManager({
   );
 }
 
-function SummaryItem({ label, value, unit, tone }: { label: string; value: number; unit: string; tone?: "active" | "warning" }) {
+function SummaryItem({
+  label,
+  value,
+  unit,
+  tone,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  tone?: "active" | "warning";
+}) {
   return (
     <div className={styles.summaryItem}>
       <span>{label}</span>
       <strong className={tone ? styles[`summaryValue_${tone}`] : undefined}>
-        {formatNumber(value)}<small>{unit}</small>
+        {formatNumber(value)}
+        <small>{unit}</small>
       </strong>
     </div>
   );
 }
 
-function MemberRow({ member, canManage, referenceDate, onManage }: { member: AdminMember; canManage: boolean; referenceDate: Date; onManage: () => void }) {
-  const activeEntitlements = member.entitlements.filter((entitlement) =>
-    isEffectivelyActive(entitlement, referenceDate)
+function SortButton({
+  label,
+  active,
+  direction,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  direction: SortDirection;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={active ? styles.sortButtonActive : styles.sortButton}
+      onClick={onClick}
+    >
+      {label}
+      {active ? direction === "asc" ? <ArrowUpIcon /> : <ArrowDownIcon /> : <SortIcon />}
+    </button>
   );
+}
+
+function MemberRow({
+  row,
+  canManage,
+  onManage,
+  onCopyId,
+}: {
+  row: MemberRowData;
+  canManage: boolean;
+  onManage: () => void;
+  onCopyId: () => void;
+}) {
+  const { member, activeEntitlements } = row;
   return (
     <tr>
       <td>
         <span className={styles.memberIdentity}>
-          <span className={styles.memberAvatar} aria-hidden="true">{member.name.slice(0, 1).toUpperCase()}</span>
+          <span className={styles.memberAvatar} aria-hidden="true">
+            {member.name.slice(0, 1).toUpperCase()}
+          </span>
           <span>
             <strong>{member.name}</strong>
             <small>{member.email}</small>
+            <MemberIdField member={member} onCopy={onCopyId} />
           </span>
         </span>
       </td>
-      <td data-label="가입일" className={styles.dateCell}>{formatDate(member.joinedAt)}</td>
+      <td data-label="가입일" className={styles.dateCell}>
+        {formatDate(member.joinedAt)}
+      </td>
       <td data-label="보유 콘텐츠">
         {activeEntitlements.length > 0 ? (
           <span className={styles.productChips}>
@@ -280,22 +528,72 @@ function MemberRow({ member, canManage, referenceDate, onManage }: { member: Adm
             ))}
             {activeEntitlements.length > 2 && <small>+{activeEntitlements.length - 2}</small>}
           </span>
-        ) : <span className={styles.emptyValue}>없음</span>}
+        ) : (
+          <span className={styles.emptyValue}>없음</span>
+        )}
       </td>
       <td data-label="활성 수강권">
         <strong className={activeEntitlements.length > 0 ? styles.activeCount : styles.zeroCount}>
-          {activeEntitlements.length}<small>개</small>
+          {activeEntitlements.length}
+          <small>개</small>
         </strong>
       </td>
-      <td data-label="최근 로그인" className={styles.dateCell}>{member.lastSignInAt ? formatDateTime(member.lastSignInAt) : "기록 없음"}</td>
+      <td data-label="최근 로그인" className={styles.dateCell}>
+        {member.lastSignInAt ? formatDateTime(member.lastSignInAt) : "기록 없음"}
+      </td>
       <td className={styles.actionCell}>
-        {canManage ? (
-          <button type="button" onClick={onManage}>수강권 관리</button>
-        ) : (
-          <span className={styles.emptyValue}>조회 전용</span>
-        )}
+        <span className={styles.rowActions}>
+          <MemberCrossLinks email={member.email} />
+          {canManage ? (
+            <button type="button" onClick={onManage}>
+              수강권 관리
+            </button>
+          ) : (
+            <span className={styles.emptyValue}>조회 전용</span>
+          )}
+        </span>
       </td>
     </tr>
+  );
+}
+
+/**
+ * 운영자 추가 화면이 회원 UUID를 직접 입력받는데 그동안 UUID를 볼 곳이 없었다.
+ * 좁은 화면에서는 앞 8자만 노출하고 복사 버튼으로 전문을 넘긴다.
+ */
+function MemberIdField({ member, onCopy }: { member: AdminMember; onCopy: () => void }) {
+  return (
+    <span className={styles.memberIdField}>
+      <code title={member.id}>
+        <span className={styles.memberIdFull}>{member.id}</span>
+        <span className={styles.memberIdShort}>{member.id.slice(0, 8)}</span>
+      </code>
+      <button
+        type="button"
+        className={styles.copyIdButton}
+        onClick={onCopy}
+        aria-label={`${member.name} 회원 ID 복사`}
+      >
+        복사
+      </button>
+    </span>
+  );
+}
+
+/** 회원 → 주문·학습 화면 이동. 이메일을 손으로 옮겨 붙이던 동선을 없앤다. */
+function MemberCrossLinks({ email }: { email: string }) {
+  const encoded = encodeURIComponent(email);
+  return (
+    <>
+      <Link className={styles.crossLink} href={`/admin/orders?q=${encoded}`}>
+        주문 내역
+        <ExternalIcon />
+      </Link>
+      <Link className={styles.crossLink} href={`/admin/progress?q=${encoded}`}>
+        학습 현황
+        <ExternalIcon />
+      </Link>
+    </>
   );
 }
 
@@ -305,6 +603,7 @@ function EntitlementDialog({
   pending,
   referenceDate,
   onClose,
+  onCopyId,
   onGrant,
   onUpdate,
 }: {
@@ -313,156 +612,209 @@ function EntitlementDialog({
   pending: boolean;
   referenceDate: Date;
   onClose: () => void;
+  onCopyId: () => void;
   onGrant: (productId: string, expiresAt: string | null) => Promise<boolean>;
-  onUpdate: (entitlementId: string, status: AdminEntitlementStatus, expiresAt: string | null) => Promise<boolean>;
+  onUpdate: (
+    entitlementId: string,
+    status: AdminEntitlementStatus,
+    expiresAt: string | null
+  ) => Promise<boolean>;
 }) {
   const [productId, setProductId] = useState(products[0]?.id ?? "");
   const [expiryMode, setExpiryMode] = useState<ExpiryMode>("product");
   const [customExpiry, setCustomExpiry] = useState("");
   const selectedProduct = products.find((product) => product.id === productId);
-  const dialogRef = useRef<HTMLElement>(null);
 
-  useDialogBehavior(dialogRef, pending, onClose);
+  // 만료가 임박한 수강권부터 보여야 실무에서 처리 순서를 잡을 수 있다.
+  const sortedEntitlements = useMemo(
+    () =>
+      [...member.entitlements].sort((left, right) => {
+        const gap =
+          entitlementOrder[getEffectiveStatus(left, referenceDate)] -
+          entitlementOrder[getEffectiveStatus(right, referenceDate)];
+        if (gap !== 0) return gap;
+        return expiryTime(left) - expiryTime(right);
+      }),
+    [member.entitlements, referenceDate]
+  );
 
   const submitGrant = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedProduct) return;
-    const expiresAt = resolveGrantExpiration(selectedProduct, expiryMode, customExpiry);
+    const expiresAt = resolveGrantExpiration(
+      selectedProduct,
+      expiryMode,
+      customExpiry,
+      referenceDate
+    );
     if (expiryMode === "custom" && !expiresAt) return;
     await onGrant(selectedProduct.id, expiresAt);
   };
 
   return (
-    <div className={styles.dialogBackdrop} role="presentation" onMouseDown={(event) => {
-      if (event.target === event.currentTarget && !pending) onClose();
-    }}>
-      <section ref={dialogRef} className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="entitlement-dialog-title">
-        <header className={styles.dialogHeader}>
-          <div>
-            <p>MEMBER ACCESS</p>
-            <h2 id="entitlement-dialog-title">{member.name}님의 수강권</h2>
-            <span>{member.email}</span>
-          </div>
-          <button autoFocus type="button" className={styles.dialogClose} onClick={onClose} disabled={pending} aria-label="수강권 관리 닫기">
-            <CloseIcon />
+    <AdminDialog
+      eyebrow="MEMBER ACCESS"
+      title={`${member.name}님의 수강권`}
+      description={member.email}
+      busy={pending}
+      size="large"
+      onClose={onClose}
+    >
+      <div className={styles.dialogMeta}>
+        <span className={styles.memberIdField}>
+          <span className={styles.visuallyHidden}>회원 ID</span>
+          <code title={member.id}>
+            <span className={styles.memberIdFull}>{member.id}</span>
+            <span className={styles.memberIdShort}>{member.id.slice(0, 8)}</span>
+          </code>
+          <button
+            type="button"
+            className={styles.copyIdButton}
+            onClick={onCopyId}
+            aria-label="회원 ID 복사"
+          >
+            복사
           </button>
-        </header>
+        </span>
+        <span className={styles.dialogLinks}>
+          <MemberCrossLinks email={member.email} />
+        </span>
+      </div>
 
-        <div className={styles.dialogBody}>
-          <section className={styles.entitlementSection} aria-labelledby="current-entitlements-title">
-            <div className={styles.dialogSectionHeading}>
-              <h3 id="current-entitlements-title">보유 수강권</h3>
-              <span>{member.entitlements.length}개</span>
+      <div className={styles.dialogBody}>
+        <section className={styles.entitlementSection} aria-labelledby="current-entitlements-title">
+          <div className={styles.dialogSectionHeading}>
+            <h3 id="current-entitlements-title">보유 수강권</h3>
+            <span>{member.entitlements.length}개</span>
+          </div>
+          {sortedEntitlements.length > 0 ? (
+            <div className={styles.entitlementList}>
+              {sortedEntitlements.map((entitlement) => (
+                <EntitlementEditor
+                  key={`${entitlement.id}:${entitlement.status}:${entitlement.expiresAt ?? "none"}`}
+                  entitlement={entitlement}
+                  pending={pending}
+                  referenceDate={referenceDate}
+                  onUpdate={onUpdate}
+                />
+              ))}
             </div>
-            {member.entitlements.length > 0 ? (
-              <div className={styles.entitlementList}>
-                {member.entitlements.map((entitlement) => (
-                  <EntitlementEditor
-                    key={`${entitlement.id}:${entitlement.status}:${entitlement.expiresAt ?? "none"}`}
-                    entitlement={entitlement}
-                    pending={pending}
-                    referenceDate={referenceDate}
-                    onUpdate={onUpdate}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.dialogEmpty}>아직 지급된 수강권이 없습니다.</div>
-            )}
-          </section>
+          ) : (
+            <div className={styles.dialogEmpty}>아직 지급된 수강권이 없습니다.</div>
+          )}
+        </section>
 
-          <form className={styles.grantForm} onSubmit={submitGrant}>
-            <div className={styles.dialogSectionHeading}>
-              <h3>새 수강권 지급</h3>
-              <span>관리자 지급</span>
-            </div>
+        <form className={styles.grantForm} onSubmit={submitGrant}>
+          <div className={styles.dialogSectionHeading}>
+            <h3>새 수강권 지급</h3>
+            <span>관리자 지급</span>
+          </div>
+          <label>
+            <span>상품</span>
+            <select
+              value={productId}
+              onChange={(event) => setProductId(event.target.value)}
+              required
+            >
+              {products.map((product) => (
+                <option value={product.id} key={product.id}>
+                  {product.title} · {formatProductStatus(product.status)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <fieldset>
+            <legend>이용 기간</legend>
             <label>
-              <span>상품</span>
-              <select value={productId} onChange={(event) => setProductId(event.target.value)} required>
-                {products.map((product) => (
-                  <option value={product.id} key={product.id}>
-                    {product.title} · {formatProductStatus(product.status)}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="radio"
+                name="expiryMode"
+                value="product"
+                checked={expiryMode === "product"}
+                onChange={() => setExpiryMode("product")}
+              />
+              상품 기본값 (
+              {selectedProduct?.accessPeriodDays
+                ? `${selectedProduct.accessPeriodDays}일`
+                : "무제한"}
+              )
             </label>
-            <fieldset>
-              <legend>이용 기간</legend>
-              <label>
-                <input type="radio" name="expiryMode" value="product" checked={expiryMode === "product"} onChange={() => setExpiryMode("product")} />
-                상품 기본값 ({selectedProduct?.accessPeriodDays ? `${selectedProduct.accessPeriodDays}일` : "무제한"})
-              </label>
-              <label>
-                <input type="radio" name="expiryMode" value="unlimited" checked={expiryMode === "unlimited"} onChange={() => setExpiryMode("unlimited")} />
-                기간 제한 없음
-              </label>
-              <label>
-                <input type="radio" name="expiryMode" value="custom" checked={expiryMode === "custom"} onChange={() => setExpiryMode("custom")} />
-                만료일 직접 선택
-              </label>
-            </fieldset>
-            {expiryMode === "custom" && (
-              <label>
-                <span>만료일</span>
-                <input type="date" value={customExpiry} min={getTomorrowDate(referenceDate)} onChange={(event) => setCustomExpiry(event.target.value)} required />
-              </label>
-            )}
-            <button type="submit" className={styles.grantButton} disabled={pending || !selectedProduct}>
-              {pending ? "처리 중" : "수강권 지급"}
-            </button>
-          </form>
-        </div>
-      </section>
-    </div>
+            <label>
+              <input
+                type="radio"
+                name="expiryMode"
+                value="unlimited"
+                checked={expiryMode === "unlimited"}
+                onChange={() => setExpiryMode("unlimited")}
+              />
+              기간 제한 없음
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="expiryMode"
+                value="custom"
+                checked={expiryMode === "custom"}
+                onChange={() => setExpiryMode("custom")}
+              />
+              만료일 직접 선택
+            </label>
+          </fieldset>
+          {expiryMode === "custom" && (
+            <label>
+              <span>만료일</span>
+              <input
+                type="date"
+                value={customExpiry}
+                min={getTomorrowDate(referenceDate)}
+                onChange={(event) => setCustomExpiry(event.target.value)}
+                required
+              />
+              <QuickExpiryButtons
+                referenceDate={referenceDate}
+                disabled={pending}
+                onSelect={setCustomExpiry}
+              />
+            </label>
+          )}
+          <button
+            type="submit"
+            className={styles.grantButton}
+            disabled={pending || !selectedProduct}
+          >
+            {pending ? "처리 중" : "수강권 지급"}
+          </button>
+        </form>
+      </div>
+    </AdminDialog>
   );
 }
 
-function useDialogBehavior(
-  dialogRef: RefObject<HTMLElement | null>,
-  pending: boolean,
-  onClose: () => void
-) {
-  useEffect(() => {
-    const returnFocusTo =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    return () => returnFocusTo?.focus();
-  }, []);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pending) {
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab" || !dialogRef.current) return;
-      const focusableElements = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]'
-        )
-      );
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements.at(-1);
-      if (!firstElement || !lastElement) return;
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [dialogRef, onClose, pending]);
+/** 만료일을 손으로 고르는 대신 자주 쓰는 기간을 서버 시각 기준으로 채워 넣는다. */
+function QuickExpiryButtons({
+  referenceDate,
+  disabled,
+  onSelect,
+}: {
+  referenceDate: Date;
+  disabled: boolean;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <span className={styles.quickExpiry}>
+      {[30, 90].map((days) => (
+        <button
+          key={days}
+          type="button"
+          disabled={disabled}
+          title={`오늘부터 ${days}일 뒤로 만료일을 설정합니다.`}
+          onClick={() => onSelect(addDaysToDateInput(referenceDate, days))}
+        >
+          {days}일 연장
+        </button>
+      ))}
+    </span>
+  );
 }
 
 function EntitlementEditor({
@@ -474,18 +826,34 @@ function EntitlementEditor({
   entitlement: AdminMemberEntitlement;
   pending: boolean;
   referenceDate: Date;
-  onUpdate: (entitlementId: string, status: AdminEntitlementStatus, expiresAt: string | null) => Promise<boolean>;
+  onUpdate: (
+    entitlementId: string,
+    status: AdminEntitlementStatus,
+    expiresAt: string | null
+  ) => Promise<boolean>;
 }) {
+  const { confirm } = useAdminFeedback();
   const effectiveStatus = getEffectiveStatus(entitlement, referenceDate);
   // 이미 만료된 수강권은 과거 만료일을 그대로 되보내면 서버·DB가 거부하므로, 편집 초기값을 무제한("")으로 둔다.
   const [expiration, setExpiration] = useState(
     effectiveStatus === "expired" ? "" : toDateInputValue(entitlement.expiresAt)
   );
   const [expirationError, setExpirationError] = useState<string | null>(null);
+
   const updateStatus = async (status: AdminEntitlementStatus) => {
-    if (status === "revoked" && !window.confirm(`${entitlement.productTitle} 수강권을 회수할까요? 즉시 콘텐츠 접근이 중단됩니다.`)) return;
+    if (status === "revoked") {
+      const confirmed = await confirm({
+        title: `${entitlement.productTitle} 수강권을 회수할까요?`,
+        description: "즉시 콘텐츠 접근이 중단됩니다.\n필요하면 나중에 다시 활성화할 수 있습니다.",
+        confirmLabel: "수강권 회수",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+    }
     if (expiration && new Date(toEndOfDayIso(expiration)) <= referenceDate) {
-      setExpirationError("만료일이 지났습니다. 새 만료일을 지정하거나 비워서 무제한으로 저장해 주세요.");
+      setExpirationError(
+        "만료일이 지났습니다. 새 만료일을 지정하거나 비워서 무제한으로 저장해 주세요."
+      );
       return;
     }
     setExpirationError(null);
@@ -495,27 +863,74 @@ function EntitlementEditor({
   return (
     <article className={styles.entitlementCard}>
       <div className={styles.entitlementTop}>
-        <span className={styles.productIcon} aria-hidden="true">{entitlement.productType === "course" ? <PlayIcon /> : <BookIcon />}</span>
+        <span className={styles.productIcon} aria-hidden="true">
+          {entitlement.productType === "course" ? <PlayIcon /> : <BookIcon />}
+        </span>
         <div>
           <strong>{entitlement.productTitle}</strong>
-          <span>{formatSource(entitlement.source)} · {formatDate(entitlement.grantedAt)} 지급</span>
+          <span>
+            {formatSource(entitlement.source)} · {formatDate(entitlement.grantedAt)} 지급
+          </span>
         </div>
-        <span className={`${styles.entitlementBadge} ${styles[effectiveStatus]}`}>{formatEffectiveStatus(effectiveStatus)}</span>
+        <span className={`${styles.entitlementBadge} ${styles[effectiveStatus]}`}>
+          {formatEffectiveStatus(effectiveStatus)}
+        </span>
       </div>
       <div className={styles.entitlementControls}>
         <label>
           <span>만료일</span>
-          <input type="date" value={expiration} min={getTomorrowDate(referenceDate)} disabled={pending} onChange={(event) => { setExpiration(event.target.value); setExpirationError(null); }} />
-          {expiration && <button type="button" disabled={pending} onClick={() => { setExpiration(""); setExpirationError(null); }}>무제한으로</button>}
-          {expirationError && <span className={styles.summaryValue_warning}>{expirationError}</span>}
+          <input
+            type="date"
+            value={expiration}
+            min={getTomorrowDate(referenceDate)}
+            disabled={pending}
+            onChange={(event) => {
+              setExpiration(event.target.value);
+              setExpirationError(null);
+            }}
+          />
+          {expiration && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setExpiration("");
+                setExpirationError(null);
+              }}
+            >
+              무제한으로
+            </button>
+          )}
+          <QuickExpiryButtons
+            referenceDate={referenceDate}
+            disabled={pending}
+            onSelect={(value) => {
+              setExpiration(value);
+              setExpirationError(null);
+            }}
+          />
+          {expirationError && (
+            <span className={styles.summaryValue_warning}>{expirationError}</span>
+          )}
         </label>
         <span className={styles.entitlementActions}>
           {entitlement.status === "revoked" ? (
-            <button type="button" disabled={pending} onClick={() => updateStatus("active")}>다시 활성화</button>
+            <button type="button" disabled={pending} onClick={() => updateStatus("active")}>
+              다시 활성화
+            </button>
           ) : (
             <>
-              <button type="button" disabled={pending} onClick={() => updateStatus("active")}>기간 저장</button>
-              <button type="button" className={styles.revokeButton} disabled={pending} onClick={() => updateStatus("revoked")}>회수</button>
+              <button type="button" disabled={pending} onClick={() => updateStatus("active")}>
+                기간 저장
+              </button>
+              <button
+                type="button"
+                className={styles.revokeButton}
+                disabled={pending}
+                onClick={() => updateStatus("revoked")}
+              >
+                회수
+              </button>
             </>
           )}
         </span>
@@ -526,7 +941,55 @@ function EntitlementEditor({
 
 type EffectiveStatus = "active" | "expiring" | "expired" | "revoked";
 
-function getEffectiveStatus(entitlement: AdminMemberEntitlement, referenceDate: Date): EffectiveStatus {
+const entitlementOrder: Record<EffectiveStatus, number> = {
+  expiring: 0,
+  active: 1,
+  expired: 2,
+  revoked: 3,
+};
+
+function expiryTime(entitlement: AdminMemberEntitlement) {
+  return entitlement.expiresAt
+    ? new Date(entitlement.expiresAt).getTime()
+    : Number.POSITIVE_INFINITY;
+}
+
+function compareRows(left: MemberRowData, right: MemberRowData, key: SortKey) {
+  switch (key) {
+    case "name":
+      return left.member.name.localeCompare(right.member.name, "ko-KR");
+    case "active":
+      return left.activeEntitlements.length - right.activeEntitlements.length;
+    case "signin":
+      return signInTime(left.member) - signInTime(right.member);
+    default:
+      return new Date(left.member.joinedAt).getTime() - new Date(right.member.joinedAt).getTime();
+  }
+}
+
+/** 로그인 기록이 없는 회원은 항상 가장 오래된 쪽으로 보낸다. */
+function signInTime(member: AdminMember) {
+  return member.lastSignInAt ? new Date(member.lastSignInAt).getTime() : 0;
+}
+
+function toMemberFilter(value: string): MemberFilter {
+  return memberFilters.some((item) => item.value === value) ? (value as MemberFilter) : "all";
+}
+
+function parseSort(value: string): { sortKey: SortKey; sortDirection: SortDirection } {
+  const [key, direction] = value.split("_");
+  const sortKey: SortKey =
+    key === "name" || key === "active" || key === "signin" || key === "joined" ? key : "joined";
+  return {
+    sortKey,
+    sortDirection: direction === "asc" ? "asc" : "desc",
+  };
+}
+
+function getEffectiveStatus(
+  entitlement: AdminMemberEntitlement,
+  referenceDate: Date
+): EffectiveStatus {
   if (entitlement.status === "revoked") return "revoked";
   if (!entitlement.expiresAt) return "active";
   const expiresAt = new Date(entitlement.expiresAt);
@@ -535,24 +998,46 @@ function getEffectiveStatus(entitlement: AdminMemberEntitlement, referenceDate: 
 }
 
 function isEffectivelyActive(entitlement: AdminMemberEntitlement, referenceDate: Date) {
-  return entitlement.status === "active" && (!entitlement.expiresAt || new Date(entitlement.expiresAt) > referenceDate);
+  return (
+    entitlement.status === "active" &&
+    (!entitlement.expiresAt || new Date(entitlement.expiresAt) > referenceDate)
+  );
 }
 
 function isExpiringSoon(entitlement: AdminMemberEntitlement, referenceDate: Date) {
   if (!entitlement.expiresAt || !isEffectivelyActive(entitlement, referenceDate)) return false;
-  return new Date(entitlement.expiresAt).getTime() <= referenceDate.getTime() + 30 * 24 * 60 * 60 * 1000;
+  return (
+    new Date(entitlement.expiresAt).getTime() <=
+    referenceDate.getTime() + 30 * 24 * 60 * 60 * 1000
+  );
 }
 
-function resolveGrantExpiration(product: AdminMemberProductOption, mode: ExpiryMode, customExpiry: string) {
+/**
+ * 상품 기본 기간은 서버가 내려준 referenceDate에서 센다. Date.now()를 쓰면
+ * 만료일이 관리자 PC 시계에 따라 달라진다.
+ */
+function resolveGrantExpiration(
+  product: AdminMemberProductOption,
+  mode: ExpiryMode,
+  customExpiry: string,
+  referenceDate: Date
+) {
   if (mode === "unlimited") return null;
   if (mode === "custom") return customExpiry ? toEndOfDayIso(customExpiry) : null;
   if (!product.accessPeriodDays) return null;
-  return new Date(Date.now() + product.accessPeriodDays * 24 * 60 * 60 * 1000).toISOString();
+  return new Date(
+    referenceDate.getTime() + product.accessPeriodDays * 24 * 60 * 60 * 1000
+  ).toISOString();
 }
 
 function toDateInputValue(value: string | null) {
   if (!value) return "";
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
 }
 
 function toEndOfDayIso(value: string) {
@@ -560,8 +1045,17 @@ function toEndOfDayIso(value: string) {
 }
 
 function getTomorrowDate(referenceDate: Date) {
-  const tomorrow = new Date(referenceDate.getTime() + 24 * 60 * 60 * 1000);
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(tomorrow);
+  return addDaysToDateInput(referenceDate, 1);
+}
+
+function addDaysToDateInput(referenceDate: Date, days: number) {
+  const target = new Date(referenceDate.getTime() + days * 24 * 60 * 60 * 1000);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(target);
 }
 
 function formatEffectiveStatus(status: EffectiveStatus) {
@@ -581,16 +1075,22 @@ function formatNumber(value: number) {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
 }
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value));
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(value));
 }
-
-function SearchIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5" /><path d="m12.2 12.2 4 4" /></svg>; }
-function CloseIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>; }
-function MemberIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 11a3 3 0 0 1 4.5 2.6M17 16a4 4 0 0 1 4 3" /></svg>; }
-function DatabaseIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" /></svg>; }
-function PlayIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4" width="15" height="12" rx="2" /><path d="m8 7 5 3-5 3V7Z" /></svg>; }
-function BookIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3.5h7a3 3 0 0 1 3 3V17H7a3 3 0 0 1-3-3V3.5Z" /><path d="M14 6h2a2 2 0 0 1 2 2v9h-4" /></svg>; }

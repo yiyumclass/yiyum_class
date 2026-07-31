@@ -1,7 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useAdminFeedback } from "@/components/admin/AdminFeedback";
+import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "@/components/admin/AdminPagination";
+import tableStyles from "@/components/admin/AdminTable.module.css";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChartIcon,
+  ChevronIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  SearchIcon,
+  SortIcon,
+} from "@/components/admin/icons";
+import { exportRowsToCsv } from "@/lib/admin/csv";
 import type { AdminLearningRecord } from "@/lib/admin/learning-progress";
+import { useTableParams } from "@/lib/admin/use-table-params";
 import styles from "./AdminLearningProgress.module.css";
 
 type AdminLearningProgressProps = {
@@ -13,7 +29,18 @@ type AdminLearningProgressProps = {
 
 type LearningState = "not_started" | "in_progress" | "completed";
 type StatusFilter = "all" | LearningState | "attention";
-type SortOption = "recent" | "progress_low" | "progress_high" | "name";
+type SortOption =
+  | "recent"
+  | "oldest"
+  | "progress_low"
+  | "progress_high"
+  | "lesson_low"
+  | "lesson_high"
+  | "name";
+
+const ATTENTION_DAYS = 14;
+const ACTIVE_WINDOW_DAYS = 30;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const statusFilters: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "전체" },
@@ -25,10 +52,23 @@ const statusFilters: Array<{ value: StatusFilter; label: string }> = [
 
 const sortOptions: Array<{ value: SortOption; label: string }> = [
   { value: "recent", label: "최근 학습순" },
+  { value: "oldest", label: "오래된 학습순" },
   { value: "progress_low", label: "진도 낮은순" },
   { value: "progress_high", label: "진도 높은순" },
+  { value: "lesson_low", label: "완료 차시 적은순" },
+  { value: "lesson_high", label: "완료 차시 많은순" },
   { value: "name", label: "회원 이름순" },
 ];
+
+// useTableParams가 defaults를 의존성으로 쓰므로 렌더마다 새 객체를 만들지 않는다.
+const TABLE_DEFAULTS = {
+  q: "",
+  status: "all",
+  course: "all",
+  sort: "recent",
+  page: 1,
+  size: DEFAULT_ADMIN_PAGE_SIZE,
+};
 
 export default function AdminLearningProgress({
   records,
@@ -37,10 +77,25 @@ export default function AdminLearningProgress({
   referenceTime,
 }: AdminLearningProgressProps) {
   const referenceDate = useMemo(() => new Date(referenceTime), [referenceTime]);
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [courseFilter, setCourseFilter] = useState("all");
-  const [sort, setSort] = useState<SortOption>("recent");
+  const { toast } = useAdminFeedback();
+  const { values, setValues, numberOf } = useTableParams(TABLE_DEFAULTS);
+
+  const query = values.q;
+  const statusFilter = parseStatusFilter(values.status);
+  const courseFilter = values.course;
+  const sort = parseSortOption(values.sort);
+  const page = numberOf("page");
+  const pageSize = numberOf("size");
+
+  const [searchInput, setSearchInput] = useState(query);
+
+  // 타이핑마다 router.replace가 돌면 목록 전체가 다시 정렬된다.
+  useEffect(() => {
+    if (searchInput === query) return;
+    const timer = window.setTimeout(() => setValues({ q: searchInput }), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [query, searchInput, setValues]);
+
   const courses = useMemo(() => buildCourseSummaries(records, referenceDate), [records, referenceDate]);
 
   const filteredRecords = useMemo(() => {
@@ -64,16 +119,48 @@ export default function AdminLearningProgress({
       .sort((first, second) => compareRecords(first, second, sort));
   }, [courseFilter, query, records, referenceDate, sort, statusFilter]);
 
-  const memberCount = new Set(records.map((record) => record.memberId)).size;
+  const pagedRecords = filteredRecords.slice((page - 1) * pageSize, page * pageSize);
+  const filtersActive = query.trim() !== "" || statusFilter !== "all" || courseFilter !== "all";
+
+  // 요약은 표와 같은 조건을 봐야 오독이 없다. 다만 '관심 필요'는 전체에서 몇 건인지가 지표다.
+  const memberCount = new Set(filteredRecords.map((record) => record.memberId)).size;
   const activeMemberCount = new Set(
-    records
-      .filter((record) => isRecent(record.lastWatchedAt, referenceDate, 30))
+    filteredRecords
+      .filter((record) => isRecent(record.lastWatchedAt, referenceDate, ACTIVE_WINDOW_DAYS))
       .map((record) => record.memberId)
   ).size;
-  const averageProgress = records.length
-    ? records.reduce((total, record) => total + record.progressPercent, 0) / records.length
+  const averageProgress = filteredRecords.length
+    ? filteredRecords.reduce((total, record) => total + record.progressPercent, 0) / filteredRecords.length
     : 0;
   const attentionCount = records.filter((record) => needsAttention(record, referenceDate)).length;
+
+  const handleExport = () => {
+    exportRowsToCsv({
+      fileName: "이윰-학습현황",
+      columns: [
+        { header: "회원명", value: (record) => record.memberName },
+        { header: "이메일", value: (record) => record.memberEmail },
+        { header: "강의명", value: (record) => record.courseTitle },
+        { header: "강의slug", value: (record) => record.courseSlug },
+        { header: "진도율", value: (record) => record.progressPercent },
+        { header: "완료차시", value: (record) => record.completedLessons },
+        { header: "전체차시", value: (record) => record.totalLessons },
+        { header: "시작차시", value: (record) => record.startedLessons },
+        { header: "학습시간(분)", value: (record) => Math.floor(record.watchedSeconds / 60) },
+        { header: "최근학습일", value: (record) => formatCsvDate(record.lastWatchedAt) },
+        {
+          header: "최근차시",
+          value: (record) => record.lastLessonTitle ?? record.lastLessonKey ?? "",
+        },
+        {
+          header: "학습상태",
+          value: (record) => formatRecordStatus(record, referenceDate),
+        },
+      ],
+      rows: filteredRecords,
+    });
+    toast(`${formatNumber(filteredRecords.length)}건을 내보냈습니다.`, "success");
+  };
 
   return (
     <div className={styles.page}>
@@ -99,11 +186,40 @@ export default function AdminLearningProgress({
         </div>
       )}
 
-      <section className={styles.summaryBar} aria-label="현재 학습 진도 요약">
-        <SummaryItem label="수강 회원" value={formatNumber(memberCount)} unit="명" />
-        <SummaryItem label="최근 30일 학습" value={formatNumber(activeMemberCount)} unit="명" tone="active" />
-        <SummaryItem label="평균 현재 진도" value={formatPercent(averageProgress)} tone="progress" />
-        <SummaryItem label="관심 필요" value={formatNumber(attentionCount)} unit="건" tone="warning" />
+      <section className={styles.summarySection} aria-label="현재 학습 진도 요약">
+        {filtersActive && (
+          <p className={styles.summaryScope}>
+            (필터 적용됨) 아래 수치는 현재 조건에 걸린 결과 기준입니다.
+          </p>
+        )}
+        <div className={styles.summaryBar}>
+          <SummaryItem
+            label="수강 회원"
+            hint="조건에 걸린 수강권의 회원 수"
+            value={formatNumber(memberCount)}
+            unit="명"
+          />
+          <SummaryItem
+            label="최근 30일 학습"
+            hint={`오늘부터 ${ACTIVE_WINDOW_DAYS}일 안에 학습 기록이 있는 회원`}
+            value={formatNumber(activeMemberCount)}
+            unit="명"
+            tone="active"
+          />
+          <SummaryItem
+            label="평균 현재 진도"
+            hint="조건에 걸린 수강권의 진도 평균"
+            value={formatPercent(averageProgress)}
+            tone="progress"
+          />
+          <SummaryItem
+            label="관심 필요 (전체 기준)"
+            hint={`마지막 학습 후 ${ATTENTION_DAYS}일 경과 또는 미시작`}
+            value={formatNumber(attentionCount)}
+            unit="건"
+            tone="warning"
+          />
+        </div>
       </section>
 
       {courses.length > 0 && (
@@ -121,7 +237,7 @@ export default function AdminLearningProgress({
                 type="button"
                 key={course.id}
                 className={courseFilter === course.id ? styles.courseCardActive : styles.courseCard}
-                onClick={() => setCourseFilter(courseFilter === course.id ? "all" : course.id)}
+                onClick={() => setValues({ course: courseFilter === course.id ? "all" : course.id })}
                 aria-pressed={courseFilter === course.id}
               >
                 <span className={styles.courseCardTop}>
@@ -136,6 +252,9 @@ export default function AdminLearningProgress({
                   <span>진행 <strong>{course.inProgress}</strong></span>
                   <span>완료 <strong>{course.completed}</strong></span>
                   <span>최근 7일 <strong>{course.recent}</strong></span>
+                  <span className={course.attention > 0 ? styles.courseAttention : undefined}>
+                    관심 필요 <strong>{course.attention}</strong>
+                  </span>
                 </span>
               </button>
             ))}
@@ -147,9 +266,20 @@ export default function AdminLearningProgress({
         <div className={styles.panelHeader}>
           <div>
             <h2 id="learner-progress-title">회원별 현재 진도</h2>
-            <p>장기 미학습은 마지막 학습 후 14일이 지났거나 아직 시작하지 않은 경우입니다. 환불 판단용 수강 기록은 주문·결제에서 확인합니다.</p>
+            <p>장기 미학습은 마지막 학습 후 {ATTENTION_DAYS}일이 지났거나 아직 시작하지 않은 경우입니다. 환불 판단용 수강 기록은 주문·결제에서 확인합니다.</p>
           </div>
-          <span className={styles.resultCount}>총 {formatNumber(filteredRecords.length)}건</span>
+          <div className={styles.panelActions}>
+            <span className={styles.resultCount}>총 {formatNumber(filteredRecords.length)}건</span>
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={handleExport}
+              disabled={filteredRecords.length === 0}
+            >
+              <DownloadIcon />
+              CSV 내보내기
+            </button>
+          </div>
         </div>
 
         <div className={styles.toolbar}>
@@ -159,7 +289,7 @@ export default function AdminLearningProgress({
                 type="button"
                 key={filter.value}
                 className={statusFilter === filter.value ? styles.filterActive : styles.filter}
-                onClick={() => setStatusFilter(filter.value)}
+                onClick={() => setValues({ status: filter.value })}
                 aria-pressed={statusFilter === filter.value}
               >
                 {filter.label}
@@ -172,15 +302,15 @@ export default function AdminLearningProgress({
               <span className={styles.visuallyHidden}>회원 또는 강의 검색</span>
               <input
                 type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="회원 또는 강의 검색"
               />
             </label>
             <SelectField
               label="강의 선택"
               value={courseFilter}
-              onChange={setCourseFilter}
+              onChange={(value) => setValues({ course: value })}
               options={[
                 { value: "all", label: "모든 강의" },
                 ...courses.map((course) => ({ value: course.id, label: course.title })),
@@ -189,32 +319,59 @@ export default function AdminLearningProgress({
             <SelectField
               label="정렬"
               value={sort}
-              onChange={(value) => setSort(value as SortOption)}
+              onChange={(value) => setValues({ sort: value })}
               options={sortOptions}
             />
           </div>
         </div>
 
         {filteredRecords.length > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.progressTable}>
-              <thead>
-                <tr>
-                  <th>회원</th>
-                  <th>강의</th>
-                  <th>현재 진도</th>
-                  <th>완료 차시</th>
-                  <th>최근 학습</th>
-                  <th>학습 상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.map((record) => (
-                  <ProgressRow key={`${record.entitlementId}:${record.courseId}`} record={record} referenceDate={referenceDate} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className={styles.tableWrap}>
+              <table className={`${styles.progressTable} ${tableStyles.cardTable}`}>
+                <thead>
+                  <tr>
+                    <th scope="col">회원</th>
+                    <th scope="col">강의</th>
+                    <SortableHeader
+                      label="현재 진도"
+                      ascending="progress_low"
+                      descending="progress_high"
+                      sort={sort}
+                      onSort={(next) => setValues({ sort: next })}
+                    />
+                    <SortableHeader
+                      label="완료 차시"
+                      ascending="lesson_low"
+                      descending="lesson_high"
+                      sort={sort}
+                      onSort={(next) => setValues({ sort: next })}
+                    />
+                    <SortableHeader
+                      label="최근 학습"
+                      ascending="oldest"
+                      descending="recent"
+                      sort={sort}
+                      onSort={(next) => setValues({ sort: next })}
+                    />
+                    <th scope="col">학습 상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedRecords.map((record) => (
+                    <ProgressRow key={`${record.entitlementId}:${record.courseId}`} record={record} referenceDate={referenceDate} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <AdminPagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={filteredRecords.length}
+              onPageChange={(next) => setValues({ page: next })}
+              onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
+            />
+          </>
         ) : (
           <div className={styles.emptyState}>
             <ChartIcon />
@@ -227,12 +384,43 @@ export default function AdminLearningProgress({
   );
 }
 
-function SummaryItem({ label, value, unit, tone }: { label: string; value: string; unit?: string; tone?: "active" | "progress" | "warning" }) {
+function SummaryItem({ label, hint, value, unit, tone }: { label: string; hint?: string; value: string; unit?: string; tone?: "active" | "progress" | "warning" }) {
   return (
     <div className={styles.summaryItem}>
-      <span>{label}</span>
+      <span className={styles.summaryLabel} title={hint}>
+        {label}
+        {hint && <small>{hint}</small>}
+      </span>
       <strong className={tone ? styles[`summary_${tone}`] : undefined}>{value}{unit && <small>{unit}</small>}</strong>
     </div>
+  );
+}
+
+function SortableHeader({
+  label,
+  ascending,
+  descending,
+  sort,
+  onSort,
+}: {
+  label: string;
+  ascending: SortOption;
+  descending: SortOption;
+  sort: SortOption;
+  onSort: (sort: SortOption) => void;
+}) {
+  const direction = sort === ascending ? "ascending" : sort === descending ? "descending" : "none";
+  return (
+    <th scope="col" aria-sort={direction}>
+      <button
+        type="button"
+        className={direction === "none" ? styles.sortButton : styles.sortButtonActive}
+        onClick={() => onSort(direction === "descending" ? ascending : descending)}
+      >
+        {label}
+        {direction === "ascending" ? <ArrowUpIcon /> : direction === "descending" ? <ArrowDownIcon /> : <SortIcon />}
+      </button>
+    </th>
   );
 }
 
@@ -244,10 +432,25 @@ function ProgressRow({ record, referenceDate }: { record: AdminLearningRecord; r
       <td>
         <span className={styles.memberIdentity}>
           <span className={styles.memberAvatar} aria-hidden="true">{record.memberName.slice(0, 1).toUpperCase()}</span>
-          <span><strong>{record.memberName}</strong><small>{record.memberEmail}</small></span>
+          <span>
+            <strong>{record.memberName}</strong>
+            <small>{record.memberEmail}</small>
+            {/* 운영자가 같은 회원을 회원·주문 화면에서 다시 찾을 때 이메일을 손으로 옮기지 않도록 한다. */}
+            <span className={styles.rowLinks}>
+              <Link href={`/admin/members?q=${encodeURIComponent(record.memberEmail)}`}>회원 정보</Link>
+              <Link href={`/admin/orders?q=${encodeURIComponent(record.memberEmail)}`}>주문 내역</Link>
+            </span>
+          </span>
         </span>
       </td>
-      <td data-label="강의"><span className={styles.courseIdentity}><strong>{record.courseTitle}</strong><small>/{record.courseSlug}</small></span></td>
+      <td data-label="강의">
+        <span className={styles.courseIdentity}>
+          <Link href="/admin/courses" className={styles.courseLink}>
+            <strong>{record.courseTitle}</strong>
+          </Link>
+          <small>/{record.courseSlug}</small>
+        </span>
+      </td>
       <td data-label="현재 진도">
         <span className={styles.progressCell} aria-label={`현재 진도 ${formatPercent(record.progressPercent)}`}>
           <span><strong>{formatPercent(record.progressPercent)}</strong><small>{formatWatchTime(record.watchedSeconds)} 학습</small></span>
@@ -286,14 +489,16 @@ function SelectField({ label, value, options, onChange }: { label: string; value
 }
 
 function buildCourseSummaries(records: AdminLearningRecord[], referenceDate: Date) {
-  const summaries = new Map<string, { id: string; title: string; enrolled: number; inProgress: number; completed: number; recent: number; progressTotal: number }>();
+  const summaries = new Map<string, { id: string; title: string; enrolled: number; inProgress: number; completed: number; recent: number; attention: number; progressTotal: number }>();
   for (const record of records) {
-    const summary = summaries.get(record.courseId) ?? { id: record.courseId, title: record.courseTitle, enrolled: 0, inProgress: 0, completed: 0, recent: 0, progressTotal: 0 };
+    const summary = summaries.get(record.courseId) ?? { id: record.courseId, title: record.courseTitle, enrolled: 0, inProgress: 0, completed: 0, recent: 0, attention: 0, progressTotal: 0 };
+    const state = getLearningState(record);
     summary.enrolled += 1;
     summary.progressTotal += record.progressPercent;
-    if (getLearningState(record) === "in_progress") summary.inProgress += 1;
-    if (getLearningState(record) === "completed") summary.completed += 1;
+    if (state === "in_progress") summary.inProgress += 1;
+    if (state === "completed") summary.completed += 1;
     if (isRecent(record.lastWatchedAt, referenceDate, 7)) summary.recent += 1;
+    if (needsAttention(record, referenceDate)) summary.attention += 1;
     summaries.set(record.courseId, summary);
   }
   return Array.from(summaries.values()).map((summary) => ({ ...summary, averageProgress: summary.enrolled ? summary.progressTotal / summary.enrolled : 0 }));
@@ -309,7 +514,7 @@ function needsAttention(record: AdminLearningRecord, referenceDate: Date) {
   const state = getLearningState(record);
   if (state === "completed") return false;
   if (!record.lastWatchedAt) return true;
-  return !isRecent(record.lastWatchedAt, referenceDate, 14);
+  return !isRecent(record.lastWatchedAt, referenceDate, ATTENTION_DAYS);
 }
 
 function isRecent(value: string | null, referenceDate: Date, days: number) {
@@ -320,17 +525,36 @@ function isRecent(value: string | null, referenceDate: Date, days: number) {
 function compareRecords(first: AdminLearningRecord, second: AdminLearningRecord, sort: SortOption) {
   if (sort === "progress_low") return first.progressPercent - second.progressPercent;
   if (sort === "progress_high") return second.progressPercent - first.progressPercent;
+  if (sort === "lesson_low") return first.completedLessons - second.completedLessons;
+  if (sort === "lesson_high") return second.completedLessons - first.completedLessons;
   if (sort === "name") return first.memberName.localeCompare(second.memberName, "ko-KR");
-  return (second.lastWatchedAt ? new Date(second.lastWatchedAt).getTime() : 0) - (first.lastWatchedAt ? new Date(first.lastWatchedAt).getTime() : 0);
+  if (sort === "oldest") return lastWatchedTime(first) - lastWatchedTime(second);
+  return lastWatchedTime(second) - lastWatchedTime(first);
+}
+
+function lastWatchedTime(record: AdminLearningRecord) {
+  return record.lastWatchedAt ? new Date(record.lastWatchedAt).getTime() : 0;
+}
+
+function parseStatusFilter(value: string): StatusFilter {
+  return statusFilters.some((filter) => filter.value === value) ? (value as StatusFilter) : "all";
+}
+
+function parseSortOption(value: string): SortOption {
+  return sortOptions.some((option) => option.value === value) ? (value as SortOption) : "recent";
+}
+
+/** 표의 상태 배지와 같은 문구를 쓴다. 내보낸 CSV와 화면이 달라 보이지 않게 한다. */
+function formatRecordStatus(record: AdminLearningRecord, referenceDate: Date) {
+  const state = getLearningState(record);
+  return needsAttention(record, referenceDate) && state !== "completed"
+    ? "관심 필요"
+    : formatLearningState(state);
 }
 
 function formatLearningState(state: LearningState) { return { not_started: "시작 전", in_progress: "진행 중", completed: "완료" }[state]; }
 function formatNumber(value: number) { return new Intl.NumberFormat("ko-KR").format(value); }
 function formatPercent(value: number) { return `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value)}%`; }
 function formatWatchTime(seconds: number) { const minutes = Math.floor(seconds / 60); return minutes < 60 ? `${minutes}분` : `${Math.floor(minutes / 60)}시간 ${minutes % 60}분`; }
+function formatCsvDate(value: string | null) { return value ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)) : ""; }
 function formatRelativeDate(value: string, referenceDate: Date) { const days = Math.max(0, Math.floor((referenceDate.getTime() - new Date(value).getTime()) / (24 * 60 * 60 * 1000))); if (days === 0) return "오늘"; if (days === 1) return "어제"; if (days < 30) return `${days}일 전`; return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)); }
-
-function SearchIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5" /><path d="m12.2 12.2 4 4" /></svg>; }
-function ChevronIcon() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>; }
-function ChartIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20V7" /></svg>; }
-function DatabaseIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" /></svg>; }

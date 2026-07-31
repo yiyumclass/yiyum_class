@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AdminProductManager from "@/components/admin/AdminProductManager";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminProducts } from "@/lib/admin/products";
@@ -14,11 +15,14 @@ export default async function AdminProductsPage() {
   const result = await loadAdminProducts();
 
   return (
-    <AdminProductManager
-      products={result.products}
-      databaseReady={result.databaseReady}
-      sourceMessage={result.message}
-      paymentMode={getPaymentMode()}
-    />
+    // 검색·필터 상태를 URL에서 읽으므로 useSearchParams 경계가 필요하다.
+    <Suspense>
+      <AdminProductManager
+        products={result.products}
+        databaseReady={result.databaseReady}
+        sourceMessage={result.message}
+        paymentMode={getPaymentMode()}
+      />
+    </Suspense>
   );
 }

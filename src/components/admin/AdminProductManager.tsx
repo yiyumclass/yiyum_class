@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import {
+  startTransition,
   useActionState,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
-  type RefObject,
+  type FormEvent,
 } from "react";
 import {
   createProductAction,
@@ -21,6 +22,22 @@ import type {
   AdminProductStatus,
   AdminProductType,
 } from "@/lib/admin/products";
+import { exportRowsToCsv } from "@/lib/admin/csv";
+import { useTableParams } from "@/lib/admin/use-table-params";
+import AdminDialog, { AdminDialogActions } from "./AdminDialog";
+import { useAdminFeedback } from "./AdminFeedback";
+import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "./AdminPagination";
+import {
+  BookIcon,
+  CheckIcon,
+  ChevronIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  PlayIcon,
+  PlusIcon,
+  SearchIcon,
+} from "./icons";
+import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminProductManager.module.css";
 
 type AdminProductManagerProps = {
@@ -32,6 +49,8 @@ type AdminProductManagerProps = {
 
 type TypeFilter = "all" | AdminProductType;
 type StatusFilter = "all" | AdminProductStatus;
+type SortKey = "recent" | "title" | "price";
+type SortDirection = "asc" | "desc";
 
 const typeFilters: Array<{ value: TypeFilter; label: string }> = [
   { value: "all", label: "전체" },
@@ -47,10 +66,31 @@ const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "archived", label: "보관" },
 ];
 
+/** 열마다 기본 정렬 방향이 다르다. 최근 수정과 판매가는 큰 값이, 상품명은 가나다순이 먼저다. */
+const defaultSortDirection: Record<SortKey, SortDirection> = {
+  recent: "desc",
+  title: "asc",
+  price: "desc",
+};
+
 const initialCreateProductState: CreateProductState = {
   status: "idle",
   message: "",
   fieldErrors: {},
+};
+
+/**
+ * 주문 화면에서 `/admin/products?q={slug}`로 넘어오므로 검색 키 이름은 q로 고정한다.
+ * 훅에 넘기는 기본값 객체는 렌더마다 새로 만들면 setValues의 정체성이 흔들리므로
+ * 모듈 상수로 둔다.
+ */
+const productTableDefaults = {
+  q: "",
+  type: "all",
+  status: "all",
+  sort: "recent",
+  page: 1,
+  size: DEFAULT_ADMIN_PAGE_SIZE,
 };
 
 export default function AdminProductManager({
@@ -59,18 +99,43 @@ export default function AdminProductManager({
   sourceMessage,
   paymentMode,
 }: AdminProductManagerProps) {
-  const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const { toast, confirm } = useAdminFeedback();
+  const { values, setValues, numberOf } = useTableParams(productTableDefaults);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
+
+  const query = values.q;
+  const typeFilter = values.type as TypeFilter;
+  const statusFilter = values.status as StatusFilter;
+  const sort = parseSort(values.sort);
+  const page = numberOf("page");
+  const pageSize = numberOf("size");
+
+  const [searchInput, setSearchInput] = useState(query);
+  const pushedQuery = useRef(query);
+
+  useEffect(() => {
+    // 뒤로가기나 다른 화면의 링크로 q가 바뀌면 입력칸도 따라가야 한다.
+    if (values.q !== pushedQuery.current) {
+      pushedQuery.current = values.q;
+      setSearchInput(values.q);
+    }
+  }, [values.q]);
+
+  useEffect(() => {
+    if (searchInput === pushedQuery.current) return;
+    const timer = window.setTimeout(() => {
+      pushedQuery.current = searchInput;
+      setValues({ q: searchInput });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, setValues]);
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return products.filter((product) => {
+    const matched = products.filter((product) => {
       const matchesQuery =
         !normalizedQuery ||
         product.title.toLowerCase().includes(normalizedQuery) ||
@@ -82,16 +147,32 @@ export default function AdminProductManager({
 
       return matchesQuery && matchesType && matchesStatus;
     });
-  }, [products, query, statusFilter, typeFilter]);
 
+    return sortProducts(matched, sort);
+  }, [products, query, sort, statusFilter, typeFilter]);
+
+  // URL에 남은 페이지 번호가 결과 수보다 클 수 있어 마지막 페이지로 당긴다.
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const currentPage = Math.min(Math.max(1, page), pageCount);
+  const pagedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // 요약이 항상 전체 기준이면 필터를 걸어둔 채 수치를 읽다 판매 현황을 오독한다.
   const summary = {
-    total: products.length,
-    active: products.filter((product) => product.status === "active").length,
-    draft: products.filter((product) => product.status === "draft").length,
-    unavailable: products.filter(
-      (product) => product.status === "paused" || product.status === "archived"
-    ).length,
+    total: filteredProducts.length,
+    active: filteredProducts.filter((product) => product.status === "active").length,
+    draft: filteredProducts.filter((product) => product.status === "draft").length,
+    paused: filteredProducts.filter((product) => product.status === "paused").length,
+    archived: filteredProducts.filter((product) => product.status === "archived").length,
   };
+
+  const filtersApplied =
+    query.trim() !== "" || typeFilter !== "all" || statusFilter !== "all";
+  // DB가 없어 코드 카탈로그를 읽어온 경우 요약 수치는 운영 실적이 아니다.
+  const catalogOnly =
+    !databaseReady && products.some((product) => product.source === "catalog");
 
   const updateStatus = async (
     product: AdminProduct,
@@ -99,18 +180,50 @@ export default function AdminProductManager({
   ) => {
     if (!databaseReady || product.source !== "database") return;
 
-    if (!window.confirm(getStatusConfirmMessage(product, nextStatus))) return;
+    const confirmed = await confirm(getStatusConfirmRequest(product, nextStatus));
+    if (!confirmed) return;
 
     setSavingProductId(product.id);
-    setNotice(null);
     try {
       const result = await updateProductStatusAction(product.id, nextStatus);
-      setNotice(result.message);
+      toast(result.message, result.ok ? "success" : "error");
     } catch {
-      setNotice("상품 상태를 변경하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.");
+      toast(
+        "상품 상태를 변경하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
+        "error"
+      );
     } finally {
       setSavingProductId(null);
     }
+  };
+
+  const exportCsv = () => {
+    exportRowsToCsv({
+      fileName: "이윰-상품목록",
+      columns: [
+        { header: "상품ID", value: (product) => product.id },
+        { header: "상품명", value: (product) => product.title },
+        { header: "slug", value: (product) => product.slug },
+        { header: "유형", value: (product) => formatProductType(product.productType) },
+        { header: "판매가", value: (product) => product.priceKrw },
+        { header: "이용기간(일)", value: (product) => product.accessPeriodDays ?? "제한 없음" },
+        { header: "상태", value: (product) => formatStatus(product.status) },
+        { header: "최근수정", value: (product) => formatUpdatedAt(product.updatedAt) },
+        { header: "상세경로", value: (product) => product.detailPath ?? "" },
+      ],
+      rows: filteredProducts,
+    });
+    toast(`${filteredProducts.length}건을 내보냈습니다.`, "success");
+  };
+
+  const toggleSort = (key: SortKey) => {
+    const nextDirection: SortDirection =
+      sort.key === key
+        ? sort.direction === "asc"
+          ? "desc"
+          : "asc"
+        : defaultSortDirection[key];
+    setValues({ sort: serializeSort({ key, direction: nextDirection }) });
   };
 
   return (
@@ -152,20 +265,47 @@ export default function AdminProductManager({
         </div>
       )}
 
-      {notice && (
-        <div className={styles.actionNotice} role="status">
-          <span>{notice}</span>
-          <button type="button" onClick={() => setNotice(null)} aria-label="안내 닫기">
-            <CloseIcon />
-          </button>
+      <section className={styles.summarySection} aria-labelledby="product-summary-title">
+        <div className={styles.summaryMeta}>
+          <h2 id="product-summary-title">상태 요약</h2>
+          {filtersApplied && <span className={styles.summaryHint}>(필터 적용됨)</span>}
+          {catalogOnly && (
+            <span className={styles.summarySourceBadge}>코드 기준</span>
+          )}
         </div>
-      )}
-
-      <section className={styles.summaryBar} aria-label="상품 상태 요약">
-        <SummaryItem label="전체 상품" value={summary.total} />
-        <SummaryItem label="판매 중" value={summary.active} tone="active" />
-        <SummaryItem label="작성 중" value={summary.draft} />
-        <SummaryItem label="판매 중지 · 보관" value={summary.unavailable} />
+        <div className={styles.summaryBar}>
+          <SummaryItem
+            label="전체 상품"
+            value={summary.total}
+            active={statusFilter === "all"}
+            onSelect={() => setValues({ status: "all" })}
+          />
+          <SummaryItem
+            label="판매 중"
+            value={summary.active}
+            tone="active"
+            active={statusFilter === "active"}
+            onSelect={() => setValues({ status: "active" })}
+          />
+          <SummaryItem
+            label="작성 중"
+            value={summary.draft}
+            active={statusFilter === "draft"}
+            onSelect={() => setValues({ status: "draft" })}
+          />
+          <SummaryItem
+            label="판매 중지"
+            value={summary.paused}
+            active={statusFilter === "paused"}
+            onSelect={() => setValues({ status: "paused" })}
+          />
+          <SummaryItem
+            label="보관"
+            value={summary.archived}
+            active={statusFilter === "archived"}
+            onSelect={() => setValues({ status: "archived" })}
+          />
+        </div>
       </section>
 
       <section className={styles.productPanel} aria-labelledby="product-list-title">
@@ -174,10 +314,21 @@ export default function AdminProductManager({
             <h2 id="product-list-title">상품 목록</h2>
             <p>삭제 대신 판매 중지 또는 보관 상태로 변경해 주문 기록을 유지합니다.</p>
           </div>
-          <span className={databaseReady ? styles.databaseBadge : styles.catalogBadge}>
-            <span aria-hidden="true" />
-            {databaseReady ? "운영 데이터" : "읽기 전용"}
-          </span>
+          <div className={styles.panelHeaderActions}>
+            <span className={databaseReady ? styles.databaseBadge : styles.catalogBadge}>
+              <span aria-hidden="true" />
+              {databaseReady ? "운영 데이터" : "읽기 전용"}
+            </span>
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={exportCsv}
+              disabled={filteredProducts.length === 0}
+            >
+              <DownloadIcon />
+              CSV 내보내기
+            </button>
+          </div>
         </div>
 
         <div className={styles.toolbar}>
@@ -187,7 +338,7 @@ export default function AdminProductManager({
                 type="button"
                 key={filter.value}
                 className={typeFilter === filter.value ? styles.filterActive : styles.filter}
-                onClick={() => setTypeFilter(filter.value)}
+                onClick={() => setValues({ type: filter.value })}
                 aria-pressed={typeFilter === filter.value}
               >
                 {filter.label}
@@ -201,8 +352,8 @@ export default function AdminProductManager({
               <span className={styles.visuallyHidden}>상품 검색</span>
               <input
                 type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="상품명 또는 주소 검색"
               />
             </label>
@@ -210,9 +361,7 @@ export default function AdminProductManager({
               <span className={styles.visuallyHidden}>상품 상태</span>
               <select
                 value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as StatusFilter)
-                }
+                onChange={(event) => setValues({ status: event.target.value })}
               >
                 {statusOptions.map((option) => (
                   <option value={option.value} key={option.value}>
@@ -226,33 +375,60 @@ export default function AdminProductManager({
         </div>
 
         {filteredProducts.length > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.productTable}>
-              <thead>
-                <tr>
-                  <th>상품</th>
-                  <th>유형</th>
-                  <th>판매가</th>
-                  <th>이용 기간</th>
-                  <th>상태</th>
-                  <th>최근 수정</th>
-                  <th><span className={styles.visuallyHidden}>상품 작업</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map((product) => (
-                  <ProductRow
-                    key={product.id}
-                    product={product}
-                    databaseReady={databaseReady}
-                    saving={savingProductId === product.id}
-                    onStatusChange={updateStatus}
-                    onEdit={setEditingProduct}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className={styles.tableWrap}>
+              <table className={`${styles.productTable} ${tableStyles.cardTable}`}>
+                <thead>
+                  <tr>
+                    <SortableHeader
+                      label="상품"
+                      sortKey="title"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <th scope="col">유형</th>
+                    <SortableHeader
+                      label="판매가"
+                      sortKey="price"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <th scope="col">이용 기간</th>
+                    <th scope="col">상태</th>
+                    <SortableHeader
+                      label="최근 수정"
+                      sortKey="recent"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <th scope="col">
+                      <span className={styles.visuallyHidden}>상품 작업</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedProducts.map((product) => (
+                    <ProductRow
+                      key={product.id}
+                      product={product}
+                      databaseReady={databaseReady}
+                      saving={savingProductId === product.id}
+                      onStatusChange={updateStatus}
+                      onEdit={setEditingProduct}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <AdminPagination
+              page={currentPage}
+              pageSize={pageSize}
+              totalCount={filteredProducts.length}
+              onPageChange={(next) => setValues({ page: next })}
+              onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
+            />
+          </>
         ) : (
           <div className={styles.emptyState}>
             <SearchIcon />
@@ -280,18 +456,59 @@ function SummaryItem({
   label,
   value,
   tone,
+  active,
+  onSelect,
 }: {
   label: string;
   value: number;
   tone?: "active";
+  active: boolean;
+  onSelect: () => void;
 }) {
   return (
-    <div className={styles.summaryItem}>
+    <button
+      type="button"
+      className={active ? styles.summaryItemActive : styles.summaryItem}
+      onClick={onSelect}
+      aria-pressed={active}
+    >
       <span>{label}</span>
       <strong className={tone ? styles.summaryValueActive : undefined}>
         {value}<small>개</small>
       </strong>
-    </div>
+    </button>
+  );
+}
+
+function SortableHeader({
+  label,
+  sortKey,
+  sort,
+  onSort,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: { key: SortKey; direction: SortDirection };
+  onSort: (key: SortKey) => void;
+}) {
+  const isActive = sort.key === sortKey;
+
+  return (
+    <th
+      scope="col"
+      aria-sort={
+        isActive ? (sort.direction === "asc" ? "ascending" : "descending") : "none"
+      }
+    >
+      <button
+        type="button"
+        className={isActive ? styles.sortButtonActive : styles.sortButton}
+        onClick={() => onSort(sortKey)}
+      >
+        {label}
+        <span aria-hidden="true">{isActive ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}</span>
+      </button>
+    </th>
   );
 }
 
@@ -342,34 +559,47 @@ function ProductRow({
         {formatUpdatedAt(product.updatedAt)}
       </td>
       <td className={styles.actionCell}>
-        {canEdit ? (
-          <span className={styles.rowActions}>
-            {canUpdateStatus && (
+        <span className={styles.rowActions}>
+          {canEdit ? (
+            <>
+              {canUpdateStatus && (
+                <button
+                  type="button"
+                  className={styles.rowAction}
+                  disabled={saving}
+                  onClick={() => onStatusChange(product, nextAction.status)}
+                >
+                  {saving ? "변경 중" : nextAction.label}
+                </button>
+              )}
               <button
                 type="button"
-                className={styles.rowAction}
+                className={`${styles.rowAction} ${styles.editAction}`}
                 disabled={saving}
-                onClick={() => onStatusChange(product, nextAction.status)}
+                onClick={() => onEdit(product)}
               >
-                {saving ? "변경 중" : nextAction.label}
+                수정
               </button>
-            )}
-            <button
-              type="button"
-              className={`${styles.rowAction} ${styles.editAction}`}
-              disabled={saving}
-              onClick={() => onEdit(product)}
-            >
-              수정
-            </button>
-          </span>
-        ) : product.detailPath ? (
-          <Link href={product.detailPath} className={styles.rowLink}>
-            보기
+            </>
+          ) : product.detailPath ? (
+            <Link href={product.detailPath} className={styles.rowLink}>
+              보기
+            </Link>
+          ) : null}
+
+          {/* 상품에서 곧바로 판매 실적과 콘텐츠 구성으로 넘어갈 수 있게 한다. */}
+          <Link
+            href={`/admin/orders?q=${encodeURIComponent(product.title)}`}
+            className={styles.rowLink}
+          >
+            주문 보기
           </Link>
-        ) : (
-          <span className={styles.noAction}>—</span>
-        )}
+          {product.productType === "course" && (
+            <Link href="/admin/courses" className={styles.rowLink}>
+              강의 구성
+            </Link>
+          )}
+        </span>
       </td>
     </tr>
   );
@@ -382,6 +612,7 @@ function ProductEditDialog({
   product: AdminProduct;
   onClose: () => void;
 }) {
+  const { confirm } = useAdminFeedback();
   const updateAction = useMemo(
     () => updateProductAction.bind(null, product.id),
     [product.id]
@@ -393,275 +624,195 @@ function ProductEditDialog({
   const [accessMode, setAccessMode] = useState<"period" | "lifetime">(
     product.accessPeriodDays ? "period" : "lifetime"
   );
-  const dialogRef = useRef<HTMLElement>(null);
 
-  useDialogBehavior(dialogRef, pending, onClose);
+  /**
+   * 확인창이 비동기라 기본 제출을 항상 막고, 확인을 통과한 뒤 액션을 직접 호출한다.
+   * event.preventDefault()를 조건부로 부르는 방식은 await 이후에는 통하지 않는다.
+   */
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const nextStatus = String(formData.get("status")) as AdminProductStatus;
+
+    if (nextStatus !== product.status) {
+      const confirmed = await confirm(getStatusConfirmRequest(product, nextStatus));
+      if (!confirmed) return;
+    }
+
+    startTransition(() => formAction(formData));
+  };
 
   return (
-    <div
-      className={styles.dialogBackdrop}
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !pending) onClose();
-      }}
+    <AdminDialog
+      eyebrow="EDIT PRODUCT"
+      title="상품 정보 수정"
+      description="판매 정보 변경은 즉시 반영됩니다. 저장 전 상태와 가격을 확인해 주세요."
+      busy={pending}
+      size="large"
+      onClose={onClose}
     >
-      <section
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-product-title"
-        aria-describedby="edit-product-description"
-      >
-        <header className={styles.dialogHeader}>
-          <div>
-            <span>EDIT PRODUCT</span>
-            <h2 id="edit-product-title">상품 정보 수정</h2>
-            <p id="edit-product-description">
-              판매 정보 변경은 즉시 반영됩니다. 저장 전 상태와 가격을 확인해 주세요.
-            </p>
-          </div>
-          <button
-            autoFocus
-            type="button"
-            className={styles.dialogClose}
-            onClick={onClose}
-            disabled={pending}
-            aria-label="상품 수정 창 닫기"
-          >
-            <CloseIcon />
-          </button>
-        </header>
+      {state.status === "success" ? (
+        <div className={styles.successState} role="status">
+          <span><CheckIcon /></span>
+          <strong>{state.message}</strong>
+          <p>상품 목록과 공개 판매 상태에 변경 내용이 반영되었습니다.</p>
+          <button type="button" onClick={onClose}>목록으로 돌아가기</button>
+        </div>
+      ) : (
+        <form className={styles.productForm} onSubmit={handleSubmit}>
+          {state.status === "error" && (
+            <div className={styles.formError} role="alert">
+              {state.message}
+            </div>
+          )}
 
-        {state.status === "success" ? (
-          <div className={styles.successState} role="status">
-            <span><CheckIcon /></span>
-            <strong>{state.message}</strong>
-            <p>상품 목록과 공개 판매 상태에 변경 내용이 반영되었습니다.</p>
-            <button type="button" onClick={onClose}>목록으로 돌아가기</button>
+          <div className={styles.lockedProductMeta}>
+            <div>
+              <span>상품 유형</span>
+              <strong>{formatProductType(product.productType)}</strong>
+            </div>
+            <div>
+              <span>상품 주소</span>
+              <strong>/{product.slug}</strong>
+            </div>
+            <small>주문 및 콘텐츠 연결을 보호하기 위해 두 항목은 변경할 수 없습니다.</small>
           </div>
-        ) : (
-          <form
-            action={formAction}
-            className={styles.productForm}
-            onSubmit={(event) => {
-              const form = event.currentTarget;
-              const nextStatus = new FormData(form).get("status");
-              if (
-                nextStatus !== product.status &&
-                !window.confirm(getStatusConfirmMessage(product, String(nextStatus) as AdminProductStatus))
-              ) {
-                event.preventDefault();
-              }
-            }}
-          >
-            {state.status === "error" && (
-              <div className={styles.formError} role="alert">
-                {state.message}
-              </div>
+
+          <div className={styles.formGrid}>
+            <FormField
+              label="상품명"
+              name="title"
+              defaultValue={product.title}
+              error={state.fieldErrors.title}
+              required
+            />
+            <FormField
+              label="판매가"
+              name="priceKrw"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1000"
+              suffix="원"
+              defaultValue={String(product.priceKrw)}
+              error={state.fieldErrors.priceKrw}
+              description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
+              required
+            />
+          </div>
+
+          <label className={styles.formField}>
+            <span>상품 설명</span>
+            <textarea
+              name="summary"
+              rows={3}
+              maxLength={500}
+              defaultValue={product.summary}
+              aria-invalid={Boolean(state.fieldErrors.summary)}
+              aria-describedby={state.fieldErrors.summary ? "edit-summary-error" : undefined}
+            />
+            {state.fieldErrors.summary && (
+              <small id="edit-summary-error" className={styles.fieldError}>
+                {state.fieldErrors.summary}
+              </small>
             )}
+          </label>
 
-            <div className={styles.lockedProductMeta}>
-              <div>
-                <span>상품 유형</span>
-                <strong>{formatProductType(product.productType)}</strong>
-              </div>
-              <div>
-                <span>상품 주소</span>
-                <strong>/{product.slug}</strong>
-              </div>
-              <small>주문 및 콘텐츠 연결을 보호하기 위해 두 항목은 변경할 수 없습니다.</small>
-            </div>
-
-            <div className={styles.formGrid}>
-              <FormField
-                label="상품명"
-                name="title"
-                defaultValue={product.title}
-                error={state.fieldErrors.title}
-                required
-              />
-              <FormField
-                label="판매가"
-                name="priceKrw"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1000"
-                suffix="원"
-                defaultValue={String(product.priceKrw)}
-                error={state.fieldErrors.priceKrw}
-                description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
-                required
-              />
-            </div>
-
+          <div className={styles.formGrid}>
             <label className={styles.formField}>
-              <span>상품 설명</span>
-              <textarea
-                name="summary"
-                rows={3}
-                maxLength={500}
-                defaultValue={product.summary}
-                aria-invalid={Boolean(state.fieldErrors.summary)}
-                aria-describedby={state.fieldErrors.summary ? "edit-summary-error" : undefined}
-              />
-              {state.fieldErrors.summary && (
-                <small id="edit-summary-error" className={styles.fieldError}>
-                  {state.fieldErrors.summary}
-                </small>
-              )}
+              <span>판매 상태</span>
+              <span className={styles.selectControl}>
+                <select name="status" defaultValue={product.status}>
+                  <option value="draft">작성 중</option>
+                  <option value="active">판매 중</option>
+                  <option value="paused">판매 중지</option>
+                  <option value="archived">보관</option>
+                </select>
+                <ChevronIcon />
+              </span>
+              <small>판매 중 상태만 공개 상품 목록에 표시됩니다.</small>
             </label>
 
-            <div className={styles.formGrid}>
-              <label className={styles.formField}>
-                <span>판매 상태</span>
-                <span className={styles.selectControl}>
-                  <select name="status" defaultValue={product.status}>
-                    <option value="draft">작성 중</option>
-                    <option value="active">판매 중</option>
-                    <option value="paused">판매 중지</option>
-                    <option value="archived">보관</option>
-                  </select>
-                  <ChevronIcon />
-                </span>
-                <small>판매 중 상태만 공개 상품 목록에 표시됩니다.</small>
-              </label>
-
-              <fieldset className={`${styles.accessFieldset} ${styles.editAccessFieldset}`}>
-                <legend>이용 기간</legend>
-                <div className={styles.editAccessControl}>
-                  <div className={styles.accessChoices}>
-                    <label>
-                      <input
-                        type="radio"
-                        name="accessMode"
-                        value="period"
-                        checked={accessMode === "period"}
-                        onChange={handleAccessMode(setAccessMode)}
-                      />
-                      <span>기간제</span>
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="accessMode"
-                        value="lifetime"
-                        checked={accessMode === "lifetime"}
-                        onChange={handleAccessMode(setAccessMode)}
-                      />
-                      <span>제한 없음</span>
-                    </label>
-                  </div>
-                  {accessMode === "period" && (
-                    <label className={styles.durationField}>
-                      <input
-                        type="number"
-                        name="accessPeriodDays"
-                        min="1"
-                        defaultValue={product.accessPeriodDays ?? 365}
-                        aria-label="이용 기간 일수"
-                        aria-describedby={
-                          state.fieldErrors.accessPeriodDays
-                            ? "edit-access-days-error"
-                            : undefined
-                        }
-                      />
-                      <span>일</span>
-                    </label>
-                  )}
+            <fieldset className={`${styles.accessFieldset} ${styles.editAccessFieldset}`}>
+              <legend>이용 기간</legend>
+              <div className={styles.editAccessControl}>
+                <div className={styles.accessChoices}>
+                  <label>
+                    <input
+                      type="radio"
+                      name="accessMode"
+                      value="period"
+                      checked={accessMode === "period"}
+                      onChange={handleAccessMode(setAccessMode)}
+                    />
+                    <span>기간제</span>
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="accessMode"
+                      value="lifetime"
+                      checked={accessMode === "lifetime"}
+                      onChange={handleAccessMode(setAccessMode)}
+                    />
+                    <span>제한 없음</span>
+                  </label>
                 </div>
-                {state.fieldErrors.accessPeriodDays && (
-                  <small id="edit-access-days-error" className={styles.fieldError}>
-                    {state.fieldErrors.accessPeriodDays}
-                  </small>
+                {accessMode === "period" && (
+                  <label className={styles.durationField}>
+                    <input
+                      type="number"
+                      name="accessPeriodDays"
+                      min="1"
+                      defaultValue={product.accessPeriodDays ?? 365}
+                      aria-label="이용 기간 일수"
+                      aria-describedby={
+                        state.fieldErrors.accessPeriodDays
+                          ? "edit-access-days-error"
+                          : undefined
+                      }
+                    />
+                    <span>일</span>
+                  </label>
                 )}
-              </fieldset>
-            </div>
-
-            <details className={styles.advancedFields}>
-              <summary>이미지·상세 페이지 경로</summary>
-              <div className={styles.formGrid}>
-                <FormField
-                  label="썸네일 경로"
-                  name="thumbnailPath"
-                  defaultValue={product.thumbnailPath ?? ""}
-                  placeholder="/assets/product-cover.jpg"
-                  error={state.fieldErrors.thumbnailPath}
-                />
-                <FormField
-                  label="상세 페이지 경로"
-                  name="detailPath"
-                  defaultValue={product.detailPath ?? ""}
-                  placeholder="/courses/product-slug"
-                  error={state.fieldErrors.detailPath}
-                />
               </div>
-            </details>
+              {state.fieldErrors.accessPeriodDays && (
+                <small id="edit-access-days-error" className={styles.fieldError}>
+                  {state.fieldErrors.accessPeriodDays}
+                </small>
+              )}
+            </fieldset>
+          </div>
 
-            <div className={styles.dialogActions}>
-              <button type="button" className={styles.cancelButton} onClick={onClose} disabled={pending}>
-                취소
-              </button>
-              <button type="submit" className={styles.submitButton} disabled={pending}>
-                {pending ? "저장 중..." : "변경 내용 저장"}
-              </button>
+          <details className={styles.advancedFields}>
+            <summary>이미지·상세 페이지 경로</summary>
+            <div className={styles.formGrid}>
+              <FormField
+                label="썸네일 경로"
+                name="thumbnailPath"
+                defaultValue={product.thumbnailPath ?? ""}
+                placeholder="/assets/product-cover.jpg"
+                error={state.fieldErrors.thumbnailPath}
+              />
+              <FormField
+                label="상세 페이지 경로"
+                name="detailPath"
+                defaultValue={product.detailPath ?? ""}
+                placeholder="/courses/product-slug"
+                error={state.fieldErrors.detailPath}
+              />
             </div>
-          </form>
-        )}
-      </section>
-    </div>
+          </details>
+
+          <AdminDialogActions
+            busy={pending}
+            onClose={onClose}
+            submitLabel="변경 내용 저장"
+          />
+        </form>
+      )}
+    </AdminDialog>
   );
-}
-
-function useDialogBehavior(
-  dialogRef: RefObject<HTMLElement | null>,
-  pending: boolean,
-  onClose: () => void
-) {
-  useEffect(() => {
-    const returnFocusTo = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    return () => returnFocusTo?.focus();
-  }, []);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleDialogKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !pending) {
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab" || !dialogRef.current) return;
-
-      const focusableElements = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, a[href]'
-        )
-      );
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements.at(-1);
-
-      if (!firstElement || !lastElement) return;
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleDialogKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleDialogKeyDown);
-    };
-  }, [dialogRef, onClose, pending]);
 }
 
 function ProductCreateDialog({ onClose }: { onClose: () => void }) {
@@ -670,206 +821,169 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
     initialCreateProductState
   );
   const [accessMode, setAccessMode] = useState<"period" | "lifetime">("period");
-  const dialogRef = useRef<HTMLElement>(null);
-
-  useDialogBehavior(dialogRef, pending, onClose);
 
   return (
-    <div
-      className={styles.dialogBackdrop}
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !pending) onClose();
-      }}
+    <AdminDialog
+      eyebrow="NEW PRODUCT"
+      title="새 상품 등록"
+      description="판매 단위를 먼저 만들고, 다음 단계에서 강의 또는 전자책 콘텐츠를 연결합니다."
+      busy={pending}
+      size="large"
+      onClose={onClose}
     >
-      <section
-        ref={dialogRef}
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-product-title"
-        aria-describedby="create-product-description"
-      >
-        <header className={styles.dialogHeader}>
-          <div>
-            <span>NEW PRODUCT</span>
-            <h2 id="create-product-title">새 상품 등록</h2>
-            <p id="create-product-description">
-              판매 단위를 먼저 만들고, 다음 단계에서 강의 또는 전자책 콘텐츠를 연결합니다.
-            </p>
-          </div>
-          <button
-            autoFocus
-            type="button"
-            className={styles.dialogClose}
-            onClick={onClose}
-            disabled={pending}
-            aria-label="새 상품 등록 창 닫기"
-          >
-            <CloseIcon />
-          </button>
-        </header>
+      {state.status === "success" ? (
+        <div className={styles.successState} role="status">
+          <span><CheckIcon /></span>
+          <strong>{state.message}</strong>
+          <p>상품 목록에 반영되었습니다. 콘텐츠 연결은 강의 관리 단계에서 진행합니다.</p>
+          <button type="button" onClick={onClose}>목록으로 돌아가기</button>
+        </div>
+      ) : (
+        <form action={formAction} className={styles.productForm}>
+          {state.status === "error" && (
+            <div className={styles.formError} role="alert">
+              {state.message}
+            </div>
+          )}
 
-        {state.status === "success" ? (
-          <div className={styles.successState} role="status">
-            <span><CheckIcon /></span>
-            <strong>{state.message}</strong>
-            <p>상품 목록에 반영되었습니다. 콘텐츠 연결은 강의 관리 단계에서 진행합니다.</p>
-            <button type="button" onClick={onClose}>목록으로 돌아가기</button>
+          <fieldset className={styles.typeChoice}>
+            <legend>상품 유형</legend>
+            <label>
+              <input type="radio" name="productType" value="course" defaultChecked />
+              <span><PlayIcon /><strong>VOD 강의</strong><small>영상 커리큘럼 연결</small></span>
+            </label>
+            <label>
+              <input type="radio" name="productType" value="ebook" />
+              <span><BookIcon /><strong>전자책</strong><small>파일 또는 리더 연결</small></span>
+            </label>
+          </fieldset>
+
+          <div className={styles.formGrid}>
+            <FormField
+              label="상품명"
+              name="title"
+              placeholder="예: 이윰 SNS 수익화 클래스"
+              error={state.fieldErrors.title}
+              required
+            />
+            <FormField
+              label="상품 주소"
+              name="slug"
+              placeholder="예: sns-monetization"
+              description="영문 소문자, 숫자와 하이픈만 사용"
+              error={state.fieldErrors.slug}
+              required
+            />
+            <FormField
+              label="판매가"
+              name="priceKrw"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1000"
+              placeholder="300000"
+              suffix="원"
+              error={state.fieldErrors.priceKrw}
+              description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
+              required
+            />
+            <label className={styles.formField}>
+              <span>등록 상태</span>
+              <span className={styles.selectControl}>
+                <select name="status" defaultValue="draft">
+                  <option value="draft">작성 중</option>
+                  <option value="active">판매 중</option>
+                </select>
+                <ChevronIcon />
+              </span>
+              <small>검수 전에는 작성 중을 권장합니다.</small>
+            </label>
           </div>
-        ) : (
-          <form action={formAction} className={styles.productForm}>
-            {state.status === "error" && (
-              <div className={styles.formError} role="alert">
-                {state.message}
-              </div>
+
+          <label className={styles.formField}>
+            <span>상품 설명</span>
+            <textarea
+              name="summary"
+              rows={3}
+              maxLength={500}
+              placeholder="상품 목록과 결제 화면에 표시할 설명을 입력하세요."
+              aria-describedby={state.fieldErrors.summary ? "summary-error" : undefined}
+            />
+            {state.fieldErrors.summary && (
+              <small id="summary-error" className={styles.fieldError}>
+                {state.fieldErrors.summary}
+              </small>
             )}
+          </label>
 
-            <fieldset className={styles.typeChoice}>
-              <legend>상품 유형</legend>
+          <fieldset className={styles.accessFieldset}>
+            <legend>이용 기간</legend>
+            <div className={styles.accessChoices}>
               <label>
-                <input type="radio" name="productType" value="course" defaultChecked />
-                <span><PlayIcon /><strong>VOD 강의</strong><small>영상 커리큘럼 연결</small></span>
+                <input
+                  type="radio"
+                  name="accessMode"
+                  value="period"
+                  checked={accessMode === "period"}
+                  onChange={handleAccessMode(setAccessMode)}
+                />
+                <span>기간제</span>
               </label>
               <label>
-                <input type="radio" name="productType" value="ebook" />
-                <span><BookIcon /><strong>전자책</strong><small>파일 또는 리더 연결</small></span>
+                <input
+                  type="radio"
+                  name="accessMode"
+                  value="lifetime"
+                  checked={accessMode === "lifetime"}
+                  onChange={handleAccessMode(setAccessMode)}
+                />
+                <span>기간 제한 없음</span>
               </label>
-            </fieldset>
+            </div>
+            {accessMode === "period" && (
+              <label className={styles.durationField}>
+                <input
+                  type="number"
+                  name="accessPeriodDays"
+                  min="1"
+                  defaultValue="365"
+                  aria-label="이용 기간 일수"
+                  aria-describedby={
+                    state.fieldErrors.accessPeriodDays ? "access-days-error" : undefined
+                  }
+                />
+                <span>일</span>
+              </label>
+            )}
+            {state.fieldErrors.accessPeriodDays && (
+              <small id="access-days-error" className={styles.fieldError}>
+                {state.fieldErrors.accessPeriodDays}
+              </small>
+            )}
+          </fieldset>
 
+          <details className={styles.advancedFields}>
+            <summary>이미지·상세 페이지 경로</summary>
             <div className={styles.formGrid}>
               <FormField
-                label="상품명"
-                name="title"
-                placeholder="예: 이윰 SNS 수익화 클래스"
-                error={state.fieldErrors.title}
-                required
+                label="썸네일 경로"
+                name="thumbnailPath"
+                placeholder="/assets/product-cover.jpg"
+                error={state.fieldErrors.thumbnailPath}
               />
               <FormField
-                label="상품 주소"
-                name="slug"
-                placeholder="예: sns-monetization"
-                description="영문 소문자, 숫자와 하이픈만 사용"
-                error={state.fieldErrors.slug}
-                required
+                label="상세 페이지 경로"
+                name="detailPath"
+                placeholder="/courses/product-slug"
+                error={state.fieldErrors.detailPath}
               />
-              <FormField
-                label="판매가"
-                name="priceKrw"
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1000"
-                placeholder="300000"
-                suffix="원"
-                error={state.fieldErrors.priceKrw}
-                description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
-                required
-              />
-              <label className={styles.formField}>
-                <span>등록 상태</span>
-                <span className={styles.selectControl}>
-                  <select name="status" defaultValue="draft">
-                    <option value="draft">작성 중</option>
-                    <option value="active">판매 중</option>
-                  </select>
-                  <ChevronIcon />
-                </span>
-                <small>검수 전에는 작성 중을 권장합니다.</small>
-              </label>
             </div>
+          </details>
 
-            <label className={styles.formField}>
-              <span>상품 설명</span>
-              <textarea
-                name="summary"
-                rows={3}
-                maxLength={500}
-                placeholder="상품 목록과 결제 화면에 표시할 설명을 입력하세요."
-                aria-describedby={state.fieldErrors.summary ? "summary-error" : undefined}
-              />
-              {state.fieldErrors.summary && (
-                <small id="summary-error" className={styles.fieldError}>
-                  {state.fieldErrors.summary}
-                </small>
-              )}
-            </label>
-
-            <fieldset className={styles.accessFieldset}>
-              <legend>이용 기간</legend>
-              <div className={styles.accessChoices}>
-                <label>
-                  <input
-                    type="radio"
-                    name="accessMode"
-                    value="period"
-                    checked={accessMode === "period"}
-                    onChange={handleAccessMode(setAccessMode)}
-                  />
-                  <span>기간제</span>
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="accessMode"
-                    value="lifetime"
-                    checked={accessMode === "lifetime"}
-                    onChange={handleAccessMode(setAccessMode)}
-                  />
-                  <span>기간 제한 없음</span>
-                </label>
-              </div>
-              {accessMode === "period" && (
-                <label className={styles.durationField}>
-                  <input
-                    type="number"
-                    name="accessPeriodDays"
-                    min="1"
-                    defaultValue="365"
-                    aria-label="이용 기간 일수"
-                    aria-describedby={
-                      state.fieldErrors.accessPeriodDays ? "access-days-error" : undefined
-                    }
-                  />
-                  <span>일</span>
-                </label>
-              )}
-              {state.fieldErrors.accessPeriodDays && (
-                <small id="access-days-error" className={styles.fieldError}>
-                  {state.fieldErrors.accessPeriodDays}
-                </small>
-              )}
-            </fieldset>
-
-            <details className={styles.advancedFields}>
-              <summary>이미지·상세 페이지 경로</summary>
-              <div className={styles.formGrid}>
-                <FormField
-                  label="썸네일 경로"
-                  name="thumbnailPath"
-                  placeholder="/assets/product-cover.jpg"
-                  error={state.fieldErrors.thumbnailPath}
-                />
-                <FormField
-                  label="상세 페이지 경로"
-                  name="detailPath"
-                  placeholder="/courses/product-slug"
-                  error={state.fieldErrors.detailPath}
-                />
-              </div>
-            </details>
-
-            <div className={styles.dialogActions}>
-              <button type="button" className={styles.cancelButton} onClick={onClose} disabled={pending}>
-                취소
-              </button>
-              <button type="submit" className={styles.submitButton} disabled={pending}>
-                {pending ? "저장 중..." : "상품 등록"}
-              </button>
-            </div>
-          </form>
-        )}
-      </section>
-    </div>
+          <AdminDialogActions busy={pending} onClose={onClose} submitLabel="상품 등록" />
+        </form>
+      )}
+    </AdminDialog>
   );
 }
 
@@ -944,6 +1058,44 @@ function handleAccessMode(
   };
 }
 
+function parseSort(raw: string): { key: SortKey; direction: SortDirection } {
+  const [rawKey, rawDirection] = raw.split("-");
+  const key: SortKey =
+    rawKey === "title" || rawKey === "price" ? rawKey : "recent";
+  const direction: SortDirection =
+    rawDirection === "asc" || rawDirection === "desc"
+      ? rawDirection
+      : defaultSortDirection[key];
+  return { key, direction };
+}
+
+function serializeSort(sort: { key: SortKey; direction: SortDirection }) {
+  return sort.direction === defaultSortDirection[sort.key]
+    ? sort.key
+    : `${sort.key}-${sort.direction}`;
+}
+
+function sortProducts(
+  products: AdminProduct[],
+  sort: { key: SortKey; direction: SortDirection }
+) {
+  const factor = sort.direction === "asc" ? 1 : -1;
+
+  return [...products].sort((left, right) => {
+    if (sort.key === "title") {
+      return left.title.localeCompare(right.title, "ko-KR") * factor;
+    }
+    if (sort.key === "price") {
+      return (left.priceKrw - right.priceKrw) * factor;
+    }
+    // 코드 카탈로그 상품은 최근 수정 값이 없어 항상 뒤로 보낸다.
+    if (!left.updatedAt && !right.updatedAt) return 0;
+    if (!left.updatedAt) return 1;
+    if (!right.updatedAt) return -1;
+    return (Date.parse(left.updatedAt) - Date.parse(right.updatedAt)) * factor;
+  });
+}
+
 function getNextStatusAction(status: AdminProductStatus) {
   const actions: Partial<
     Record<AdminProductStatus, { label: string; status: AdminProductStatus }>
@@ -955,17 +1107,38 @@ function getNextStatusAction(status: AdminProductStatus) {
   return actions[status] ?? null;
 }
 
-function getStatusConfirmMessage(product: AdminProduct, nextStatus: AdminProductStatus) {
+function getStatusConfirmRequest(
+  product: AdminProduct,
+  nextStatus: AdminProductStatus
+) {
   if (nextStatus === "active") {
-    return `‘${product.title}’을 판매 중으로 변경할까요?\n사용자 상품 목록과 수강신청 화면에 즉시 노출됩니다.`;
+    return {
+      title: `‘${product.title}’을 판매 중으로 변경할까요?`,
+      description: "사용자 상품 목록과 수강신청 화면에 즉시 노출됩니다.",
+      confirmLabel: "판매 시작",
+    };
   }
   if (nextStatus === "paused") {
-    return `‘${product.title}’ 판매를 중지할까요?\n기존 수강권은 유지되지만 신규 수강신청은 중단됩니다.`;
+    return {
+      title: `‘${product.title}’ 판매를 중지할까요?`,
+      description: "기존 수강권은 유지되지만 신규 수강신청은 중단됩니다.",
+      confirmLabel: "판매 중지",
+      tone: "danger" as const,
+    };
   }
   if (nextStatus === "archived") {
-    return `‘${product.title}’을 보관할까요?\n판매 페이지에서 숨겨지며 신규 수강신청이 중단됩니다.`;
+    return {
+      title: `‘${product.title}’을 보관할까요?`,
+      description: "판매 페이지에서 숨겨지며 신규 수강신청이 중단됩니다.",
+      confirmLabel: "보관",
+      tone: "danger" as const,
+    };
   }
-  return `‘${product.title}’을 작성 중 상태로 변경할까요?\n판매 페이지에서 즉시 숨겨집니다.`;
+  return {
+    title: `‘${product.title}’을 작성 중 상태로 변경할까요?`,
+    description: "판매 페이지에서 즉시 숨겨집니다.",
+    confirmLabel: "작성 중으로 변경",
+  };
 }
 
 function formatProductType(type: AdminProductType) {
@@ -998,36 +1171,4 @@ function formatUpdatedAt(value: string | null) {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(value));
-}
-
-function PlusIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>;
-}
-
-function SearchIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5" /><path d="m12.5 12.5 4 4" /></svg>;
-}
-
-function CloseIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8M14 6l-8 8" /></svg>;
-}
-
-function ChevronIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6.5 8 3.5 3.5L13.5 8" /></svg>;
-}
-
-function PlayIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m10 9 5 3-5 3V9Z" /></svg>;
-}
-
-function BookIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h9a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3V4.5Z" /><path d="M17 7.5h2a2 2 0 0 1 2 2V20h-4" /></svg>;
-}
-
-function DatabaseIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 10v6M12 7h.01" /></svg>;
-}
-
-function CheckIcon() {
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10 3 3 7-7" /></svg>;
 }

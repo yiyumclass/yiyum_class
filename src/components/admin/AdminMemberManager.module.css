@@ -9,17 +9,14 @@
 .pendingBadge { background: #eee8dd; color: #887c6d; }
 .liveBadge > span, .pendingBadge > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-.setupNotice, .actionNotice { border-radius: 9px; display: flex; align-items: flex-start; }
-.setupNotice { padding: 15px 17px; border: 1px solid #dfd0af; background: #f7f0da; color: #695c3b; gap: 12px; }
+.setupNotice { padding: 15px 17px; border: 1px solid #dfd0af; border-radius: 9px; background: #f7f0da; color: #695c3b; display: flex; align-items: flex-start; gap: 12px; }
 .setupNotice > svg { width: 22px; height: 22px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .setupNotice strong { color: #5b4d2e; font-size: 15px; }
 .setupNotice p { margin: 4px 0 8px; color: #887958; font-size: 13px; line-height: 1.55; }
 .setupNotice code { padding: 4px 7px; border: 1px solid #ddceaa; border-radius: 5px; background: rgba(255,253,244,.55); color: #6d5d37; font-size: 12px; }
-.actionNotice { min-height: 44px; padding: 7px 8px 7px 13px; border: 1px solid #d7cbbf; background: #f8eee7; color: #7d5140; align-items: center; justify-content: space-between; gap: 14px; font-size: 14px; }
-.actionNotice button, .dialogClose { border: 0; background: transparent; color: #9a7565; display: grid; place-items: center; cursor: pointer; }
-.actionNotice button { width: 30px; height: 30px; }
-.actionNotice svg, .dialogClose svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 
+.summarySection { display: grid; gap: 8px; }
+.summaryScope { margin: 0; color: #9a8e80; font-size: 12px; font-weight: 650; }
 .summaryBar { border: 1px solid #ddd6ca; border-radius: 10px; background: #fbf8f3; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; }
 .summaryItem { min-height: 84px; padding: 17px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .summaryItem + .summaryItem { border-left: 1px solid #e1dacf; }
@@ -33,7 +30,13 @@
 .panelHeader { min-height: 80px; padding: 20px 23px; border-bottom: 1px solid #e0d9ce; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .panelHeader h2 { margin: 0; color: #302b25; font-size: 18px; letter-spacing: -.02em; }
 .panelHeader p { margin: 5px 0 0; color: #948b80; font-size: 13px; }
+.panelHeaderActions { display: flex; align-items: center; gap: 12px; }
 .resultCount { color: #8d8377; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.exportButton { min-height: 36px; padding: 0 12px; border: 1px solid #d0c5b8; border-radius: 7px; background: #fffdf9; color: #675e54; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.exportButton svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.exportButton:hover:not(:disabled) { border-color: #b98c77; color: #9c4f33; }
+.exportButton:disabled { cursor: default; opacity: .45; }
+
 .toolbar { min-height: 68px; padding: 12px 18px; border-bottom: 1px solid #e5ded4; background: #f7f3ed; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .memberFilters { display: flex; align-items: center; gap: 4px; }
 .filter, .filterActive { min-height: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #887f73; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -45,16 +48,31 @@
 .searchField input::placeholder { color: #aaa196; }
 
 .tableWrap { overflow-x: auto; }
-.memberTable { width: 100%; min-width: 960px; border-collapse: collapse; text-align: left; }
+.memberTable { width: 100%; min-width: 1040px; border-collapse: collapse; text-align: left; }
 .memberTable th { height: 42px; padding: 0 16px; border-bottom: 1px solid #e5ded4; background: #faf7f2; color: #948b80; font-size: 12px; font-weight: 650; white-space: nowrap; }
 .memberTable td { padding: 15px 16px; border-bottom: 1px solid #e8e1d7; color: #5b544b; font-size: 13px; vertical-align: middle; }
 .memberTable tbody tr:last-child td { border-bottom: 0; }
 .memberTable tbody tr:hover { background: #fffdfa; }
+
+.sortButton, .sortButtonActive { padding: 0; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 4px; font: inherit; cursor: pointer; }
+.sortButtonActive { color: #7e402b; }
+.sortButton svg, .sortButtonActive svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sortButton svg { opacity: .45; }
+.sortButton:hover { color: #514a42; }
+
 .memberIdentity { min-width: 205px; display: flex; align-items: center; gap: 10px; }
 .memberAvatar { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; background: #ece3d8; color: #8e4c32; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
 .memberIdentity > span:last-child { min-width: 0; display: grid; gap: 4px; }
 .memberIdentity strong { color: #39332d; font-size: 13px; font-weight: 650; }
 .memberIdentity small { max-width: 190px; overflow: hidden; color: #948b80; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+
+.memberIdField { display: inline-flex; align-items: center; gap: 6px; }
+.memberIdField code { color: #9a8e80; font-size: 11px; letter-spacing: .01em; }
+.memberIdFull { display: none; }
+.memberIdShort { display: inline; }
+.copyIdButton { padding: 2px 6px; border: 1px solid #e1dacf; border-radius: 5px; background: #fffdf9; color: #7e756a; font: inherit; font-size: 10px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.copyIdButton:hover { border-color: #c47757; color: #9c4f33; }
+
 .dateCell { color: #776f65 !important; font-size: 12px !important; white-space: nowrap; }
 .productChips { max-width: 275px; display: flex; align-items: center; gap: 5px; overflow: hidden; }
 .productChips > span { max-width: 130px; padding: 5px 7px; border-radius: 5px; background: #eee8de; color: #655c52; overflow: hidden; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -63,27 +81,26 @@
 .activeCount, .zeroCount { font-size: 17px; }
 .activeCount { color: #69765b; }
 .zeroCount { color: #aaa196; }
+
 .actionCell { text-align: right; }
+.rowActions { display: inline-flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
 .actionCell button { min-height: 34px; padding: 0 10px; border: 1px solid #d0c5b8; border-radius: 6px; background: #fffdf9; color: #675e54; font-family: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
 .actionCell button:hover:not(:disabled) { border-color: #b98c77; color: #9c4f33; }
 .actionCell button:disabled { cursor: default; opacity: .45; }
+.crossLink { min-height: 34px; padding: 0 9px; border: 1px solid #e1dacf; border-radius: 6px; background: #fffdf9; color: #7e756a; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 650; white-space: nowrap; text-decoration: none; }
+.crossLink:hover { border-color: #c47757; color: #9c4f33; }
+.crossLink svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 .emptyState { min-height: 260px; padding: 35px 20px; color: #a2978a; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .emptyState > svg { width: 31px; height: 31px; margin-bottom: 13px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
 .emptyState strong { color: #625a51; font-size: 15px; }
 .emptyState p { margin: 7px 0 0; color: #999084; font-size: 13px; }
 
-.dialogBackdrop { position: fixed; inset: 0; z-index: 80; padding: 28px; background: rgba(28,24,20,.62); display: grid; place-items: center; overflow-y: auto; }
-.dialog { width: min(900px, 100%); max-height: calc(100dvh - 56px); border: 1px solid #d8d0c4; border-radius: 13px; background: #f9f6f0; box-shadow: 0 24px 70px rgba(20,17,14,.28); overflow: hidden; display: grid; grid-template-rows: auto minmax(0,1fr); }
-.dialogHeader { padding: 21px 23px; border-bottom: 1px solid #dfd7cc; background: #f3eee6; display: flex; justify-content: space-between; gap: 20px; }
-.dialogHeader p { margin: 0 0 5px; color: #a65a3c; font-size: 10px; font-weight: 750; letter-spacing: .14em; }
-.dialogHeader h2 { margin: 0; color: #302a24; font-size: 21px; letter-spacing: -.025em; }
-.dialogHeader > div > span { display: block; margin-top: 5px; color: #8b8176; font-size: 12px; }
-.dialogClose { width: 36px; height: 36px; }
-.dialogClose:disabled { opacity: .4; }
-.dialogBody { min-height: 0; display: grid; grid-template-columns: minmax(0,1.6fr) minmax(280px, .9fr); overflow-y: auto; }
-.entitlementSection, .grantForm { padding: 22px; }
-.grantForm { border-left: 1px solid #e0d8cd; background: #f5f0e9; align-content: start; display: grid; gap: 15px; }
+.dialogMeta { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #ebe4d9; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.dialogLinks { display: inline-flex; align-items: center; gap: 6px; }
+.dialogBody { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(260px,.9fr); gap: 20px; }
+.entitlementSection { min-width: 0; }
+.grantForm { padding-left: 20px; border-left: 1px solid #e0d8cd; align-content: start; display: grid; gap: 15px; }
 .dialogSectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .dialogSectionHeading h3 { margin: 0; color: #443d35; font-size: 15px; }
 .dialogSectionHeading > span { color: #968c80; font-size: 11px; font-weight: 650; }
@@ -104,11 +121,14 @@
 .entitlementControls label > span { grid-column: 1 / -1; color: #8b8175; font-size: 10px; font-weight: 650; }
 .entitlementControls input, .grantForm select, .grantForm input[type="date"] { min-height: 36px; border: 1px solid #d8cfc3; border-radius: 6px; background: #fffdfa; color: #514a42; font: inherit; font-size: 12px; }
 .entitlementControls input { width: 142px; padding: 0 8px; }
-.entitlementControls label button { border: 0; background: transparent; color: #9b5b42; font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
+.entitlementControls > label > button { border: 0; background: transparent; color: #9b5b42; font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
+.quickExpiry { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+.quickExpiry button { padding: 3px 7px; border: 1px solid #e1dacf; border-radius: 5px; background: #fffdf9; color: #7e756a; font: inherit; font-size: 10px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.quickExpiry button:hover:not(:disabled) { border-color: #c47757; color: #9c4f33; }
 .entitlementActions { display: flex; gap: 5px; }
 .entitlementActions button { min-height: 33px; padding: 0 9px; border: 1px solid #cdc2b5; border-radius: 5px; background: #fffdfa; color: #665d53; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; white-space: nowrap; }
 .entitlementActions .revokeButton { color: #a15a42; }
-.entitlementActions button:disabled, .entitlementControls button:disabled { cursor: default; opacity: .45; }
+.entitlementActions button:disabled, .entitlementControls button:disabled, .quickExpiry button:disabled { cursor: default; opacity: .45; }
 .dialogEmpty { min-height: 110px; margin-top: 14px; border: 1px dashed #d8cfc3; border-radius: 8px; color: #9a9185; display: grid; place-items: center; font-size: 12px; }
 
 .grantForm > label { display: grid; gap: 7px; }
@@ -122,11 +142,15 @@
 .grantButton:disabled { border-color: #d4cbc0; background: #dcd5cb; color: #9e958a; cursor: default; }
 
 .visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-.filter:focus-visible, .filterActive:focus-visible, .searchField input:focus-visible, .actionCell button:focus-visible, .dialog button:focus-visible, .dialog input:focus-visible, .dialog select:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
+.filter:focus-visible, .filterActive:focus-visible, .searchField input:focus-visible, .actionCell button:focus-visible, .crossLink:focus-visible, .copyIdButton:focus-visible, .exportButton:focus-visible, .sortButton:focus-visible, .sortButtonActive:focus-visible, .entitlementCard button:focus-visible, .entitlementCard input:focus-visible, .grantForm button:focus-visible, .grantForm input:focus-visible, .grantForm select:focus-visible { outline: 2px solid #c47757; outline-offset: 2px; }
 
+@media (min-width: 1200px) {
+  .memberIdFull { display: inline; }
+  .memberIdShort { display: none; }
+}
 @media (max-width: 1000px) {
   .dialogBody { grid-template-columns: 1fr; }
-  .grantForm { border-top: 1px solid #e0d8cd; border-left: 0; }
+  .grantForm { padding-left: 0; padding-top: 18px; border-top: 1px solid #e0d8cd; border-left: 0; }
 }
 @media (max-width: 760px) {
   .page { gap: 18px; }
@@ -136,13 +160,18 @@
   .summaryItem:nth-child(3) { border-left: 0; }
   .summaryItem:nth-child(n+3) { border-top: 1px solid #e1dacf; }
   .panelHeader, .toolbar { padding-inline: 15px; }
+  .panelHeader { align-items: flex-start; flex-direction: column; gap: 12px; }
   .panelHeader p { display: none; }
+  .panelHeaderActions { width: 100%; justify-content: space-between; }
   .toolbar { align-items: stretch; flex-direction: column; }
   .memberFilters { overflow-x: auto; }
   .filter, .filterActive { flex: 0 0 auto; }
   .searchField { width: 100%; }
-  .dialogBackdrop { padding: 0; place-items: stretch; }
-  .dialog { width: 100%; max-height: 100dvh; border: 0; border-radius: 0; }
+  .tableWrap { padding: 12px 15px 0; }
+  .memberIdentity { min-width: 0; }
+  .actionCell { text-align: left; }
+  .rowActions { justify-content: flex-start; }
+  .rowActions > * { flex: 1 0 auto; justify-content: center; }
   .entitlementControls { align-items: stretch; flex-direction: column; }
   .entitlementControls input { width: 100%; }
   .entitlementActions button { flex: 1; }
@@ -153,7 +182,6 @@
   .setupNotice code { display: none; }
   .summaryItem { min-height: 76px; padding: 14px; align-items: flex-start; flex-direction: column; gap: 9px; }
   .summaryItem strong { font-size: 22px; }
-  .dialogHeader, .entitlementSection, .grantForm { padding: 18px 16px; }
   .entitlementTop { grid-template-columns: 34px minmax(0,1fr); }
   .entitlementBadge { grid-column: 2; width: fit-content; }
 }

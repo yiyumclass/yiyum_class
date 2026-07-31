@@ -124,22 +124,52 @@
   font-size: 12px;
 }
 
+.summarySection {
+  display: grid;
+  gap: 9px;
+}
+
+.summaryCaption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.summaryCaption h2 {
+  margin: 0;
+  color: #6f665c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 요약이 지금 화면의 필터 결과라는 것을 숨기면 매출을 잘못 읽는다. */
+.filterBadge {
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: #efe1d5;
+  color: #8e5335;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .summaryBar {
   border: 1px solid #ddd6ca;
   border-radius: 10px;
   background: #fbf8f3;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   overflow: hidden;
 }
 
+/* 라벨이 5칸으로 좁아지면서 값과 나란히 두면 줄이 깨진다. 세로로 쌓는다. */
 .summaryItem {
   min-height: 84px;
-  padding: 17px 20px;
+  padding: 15px 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 9px;
 }
 
 .summaryItem + .summaryItem {
@@ -219,7 +249,7 @@
 .summaryValueGroup {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 5px;
 }
 
@@ -263,11 +293,64 @@
   font-size: 13px;
 }
 
+.panelHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .resultCount {
   color: #8d8377;
   font-size: 13px;
   font-weight: 650;
   white-space: nowrap;
+}
+
+.exportButton {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #d8d0c4;
+  border-radius: 8px;
+  background: #fffdf9;
+  color: #5b5249;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.exportButton:hover:not(:disabled) {
+  background: #f3ece2;
+}
+
+.exportButton:disabled {
+  color: #a89f93;
+  cursor: not-allowed;
+}
+
+.exportButton svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 기간 기준이 서로 다른 것을 화면에서도 알 수 있어야 오해가 없다. */
+.periodHint {
+  margin: 0;
+  padding: 9px 18px;
+  border-bottom: 1px solid #e5ded4;
+  background: #f7f3ed;
+  color: #948b80;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .toolbar {
@@ -402,6 +485,53 @@
   white-space: nowrap;
 }
 
+.orderTable th:has(.sortButton),
+.orderTable th:has(.sortButtonActive) {
+  padding: 0;
+}
+
+.sortButton,
+.sortButtonActive {
+  width: 100%;
+  height: 42px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sortButtonActive {
+  color: #8e5335;
+}
+
+.sortButton:hover,
+.sortButtonActive:hover {
+  background: #f2ece2;
+}
+
+.sortButton svg,
+.sortButtonActive svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sortButton svg {
+  opacity: 0.45;
+}
+
 .orderTable td {
   min-height: 72px;
   padding: 15px 16px;
@@ -419,11 +549,70 @@
   background: #fffdfa;
 }
 
+.clickableRow {
+  cursor: pointer;
+}
+
+/* 행 클릭만으로는 키보드로 상세를 열 수 없어 신청번호 자체를 버튼으로 둔다. */
+.detailButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.detailButton .orderId {
+  text-decoration: underline;
+  text-decoration-color: #d3c9bb;
+  text-underline-offset: 3px;
+}
+
+.detailButton:hover .orderId {
+  color: #8e5335;
+  text-decoration-color: currentColor;
+}
+
 .orderId {
   color: #7c7165;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 12px;
   font-weight: 650;
+}
+
+.crossLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.crossLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #8e7f6e;
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.crossLink:hover {
+  color: #a2412a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.crossLink svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .customerIdentity {
@@ -614,74 +803,124 @@
   white-space: nowrap;
 }
 
-.refundDialogFrame {
-  width: min(680px, calc(100% - 48px));
-  max-width: none;
-  max-height: calc(100dvh - 48px);
-  padding: 0;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  overflow: visible;
+/* 상세 드로어: 표에서 잘라낸 식별자와 시각을 그대로 읽고 복사하는 자리다. */
+.detailIssue {
+  margin: 0 0 16px;
+  padding: 11px 13px;
+  border: 1px solid #e1c5b8;
+  border-radius: 9px;
+  background: #fcf0e9;
+  color: #7e4b39;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-.refundDialogFrame::backdrop {
-  background: rgba(29, 25, 21, 0.62);
+.detailIdentifiers {
+  display: grid;
+  gap: 8px;
 }
 
-.refundDialog {
-  width: 100%;
-  max-height: calc(100dvh - 48px);
-  padding: 25px;
-  border: 1px solid #d8cfc2;
-  border-radius: 14px;
-  background: #fbf8f3;
-  box-shadow: 0 24px 70px rgba(31, 26, 21, 0.3);
-  overflow-y: auto;
-}
-
-.dialogHeader {
+.copyRow {
+  padding: 10px 12px;
+  border: 1px solid #e1dacf;
+  border-radius: 9px;
+  background: #faf6ef;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
 }
 
-.dialogHeader p {
-  margin: 0 0 5px;
-  color: #a65335;
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.15em;
+.copyRow > span {
+  flex: 0 0 auto;
+  width: 66px;
+  color: #9a8e80;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.dialogHeader h2 {
-  margin: 0;
-  color: #302a25;
-  font-size: 24px;
-  letter-spacing: -0.03em;
+.copyRow code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #40382f;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.dialogHeader > button {
-  width: 34px;
-  height: 34px;
-  border: 0;
-  border-radius: 50%;
-  background: #eee7dd;
-  color: #6f655b;
+.copyButton {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid #d8d0c4;
+  border-radius: 7px;
+  background: #fffdf9;
+  color: #5b5249;
   font-family: inherit;
-  font-size: 23px;
-  line-height: 1;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.dialogHeader > button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+.copyButton:hover {
+  background: #f1ebe1;
+}
+
+.detailSection {
+  margin-top: 20px;
+}
+
+.detailSection h3 {
+  margin: 0 0 9px;
+  color: #6f665c;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.detailGrid {
+  margin: 0;
+  border: 1px solid #e1dacf;
+  border-radius: 9px;
+  background: #fffdf9;
+  overflow: hidden;
+}
+
+.detailRow {
+  padding: 10px 13px;
+  display: grid;
+  grid-template-columns: minmax(96px, 26%) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+}
+
+.detailRow + .detailRow {
+  border-top: 1px solid #efe9df;
+}
+
+.detailRow dt {
+  color: #9a8e80;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.detailRow dd {
+  margin: 0;
+  color: #40382f;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.detailFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .refundOrderSummary {
-  margin-top: 22px;
   padding: 15px;
   border: 1px solid #e0d8cd;
   border-radius: 10px;
@@ -807,7 +1046,6 @@
 }
 
 .dialogActions {
-  margin-top: 19px;
   display: flex;
   justify-content: flex-end;
   gap: 9px;
@@ -843,10 +1081,15 @@
 }
 
 .refundButton:focus-visible,
-.dialogHeader > button:focus-visible,
 .refundReasonField textarea:focus-visible,
 .cancelButton:focus-visible,
-.confirmRefundButton:focus-visible {
+.confirmRefundButton:focus-visible,
+.exportButton:focus-visible,
+.detailButton:focus-visible,
+.copyButton:focus-visible,
+.crossLink:focus-visible,
+.sortButton:focus-visible,
+.sortButtonActive:focus-visible {
   outline: 2px solid #c47757;
   outline-offset: 2px;
 }
@@ -931,7 +1174,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .summaryItem:nth-child(3) {
+  .summaryItem:nth-child(odd) {
     border-left: 0;
   }
 
@@ -939,8 +1182,15 @@
     border-top: 1px solid #e1dacf;
   }
 
+  .panelHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .panelHeader,
-  .toolbar {
+  .toolbar,
+  .periodHint {
     padding-inline: 15px;
   }
 
@@ -972,19 +1222,41 @@
     width: 100%;
   }
 
-  .refundDialogFrame {
-    width: calc(100% - 24px);
-    max-height: calc(100dvh - 24px);
-  }
-
-  .refundDialog {
-    max-height: calc(100dvh - 24px);
-    padding: 20px;
-  }
-
   .refundOrderSummary,
   .learningEvidence {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 카드 표에서는 셀이 한 줄을 통째로 쓰므로 가로 폭 고정을 모두 푼다. */
+  .customerIdentity,
+  .productCell,
+  .dateCell,
+  .learningCell,
+  .refundedLabel {
+    min-width: 0;
+    width: auto;
+  }
+
+  .orderTable td {
+    min-height: 0;
+  }
+
+  .detailFooter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detailFooter .refundButton {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .dialogActions {
+    flex-direction: column-reverse;
+  }
+
+  .dialogActions button {
+    width: 100%;
   }
 }
 

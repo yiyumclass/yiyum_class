@@ -1,6 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { refundPaymentOrderAction } from "@/app/admin/orders/actions";
 import {
   describeFulfillmentIssue,
@@ -11,6 +21,24 @@ import type {
   AdminOrderSource,
   AdminOrderStatus,
 } from "@/lib/admin/orders";
+import { exportRowsToCsv } from "@/lib/admin/csv";
+import { useTableParams } from "@/lib/admin/use-table-params";
+import AdminDialog from "./AdminDialog";
+import { useAdminFeedback } from "./AdminFeedback";
+import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "./AdminPagination";
+import {
+  ChevronIcon,
+  DatabaseIcon,
+  DownloadIcon,
+  ExternalIcon,
+  MemberIcon,
+  ChartIcon,
+  LayersIcon,
+  ReceiptIcon,
+  SearchIcon,
+  SortIcon,
+} from "./icons";
+import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminOrderManager.module.css";
 
 type AdminOrderManagerProps = {
@@ -24,6 +52,14 @@ type AdminOrderManagerProps = {
 type SourceFilter = "all" | AdminOrderSource;
 type StatusFilter = "all" | AdminOrderStatus;
 type PeriodFilter = "all" | "today" | "7days" | "30days";
+type SortKey =
+  | "created_desc"
+  | "created_asc"
+  | "amount_desc"
+  | "amount_asc"
+  | "progress_desc"
+  | "progress_asc";
+type SortColumn = "created" | "amount" | "progress";
 
 function fulfillmentIssueOf(order: AdminOrder) {
   return detectFulfillmentIssue({
@@ -55,6 +91,30 @@ const periodOptions: Array<{ value: PeriodFilter; label: string }> = [
   { value: "30days", label: "최근 30일" },
 ];
 
+// useTableParams는 이 객체를 메모 의존성으로 쓰므로 렌더마다 새로 만들면 안 된다.
+const orderTableDefaults = {
+  q: "",
+  source: "all",
+  status: "all",
+  period: "all",
+  attention: "0",
+  sort: "created_desc",
+  page: 1,
+  size: DEFAULT_ADMIN_PAGE_SIZE,
+};
+
+// 금액이 없는 주문(연동 대기)은 0원과 구분해야 하므로 정렬에서 양 끝으로 몬다.
+const UNKNOWN_AMOUNT = -1;
+
+const sortComparators: Record<SortKey, (a: AdminOrder, b: AdminOrder) => number> = {
+  created_desc: (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  created_asc: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
+  amount_desc: (a, b) => (b.amountKrw ?? UNKNOWN_AMOUNT) - (a.amountKrw ?? UNKNOWN_AMOUNT),
+  amount_asc: (a, b) => (a.amountKrw ?? UNKNOWN_AMOUNT) - (b.amountKrw ?? UNKNOWN_AMOUNT),
+  progress_desc: (a, b) => b.learning.progressPercent - a.learning.progressPercent,
+  progress_asc: (a, b) => a.learning.progressPercent - b.learning.progressPercent,
+};
+
 export default function AdminOrderManager({
   orders,
   databaseReady,
@@ -62,24 +122,52 @@ export default function AdminOrderManager({
   paymentMode,
   canRefund,
 }: AdminOrderManagerProps) {
-  const [query, setQuery] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
-  const [onlyNeedsAttention, setOnlyNeedsAttention] = useState(false);
+  const { toast } = useAdminFeedback();
+  const { values, setValues, numberOf } = useTableParams(orderTableDefaults);
   const [refundOrder, setRefundOrder] = useState<AdminOrder | null>(null);
+  const [detailOrder, setDetailOrder] = useState<AdminOrder | null>(null);
+
+  const sourceFilter = values.source as SourceFilter;
+  const statusFilter = values.status as StatusFilter;
+  const periodFilter = values.period as PeriodFilter;
+  const onlyNeedsAttention = values.attention === "1";
+  const sort = (sortComparators[values.sort as SortKey] ? values.sort : "created_desc") as SortKey;
+  const page = numberOf("page");
+  const pageSize = numberOf("size");
+
+  const searchQuery = values.q;
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  const committedQuery = useRef(searchQuery);
+
+  // 뒤로가기나 링크 공유로 URL의 q가 바뀌면 입력칸도 따라가야 한다.
+  useEffect(() => {
+    if (searchQuery === committedQuery.current) return;
+    committedQuery.current = searchQuery;
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  // 타이핑마다 router.replace를 돌리면 표 전체가 다시 그려진다.
+  useEffect(() => {
+    if (searchInput === committedQuery.current) return;
+    const timer = window.setTimeout(() => {
+      committedQuery.current = searchInput;
+      setValues({ q: searchInput });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, setValues]);
 
   const filteredOrders = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase("ko-KR");
     const periodStart = getPeriodStart(periodFilter);
 
-    return orders.filter((order) => {
+    const matched = orders.filter((order) => {
       if (onlyNeedsAttention && !fulfillmentIssueOf(order)) return false;
       const matchesQuery =
         !normalizedQuery ||
         order.customerName.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
         order.customerEmail.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
         order.productTitle.toLocaleLowerCase("ko-KR").includes(normalizedQuery) ||
+        order.orderUid.toLowerCase().includes(normalizedQuery) ||
         order.id.toLowerCase().includes(normalizedQuery);
       const matchesSource = sourceFilter === "all" || order.source === sourceFilter;
       const matchesStatus = statusFilter === "all" || order.status === statusFilter;
@@ -87,28 +175,94 @@ export default function AdminOrderManager({
 
       return matchesQuery && matchesSource && matchesStatus && matchesPeriod;
     });
-  }, [onlyNeedsAttention, orders, periodFilter, query, sourceFilter, statusFilter]);
 
+    return matched.sort(sortComparators[sort]);
+  }, [
+    onlyNeedsAttention,
+    orders,
+    periodFilter,
+    searchQuery,
+    sort,
+    sourceFilter,
+    statusFilter,
+  ]);
+
+  // URL로 직접 들어온 범위 밖 페이지 번호가 빈 표를 만들지 않게 잘라 맞춘다.
+  const currentPage = Math.min(
+    Math.max(1, page),
+    Math.max(1, Math.ceil(filteredOrders.length / pageSize))
+  );
+
+  const pagedOrders = useMemo(
+    () => filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [currentPage, filteredOrders, pageSize]
+  );
+
+  // 이 지표만 전체 기준이다. 필터에 가려 놓친 미이행 주문이 생기면 안 되기 때문이다.
   const needsAttentionCount = useMemo(
     () => orders.filter((order) => fulfillmentIssueOf(order)).length,
     [orders]
   );
 
+  const filterApplied =
+    searchQuery.trim().length > 0 ||
+    sourceFilter !== "all" ||
+    statusFilter !== "all" ||
+    periodFilter !== "all" ||
+    onlyNeedsAttention;
+
+  // 요약이 항상 전체 누적이면 기간을 좁혀 놓고도 전체 매출을 읽게 된다.
   const summary = useMemo(() => {
     const todayStart = getPeriodStart("today");
     return {
-      total: orders.length,
-      today: orders.filter(
+      total: filteredOrders.length,
+      today: filteredOrders.filter(
         (order) => todayStart && new Date(order.createdAt) >= todayStart
       ).length,
-      active: orders.filter((order) => order.status === "active").length,
-      revenue: orders.reduce(
+      active: filteredOrders.filter((order) => order.status === "active").length,
+      revenue: filteredOrders.reduce(
         (total, order) =>
           total + (order.paymentStatus === "paid" ? order.amountKrw ?? 0 : 0),
         0
       ),
     };
-  }, [orders]);
+  }, [filteredOrders]);
+
+  const toggleSort = useCallback(
+    (column: SortColumn) => {
+      const [descKey, ascKey] = (
+        {
+          created: ["created_desc", "created_asc"],
+          amount: ["amount_desc", "amount_asc"],
+          progress: ["progress_desc", "progress_asc"],
+        } as const
+      )[column];
+      setValues({ sort: sort === descKey ? ascKey : descKey });
+    },
+    [setValues, sort]
+  );
+
+  const exportCsv = useCallback(() => {
+    exportRowsToCsv({
+      fileName: "이윰-주문내역",
+      columns: orderCsvColumns,
+      rows: filteredOrders,
+    });
+    toast(`${formatCount(filteredOrders.length)}건을 내보냈습니다.`, "success");
+  }, [filteredOrders, toast]);
+
+  const copyValue = useCallback(
+    async (label: string, value: string) => {
+      try {
+        await navigator.clipboard.writeText(value);
+        toast(`${label}를 복사했습니다.`, "success");
+      } catch (error) {
+        console.error("Failed to copy order field:", error);
+        toast("복사하지 못했습니다. 값을 직접 선택해 주세요.", "error");
+      }
+    },
+    [toast]
+  );
 
   return (
     <div className={styles.page}>
@@ -155,27 +309,33 @@ export default function AdminOrderManager({
         </div>
       </div>
 
-      <section className={styles.summaryBar} aria-label="주문 상태 요약">
-        <SummaryItem label="전체 신청" value={formatCount(summary.total)} unit="건" />
-        <SummaryItem label="오늘 신청" value={formatCount(summary.today)} unit="건" />
-        <SummaryItem
-          label="이용 가능"
-          value={formatCount(summary.active)}
-          unit="건"
-          tone="active"
-        />
-        <SummaryItem
-          label="확인된 결제액"
-          value={formatPrice(summary.revenue)}
-          note={paymentMode === "toss_test" ? "테스트 승인액" : undefined}
-        />
-        <SummaryItem
-          label="이행 확인 필요"
-          value={formatCount(needsAttentionCount)}
-          unit="건"
-          tone={needsAttentionCount > 0 ? "attention" : undefined}
-          note={needsAttentionCount > 0 ? "결제 후 이용권 미발급" : undefined}
-        />
+      <section className={styles.summarySection} aria-label="주문 상태 요약">
+        <div className={styles.summaryCaption}>
+          <h2>요약</h2>
+          {filterApplied && <span className={styles.filterBadge}>필터 적용됨</span>}
+        </div>
+        <div className={styles.summaryBar}>
+          <SummaryItem label="신청 건수" value={formatCount(summary.total)} unit="건" />
+          <SummaryItem label="오늘 신청" value={formatCount(summary.today)} unit="건" />
+          <SummaryItem
+            label="이용 가능"
+            value={formatCount(summary.active)}
+            unit="건"
+            tone="active"
+          />
+          <SummaryItem
+            label="확인된 결제액"
+            value={formatPrice(summary.revenue)}
+            note={paymentMode === "toss_test" ? "테스트 승인액" : undefined}
+          />
+          <SummaryItem
+            label="이행 확인 필요 (전체 기준)"
+            value={formatCount(needsAttentionCount)}
+            unit="건"
+            tone={needsAttentionCount > 0 ? "attention" : undefined}
+            note={needsAttentionCount > 0 ? "결제 후 이용권 미발급" : undefined}
+          />
+        </div>
       </section>
 
       <section className={styles.orderPanel} aria-labelledby="order-list-title">
@@ -184,7 +344,18 @@ export default function AdminOrderManager({
             <h2 id="order-list-title">신청 · 주문 내역</h2>
             <p>결제 상태와 이용권 상태를 분리하고 환불 전 수강 기록을 확인합니다.</p>
           </div>
-          <span className={styles.resultCount}>총 {formatCount(filteredOrders.length)}건</span>
+          <div className={styles.panelHeaderActions}>
+            <span className={styles.resultCount}>총 {formatCount(filteredOrders.length)}건</span>
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={exportCsv}
+              disabled={filteredOrders.length === 0}
+            >
+              <DownloadIcon />
+              CSV 내보내기
+            </button>
+          </div>
         </div>
 
         <div className={styles.toolbar}>
@@ -194,7 +365,7 @@ export default function AdminOrderManager({
                 type="button"
                 key={filter.value}
                 className={sourceFilter === filter.value ? styles.filterActive : styles.filter}
-                onClick={() => setSourceFilter(filter.value)}
+                onClick={() => setValues({ source: filter.value })}
                 aria-pressed={sourceFilter === filter.value}
               >
                 {filter.label}
@@ -208,8 +379,8 @@ export default function AdminOrderManager({
               <span className={styles.visuallyHidden}>주문 검색</span>
               <input
                 type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="회원, 상품 또는 주문번호"
               />
             </label>
@@ -217,15 +388,16 @@ export default function AdminOrderManager({
               label="조회 기간"
               value={periodFilter}
               options={periodOptions}
-              onChange={(value) => setPeriodFilter(value as PeriodFilter)}
+              onChange={(value) => setValues({ period: value })}
             />
-            {needsAttentionCount > 0 && (
+            {/* 0건이어도 필터가 걸려 있으면 해제 수단이 남아 있어야 한다. */}
+            {(needsAttentionCount > 0 || onlyNeedsAttention) && (
               <button
                 type="button"
                 className={
                   onlyNeedsAttention ? styles.attentionFilterActive : styles.attentionFilter
                 }
-                onClick={() => setOnlyNeedsAttention((current) => !current)}
+                onClick={() => setValues({ attention: onlyNeedsAttention ? "0" : "1" })}
                 aria-pressed={onlyNeedsAttention}
               >
                 이행 확인 필요 {formatCount(needsAttentionCount)}건
@@ -235,40 +407,71 @@ export default function AdminOrderManager({
               label="이용권 상태"
               value={statusFilter}
               options={statusOptions}
-              onChange={(value) => setStatusFilter(value as StatusFilter)}
+              onChange={(value) => setValues({ status: value })}
             />
           </div>
         </div>
 
+        <p className={styles.periodHint}>
+          ‘오늘’은 한국 시간 자정부터이고, ‘최근 7일 · 30일’은 지금 이 시각부터 거슬러 세는
+          기간입니다.
+        </p>
+
         {filteredOrders.length > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.orderTable}>
-              <thead>
-                <tr>
-                  <th>신청 번호</th>
-                  <th>회원</th>
-                  <th>상품</th>
-                  <th>경로</th>
-                  <th>결제 금액</th>
-                  <th>결제 상태</th>
-                  <th>이용권</th>
-                  <th>학습 기록</th>
-                  <th>신청일</th>
-                  <th>처리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((order) => (
-                  <OrderRow
-                    key={order.id}
-                    order={order}
-                    canRefund={canRefund}
-                    onRefund={() => setRefundOrder(order)}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className={styles.tableWrap}>
+              <table className={`${styles.orderTable} ${tableStyles.cardTable}`}>
+                <thead>
+                  <tr>
+                    <th scope="col">신청 번호</th>
+                    <th scope="col">회원</th>
+                    <th scope="col">상품</th>
+                    <th scope="col">경로</th>
+                    <SortableHeader
+                      label="결제 금액"
+                      column="amount"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <th scope="col">결제 상태</th>
+                    <th scope="col">이용권</th>
+                    <SortableHeader
+                      label="학습 기록"
+                      column="progress"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <SortableHeader
+                      label="신청일"
+                      column="created"
+                      sort={sort}
+                      onSort={toggleSort}
+                    />
+                    <th scope="col">처리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedOrders.map((order) => (
+                    <OrderRow
+                      key={order.id}
+                      order={order}
+                      canRefund={canRefund}
+                      onRefund={() => setRefundOrder(order)}
+                      onOpenDetail={() => setDetailOrder(order)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <AdminPagination
+              page={currentPage}
+              pageSize={pageSize}
+              totalCount={filteredOrders.length}
+              onPageChange={(next) => setValues({ page: next })}
+              onPageSizeChange={(next) => setValues({ size: next, page: 1 })}
+            />
+          </>
         ) : (
           <div className={styles.emptyState}>
             <ReceiptIcon />
@@ -290,12 +493,73 @@ export default function AdminOrderManager({
         )}
       </section>
 
+      {detailOrder && (
+        <OrderDetailDialog
+          order={detailOrder}
+          canRefund={canRefund}
+          onCopy={copyValue}
+          onClose={() => setDetailOrder(null)}
+          onRefund={() => {
+            // 모달이 겹치면 포커스 트랩이 두 겹이 되므로 상세를 먼저 닫는다.
+            setDetailOrder(null);
+            setRefundOrder(detailOrder);
+          }}
+        />
+      )}
+
       {refundOrder && (
         <RefundDialog order={refundOrder} onClose={() => setRefundOrder(null)} />
       )}
     </div>
   );
 }
+
+const orderCsvColumns = [
+  { header: "신청번호", value: (order: AdminOrder) => order.id },
+  { header: "주문번호", value: (order: AdminOrder) => order.orderUid },
+  { header: "회원명", value: (order: AdminOrder) => order.customerName },
+  { header: "이메일", value: (order: AdminOrder) => order.customerEmail },
+  { header: "상품명", value: (order: AdminOrder) => order.productTitle },
+  {
+    header: "상품유형",
+    value: (order: AdminOrder) => (order.productType === "course" ? "VOD 강의" : "전자책"),
+  },
+  { header: "경로", value: (order: AdminOrder) => formatSource(order.source) },
+  { header: "결제금액", value: (order: AdminOrder) => order.amountKrw ?? "" },
+  {
+    header: "결제상태",
+    value: (order: AdminOrder) => formatPaymentStatus(order.paymentStatus),
+  },
+  {
+    header: "이용권상태",
+    value: (order: AdminOrder) => (order.status === "active" ? "이용 가능" : "회수됨"),
+  },
+  {
+    header: "진도율",
+    value: (order: AdminOrder) =>
+      order.productType === "course" ? order.learning.progressPercent : "",
+  },
+  {
+    header: "완료차시",
+    value: (order: AdminOrder) =>
+      order.productType === "course"
+        ? `${order.learning.completedLessons}/${order.learning.totalLessons}`
+        : "",
+  },
+  { header: "신청일", value: (order: AdminOrder) => formatDateTime(order.createdAt) },
+  {
+    header: "승인일",
+    value: (order: AdminOrder) => (order.approvedAt ? formatDateTime(order.approvedAt) : ""),
+  },
+  {
+    header: "환불일",
+    value: (order: AdminOrder) => (order.refundedAt ? formatDateTime(order.refundedAt) : ""),
+  },
+  {
+    header: "만료일",
+    value: (order: AdminOrder) => (order.expiresAt ? formatDateTime(order.expiresAt) : ""),
+  },
+];
 
 function SummaryItem({
   label,
@@ -357,24 +621,66 @@ function FilterSelect({
   );
 }
 
+function SortableHeader({
+  label,
+  column,
+  sort,
+  onSort,
+}: {
+  label: string;
+  column: SortColumn;
+  sort: SortKey;
+  onSort: (column: SortColumn) => void;
+}) {
+  const active = sort.startsWith(`${column}_`);
+  const ascending = sort === `${column}_asc`;
+
+  return (
+    <th scope="col" aria-sort={active ? (ascending ? "ascending" : "descending") : "none"}>
+      <button
+        type="button"
+        className={active ? styles.sortButtonActive : styles.sortButton}
+        onClick={() => onSort(column)}
+      >
+        {label}
+        <SortIcon />
+        <span className={styles.visuallyHidden}>
+          {active ? (ascending ? "오름차순 정렬됨" : "내림차순 정렬됨") : "정렬하기"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 function OrderRow({
   order,
   canRefund,
   onRefund,
+  onOpenDetail,
 }: {
   order: AdminOrder;
   canRefund: boolean;
   onRefund: () => void;
+  onOpenDetail: () => void;
 }) {
   const refundAction = getRefundActionState(order, canRefund);
   const fulfillmentIssue = fulfillmentIssueOf(order);
 
+  // 행 전체를 눌러도 열리게 하되, 행 안의 버튼·링크는 각자 동작을 유지해야 한다.
+  const stopRowClick = (event: MouseEvent) => event.stopPropagation();
+
   return (
-    <tr className={fulfillmentIssue ? styles.attentionRow : undefined}>
-      <td data-label="신청 번호">
-        <span className={styles.orderId} title={order.id}>
-          {formatOrderId(order.id)}
-        </span>
+    <tr
+      className={`${styles.clickableRow} ${fulfillmentIssue ? styles.attentionRow : ""}`}
+      onClick={onOpenDetail}
+    >
+      <td>
+        <button type="button" className={styles.detailButton} onClick={onOpenDetail}>
+          <span className={styles.orderId}>{formatOrderId(order.id)}</span>
+          <span className={styles.visuallyHidden}>
+            {order.customerName} · {order.productTitle} 상세 보기
+          </span>
+        </button>
         {fulfillmentIssue && (
           <span
             className={styles.attentionBadge}
@@ -392,6 +698,26 @@ function OrderRow({
           <span>
             <strong>{order.customerName}</strong>
             <small>{order.customerEmail}</small>
+            <span className={styles.crossLinks}>
+              <Link
+                href={`/admin/members?q=${encodeURIComponent(order.customerEmail)}`}
+                className={styles.crossLink}
+                onClick={stopRowClick}
+              >
+                <MemberIcon />
+                회원 정보
+              </Link>
+              {order.productType === "course" && (
+                <Link
+                  href={`/admin/progress?q=${encodeURIComponent(order.customerEmail)}`}
+                  className={styles.crossLink}
+                  onClick={stopRowClick}
+                >
+                  <ChartIcon />
+                  학습 현황
+                </Link>
+              )}
+            </span>
           </span>
         </span>
       </td>
@@ -399,6 +725,16 @@ function OrderRow({
         <span className={styles.productCell}>
           <strong>{order.productTitle}</strong>
           <small>{order.productType === "course" ? "VOD 강의" : "전자책"}</small>
+          <span className={styles.crossLinks}>
+            <Link
+              href={`/admin/products?q=${encodeURIComponent(order.productSlug)}`}
+              className={styles.crossLink}
+              onClick={stopRowClick}
+            >
+              <LayersIcon />
+              상품 정보
+            </Link>
+          </span>
         </span>
       </td>
       <td data-label="경로">
@@ -441,14 +777,17 @@ function OrderRow({
         <time dateTime={order.createdAt}>{formatDateTime(order.createdAt)}</time>
         <small>{formatExpiration(order.expiresAt)}</small>
       </td>
-      <td data-label="처리">
-        {refundAction === "available" ? (
-          <button type="button" className={styles.refundButton} onClick={onRefund}>
-            전액 환불
-          </button>
-        ) : refundAction === "retry" ? (
-          <button type="button" className={styles.refundButton} onClick={onRefund}>
-            환불 재시도
+      <td>
+        {refundAction === "available" || refundAction === "retry" ? (
+          <button
+            type="button"
+            className={styles.refundButton}
+            onClick={(event) => {
+              stopRowClick(event);
+              onRefund();
+            }}
+          >
+            {refundAction === "retry" ? "환불 재시도" : "전액 환불"}
           </button>
         ) : refundAction === "complete" ? (
           <span className={styles.refundedLabel}>
@@ -487,120 +826,251 @@ function getRefundActionState(
   return order.refundStatus === "failed" ? "retry" : "available";
 }
 
+/**
+ * 주문 하나의 전체 기록.
+ *
+ * 표에는 자리가 없어 잘라낸 값(승인 시각, 환불 기록, 시청 시각, 전체 식별자)을
+ * CS 대응에서 그대로 읽고 복사할 수 있게 모아 둔다.
+ */
+function OrderDetailDialog({
+  order,
+  canRefund,
+  onCopy,
+  onClose,
+  onRefund,
+}: {
+  order: AdminOrder;
+  canRefund: boolean;
+  onCopy: (label: string, value: string) => void;
+  onClose: () => void;
+  onRefund: () => void;
+}) {
+  const refundAction = getRefundActionState(order, canRefund);
+  const fulfillmentIssue = fulfillmentIssueOf(order);
+
+  return (
+    <AdminDialog
+      eyebrow="ORDER DETAIL"
+      title={`${order.customerName} · ${order.productTitle}`}
+      description={`${formatSource(order.source)} · ${formatDateTime(order.createdAt)} 신청`}
+      size="large"
+      onClose={onClose}
+      footer={
+        <div className={styles.detailFooter}>
+          <div className={styles.crossLinks}>
+            <Link
+              href={`/admin/members?q=${encodeURIComponent(order.customerEmail)}`}
+              className={styles.crossLink}
+            >
+              <MemberIcon />
+              회원 정보
+            </Link>
+            {order.productType === "course" && (
+              <Link
+                href={`/admin/progress?q=${encodeURIComponent(order.customerEmail)}`}
+                className={styles.crossLink}
+              >
+                <ChartIcon />
+                학습 현황
+              </Link>
+            )}
+            <Link
+              href={`/admin/products?q=${encodeURIComponent(order.productSlug)}`}
+              className={styles.crossLink}
+            >
+              <LayersIcon />
+              상품 정보
+              <ExternalIcon />
+            </Link>
+          </div>
+          {(refundAction === "available" || refundAction === "retry") && (
+            <button type="button" className={styles.refundButton} onClick={onRefund}>
+              {refundAction === "retry" ? "환불 재시도" : "전액 환불"}
+            </button>
+          )}
+        </div>
+      }
+    >
+      {fulfillmentIssue && (
+        <p className={styles.detailIssue} role="note">
+          {describeFulfillmentIssue(fulfillmentIssue)}
+        </p>
+      )}
+
+      <div className={styles.detailIdentifiers}>
+        <CopyRow
+          label="신청번호"
+          value={order.id}
+          onCopy={() => onCopy("신청번호", order.id)}
+        />
+        <CopyRow
+          label="주문번호"
+          value={order.orderUid}
+          onCopy={() => onCopy("주문번호", order.orderUid)}
+        />
+      </div>
+
+      <DetailSection title="회원 · 상품">
+        <DetailRow label="회원" value={order.customerName} />
+        <DetailRow label="이메일" value={order.customerEmail} />
+        <DetailRow label="상품" value={order.productTitle} />
+        <DetailRow
+          label="상품 유형"
+          value={order.productType === "course" ? "VOD 강의" : "전자책"}
+        />
+      </DetailSection>
+
+      <DetailSection title="결제">
+        <DetailRow label="경로" value={formatSource(order.source)} />
+        <DetailRow
+          label="결제 상태"
+          value={formatPaymentStatus(order.paymentStatus)}
+        />
+        <DetailRow
+          label="결제 금액"
+          value={order.amountKrw === null ? "연동 대기" : formatPrice(order.amountKrw)}
+        />
+        <DetailRow
+          label="결제 키"
+          value={order.paymentKeyPresent ? "보관됨" : "없음"}
+        />
+        <DetailRow label="신청 시각" value={formatDateTime(order.createdAt)} />
+        <DetailRow
+          label="승인 시각"
+          value={order.approvedAt ? formatDateTime(order.approvedAt) : "승인 기록 없음"}
+        />
+      </DetailSection>
+
+      <DetailSection title="이용권 · 환불">
+        <DetailRow
+          label="이용권 상태"
+          value={order.status === "active" ? "이용 가능" : "회수됨"}
+        />
+        <DetailRow label="이용 기간" value={formatExpiration(order.expiresAt)} />
+        <DetailRow
+          label="환불 상태"
+          value={order.refundStatus ? formatRefundStatus(order.refundStatus) : "환불 기록 없음"}
+        />
+        <DetailRow
+          label="환불 금액"
+          value={
+            order.refundAmountKrw === null ? "해당 없음" : formatPrice(order.refundAmountKrw)
+          }
+        />
+        <DetailRow
+          label="환불 시각"
+          value={order.refundedAt ? formatDateTime(order.refundedAt) : "해당 없음"}
+        />
+      </DetailSection>
+
+      {order.productType === "course" && (
+        <DetailSection title="학습 기록">
+          <DetailRow label="전체 진도" value={formatProgress(order.learning.progressPercent)} />
+          <DetailRow
+            label="시작한 강의"
+            value={`${order.learning.startedLessons}/${order.learning.totalLessons}`}
+          />
+          <DetailRow label="완료한 강의" value={`${order.learning.completedLessons}`} />
+          <DetailRow
+            label="최대 재생 위치 합계"
+            value={formatDuration(order.learning.watchedSeconds)}
+          />
+          <DetailRow
+            label="첫 시청"
+            value={
+              order.learning.firstWatchedAt
+                ? formatDateTime(order.learning.firstWatchedAt)
+                : "시청 기록 없음"
+            }
+          />
+          <DetailRow
+            label="마지막 시청"
+            value={
+              order.learning.lastWatchedAt
+                ? formatDateTime(order.learning.lastWatchedAt)
+                : "시청 기록 없음"
+            }
+          />
+        </DetailSection>
+      )}
+    </AdminDialog>
+  );
+}
+
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className={styles.detailSection}>
+      <h3>{title}</h3>
+      <dl className={styles.detailGrid}>{children}</dl>
+    </section>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.detailRow}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function CopyRow({
+  label,
+  value,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  onCopy: () => void;
+}) {
+  return (
+    <div className={styles.copyRow}>
+      <span>{label}</span>
+      <code>{value}</code>
+      <button
+        type="button"
+        className={styles.copyButton}
+        onClick={onCopy}
+        aria-label={`${label} 복사`}
+      >
+        복사
+      </button>
+    </div>
+  );
+}
+
 function RefundDialog({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { toast } = useAdminFeedback();
   const [reason, setReason] = useState("");
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    dialog.showModal();
-    return () => dialog.close();
-  }, []);
 
   const submitRefund = () => {
     setResult(null);
     startTransition(async () => {
       const nextResult = await refundPaymentOrderAction(order.id, reason);
       setResult(nextResult);
+      // 다이얼로그를 닫은 뒤에도 결과가 남아 있어야 재시도 여부를 판단할 수 있다.
+      if (nextResult.ok) toast(nextResult.message, "success");
     });
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles.refundDialogFrame}
-      aria-labelledby="refund-dialog-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!isPending) onClose();
-      }}
-    >
-      <section className={styles.refundDialog}>
-        <div className={styles.dialogHeader}>
-          <div>
-            <p>FULL REFUND</p>
-            <h2 id="refund-dialog-title">전액 환불 확인</h2>
-          </div>
+    <AdminDialog
+      eyebrow="FULL REFUND"
+      title="전액 환불 확인"
+      busy={isPending}
+      size="medium"
+      onClose={onClose}
+      footer={
+        <div className={styles.dialogActions}>
           <button
             type="button"
+            className={styles.cancelButton}
             onClick={onClose}
-            aria-label="환불 창 닫기"
             disabled={isPending}
           >
-            ×
-          </button>
-        </div>
-
-        <div className={styles.refundOrderSummary}>
-          <div>
-            <span>회원</span>
-            <strong>{order.customerName}</strong>
-            <small>{order.customerEmail}</small>
-          </div>
-          <div>
-            <span>상품</span>
-            <strong>{order.productTitle}</strong>
-            <small>{order.orderUid}</small>
-          </div>
-          <div>
-            <span>환불 예정액</span>
-            <strong>{formatPrice(order.amountKrw ?? 0)}</strong>
-            <small>주문 당시 결제금액 전액</small>
-          </div>
-        </div>
-
-        {order.productType === "course" && (
-          <div className={styles.learningEvidence}>
-            <div>
-              <span>전체 진도</span>
-              <strong>{formatProgress(order.learning.progressPercent)}</strong>
-            </div>
-            <div>
-              <span>시작한 강의</span>
-              <strong>
-                {order.learning.startedLessons}/{order.learning.totalLessons}
-              </strong>
-            </div>
-            <div>
-              <span>완료한 강의</span>
-              <strong>{order.learning.completedLessons}</strong>
-            </div>
-            <div>
-              <span>최대 재생 위치 합계</span>
-              <strong>{formatDuration(order.learning.watchedSeconds)}</strong>
-            </div>
-          </div>
-        )}
-
-        <div className={styles.refundWarning} role="note">
-          Toss에서 결제 전액을 취소한 뒤 주문이 환불 완료로 변경되고, 결제로 발급된 이용권이
-          즉시 회수됩니다. 이 작업은 되돌릴 수 없습니다.
-        </div>
-
-        <label className={styles.refundReasonField}>
-          <span>환불 사유</span>
-          <textarea
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            maxLength={200}
-            rows={3}
-            placeholder="고객 요청 내용과 환불 판단 근거를 입력해 주세요."
-            disabled={isPending || result?.ok}
-          />
-          <small>{reason.trim().length}/200</small>
-        </label>
-
-        {result && (
-          <p className={result.ok ? styles.refundSuccess : styles.refundError} role="status">
-            {result.message}
-          </p>
-        )}
-
-        <div className={styles.dialogActions}>
-          <button type="button" className={styles.cancelButton} onClick={onClose} disabled={isPending}>
             {result?.ok ? "닫기" : "취소"}
           </button>
           {!result?.ok && (
@@ -614,8 +1084,73 @@ function RefundDialog({ order, onClose }: { order: AdminOrder; onClose: () => vo
             </button>
           )}
         </div>
-      </section>
-    </dialog>
+      }
+    >
+      <div className={styles.refundOrderSummary}>
+        <div>
+          <span>회원</span>
+          <strong>{order.customerName}</strong>
+          <small>{order.customerEmail}</small>
+        </div>
+        <div>
+          <span>상품</span>
+          <strong>{order.productTitle}</strong>
+          <small>{order.orderUid}</small>
+        </div>
+        <div>
+          <span>환불 예정액</span>
+          <strong>{formatPrice(order.amountKrw ?? 0)}</strong>
+          <small>주문 당시 결제금액 전액</small>
+        </div>
+      </div>
+
+      {order.productType === "course" && (
+        <div className={styles.learningEvidence}>
+          <div>
+            <span>전체 진도</span>
+            <strong>{formatProgress(order.learning.progressPercent)}</strong>
+          </div>
+          <div>
+            <span>시작한 강의</span>
+            <strong>
+              {order.learning.startedLessons}/{order.learning.totalLessons}
+            </strong>
+          </div>
+          <div>
+            <span>완료한 강의</span>
+            <strong>{order.learning.completedLessons}</strong>
+          </div>
+          <div>
+            <span>최대 재생 위치 합계</span>
+            <strong>{formatDuration(order.learning.watchedSeconds)}</strong>
+          </div>
+        </div>
+      )}
+
+      <div className={styles.refundWarning} role="note">
+        Toss에서 결제 전액을 취소한 뒤 주문이 환불 완료로 변경되고, 결제로 발급된 이용권이
+        즉시 회수됩니다. 이 작업은 되돌릴 수 없습니다.
+      </div>
+
+      <label className={styles.refundReasonField}>
+        <span>환불 사유</span>
+        <textarea
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={200}
+          rows={3}
+          placeholder="고객 요청 내용과 환불 판단 근거를 입력해 주세요."
+          disabled={isPending || result?.ok}
+        />
+        <small>{reason.trim().length}/200</small>
+      </label>
+
+      {result && (
+        <p className={result.ok ? styles.refundSuccess : styles.refundError} role="status">
+          {result.message}
+        </p>
+      )}
+    </AdminDialog>
   );
 }
 
@@ -693,6 +1228,15 @@ function formatPaymentStatus(status: AdminOrder["paymentStatus"]) {
   }[status];
 }
 
+function formatRefundStatus(status: NonNullable<AdminOrder["refundStatus"]>) {
+  return {
+    requested: "환불 요청됨",
+    processing: "환불 처리 중",
+    succeeded: "환불 완료",
+    failed: "환불 실패",
+  }[status];
+}
+
 function formatProgress(value: number) {
   return `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value)}%`;
 }
@@ -711,39 +1255,4 @@ function formatDate(value: string) {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(value));
-}
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <circle cx="8.5" cy="8.5" r="5" />
-      <path d="m12.2 12.2 4 4" />
-    </svg>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="m6 8 4 4 4-4" />
-    </svg>
-  );
-}
-
-function ReceiptIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
-      <path d="M9 8h6M9 12h6M9 16h3" />
-    </svg>
-  );
-}
-
-function DatabaseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <ellipse cx="12" cy="5" rx="8" ry="3" />
-      <path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" />
-    </svg>
-  );
 }

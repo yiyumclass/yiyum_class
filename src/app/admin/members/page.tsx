@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AdminMemberManager from "@/components/admin/AdminMemberManager";
 import { requireAdmin } from "@/lib/admin/auth";
 import { loadAdminMembers } from "@/lib/admin/members";
@@ -27,13 +28,16 @@ export default async function AdminMembersPage() {
     }));
 
   return (
-    <AdminMemberManager
-      members={memberResult.members}
-      products={products}
-      databaseReady={memberResult.databaseReady && productResult.databaseReady}
-      sourceMessage={memberResult.message ?? productResult.message}
-      referenceTime={new Date().toISOString()}
-      canManageEntitlements={admin.role === "owner"}
-    />
+    // 검색·필터·정렬·페이지 상태를 URL 쿼리에서 읽으므로 Suspense 경계가 필요하다.
+    <Suspense fallback={null}>
+      <AdminMemberManager
+        members={memberResult.members}
+        products={products}
+        databaseReady={memberResult.databaseReady && productResult.databaseReady}
+        sourceMessage={memberResult.message ?? productResult.message}
+        referenceTime={new Date().toISOString()}
+        canManageEntitlements={admin.role === "owner"}
+      />
+    </Suspense>
   );
 }
