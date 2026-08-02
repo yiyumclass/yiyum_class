@@ -83,6 +83,8 @@
     --admin-control-sm: 40px;
     --admin-control-md: 44px;
     --admin-control-lg: 46px;
-    --admin-row-action-width: 100%;
+    /* 카드에서는 액션이 남은 폭을 나눠 갖는다. 고정 폭이면 버튼이 세로로 길게
+       쌓여 카드 하나가 화면을 다 먹는다. */
+    --admin-row-action-width: minmax(0, 1fr);
   }
 }

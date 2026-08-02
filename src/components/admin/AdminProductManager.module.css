@@ -1257,6 +1257,10 @@
 }
 
 @media (max-width: 760px) {
+
+  /* 2열에서 항목이 홀수면 마지막 카드가 반칸만 채워 빈 자리가 눈에 띈다. */
+  .summaryBar > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
   .pageHeading {
     padding: 0 !important;
   }

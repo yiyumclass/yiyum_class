@@ -47,14 +47,55 @@
    * 라벨 열은 화면마다 라벨 길이가 달라도 흔들리지 않게 고정 폭으로 둔다.
    * 이전 minmax(84px, 34%)는 카드 폭에 따라 값이 달라져 카드 안 세로선이 어긋났다.
    */
+  /*
+   * 데스크탑 열 너비와 행 높이를 무효화한다.
+   * 화면별 표가 열 정렬을 위해 퍼센트 폭을 지정해 두는데(예: 상품 표 첫 열 22%),
+   * 카드로 접힌 뒤에도 그 폭이 남으면 셀이 80px대로 눌려 상품명이 한 글자씩
+   * 세로로 쪼개진다. 선택자 특정성이 화면별 규칙보다 낮아 !important가 필요하다.
+   */
+  .cardTable tbody td,
+  .cardTable tbody th {
+    width: auto !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+
   .cardTable tbody td {
     display: grid;
     grid-template-columns: 96px minmax(0, 1fr);
     align-items: start;
+    /* 값이 셀 폭을 채우지 않게 한다. 없으면 상태 배지 같은 인라인 요소가
+       오른쪽 열 전체로 늘어나 길쭉한 알약이 된다. */
+    justify-items: start;
     gap: var(--admin-gap-sm);
     padding: 0;
     border: 0;
-    min-width: 0;
+  }
+
+  /* 카드에서는 라벨과 값이 왼쪽에서 시작해야 세로선이 하나로 읽힌다.
+     표에서 숫자 열을 오른쪽으로 붙이던 정렬은 여기서 의미가 없다. */
+  .cardTable tbody td,
+  .cardTable tbody td * {
+    text-align: left !important;
+  }
+
+  /*
+   * 액션 묶음만 남은 폭을 다 쓴다. 위 justify-items: start는 배지가 늘어나는 것을
+   * 막으려는 것인데, 그대로 두면 버튼 묶음까지 내용 폭으로 줄어 한 열로 쌓인다.
+   * CSS Modules가 해시 뒤에 원본 클래스명을 남기는 점을 이용해 골라낸다.
+   * 화면마다 액션 개수가 달라도 카드에서는 두 열로 통일한다.
+   */
+  .cardTable tbody td [class*="rowActions"],
+  .cardTable tbody td [class*="actionSlots"] {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  /* 빈 슬롯은 열을 맞추려고 넣은 것이라 카드에서는 자리를 차지할 이유가 없다. */
+  .cardTable tbody td [class*="rowActions"] > [aria-hidden="true"]:empty,
+  .cardTable tbody td [class*="actionSlots"] > [aria-hidden="true"]:empty {
+    display: none;
   }
 
   .cardTable tbody td::before {
@@ -63,6 +104,18 @@
     font-size: var(--admin-text-xs);
     font-weight: 700;
     line-height: 1.5;
+  }
+
+  /*
+   * 값이 여럿인 셀은 전부 값 열에 쌓는다.
+   * 라벨(::before)이 1열을 차지하므로, 자식이 둘 이상이면 두 번째부터 다음 행의
+   * 1열 즉 라벨 자리로 흘러간다. 실제로 신청일 셀의 만료일이 라벨 열 아래에
+   * 따로 떨어져 보였다.
+   */
+  .cardTable tbody td[data-label] > * {
+    grid-column: 2;
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* data-label이 없는 칸(식별 셀, 작업 버튼)은 한 줄을 통째로 쓴다. */

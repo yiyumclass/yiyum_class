@@ -173,6 +173,10 @@
   .grantForm { padding-left: 0; padding-top: var(--admin-pad-lg); border-top: 1px solid #e0d8cd; border-left: 0; }
 }
 @media (max-width: 760px) {
+
+  /* 2열에서 항목이 홀수면 마지막 카드가 반칸만 채워 빈 자리가 눈에 띈다. */
+  .summaryBar > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
   .pageHeading { min-height: auto; }
   .pageHeading > div > p:last-child { font-size: var(--admin-text-md); }
   .summaryBar { grid-template-columns: repeat(2,minmax(0,1fr)); }

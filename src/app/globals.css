@@ -270,8 +270,11 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
    (예: `1fr 0.82fr` vs `repeat(3, 1fr)`) 값 매칭은 취약하지만,
    속성 이름(grid-template-columns, column-gap)은 항상 동일하다. */
 @media (max-width: 760px) {
-  /* 좌우 패딩 축소: 40px → 22px */
-  section,
+  /* 좌우 패딩 축소: 40px → 22px
+     `section`은 body 직계 자식으로 한정한다. 랜딩의 섹션만 body 바로 아래에 있고,
+     관리자·마이·강의실 화면의 section은 레이아웃 안에 중첩돼 있다. 예전처럼 태그만
+     지정하면 그 화면들의 패널까지 !important로 덮어써 자체 여백이 통째로 무시된다. */
+  body > section,
   footer,
   #hero,
   #nav > div,
@@ -280,7 +283,7 @@ details[open] .cbody { animation: fadeDown 0.45s cubic-bezier(0.16, 1, 0.3, 1); 
     padding-right: 22px !important;
   }
   /* 섹션 상단 여백 축소 */
-  section { padding-top: 96px !important; }
+  body > section { padding-top: 96px !important; }
 
   /* 히어로: 데스크톱 기준 상하 패딩(140/90px)이 축소된 모바일 헤딩 크기 대비 과함 →
      상단 여백을 줄이고, 100vh 대신 100svh를 써서 모바일 브라우저 주소창으로 인한

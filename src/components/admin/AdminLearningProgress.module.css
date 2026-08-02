@@ -137,6 +137,13 @@
 @media (max-width: 1050px) { .courseGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 900px) { .courseMetrics { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media (max-width: 760px) {
+  /* 지표가 홀수면 마지막 항목이 반칸으로 남아 카드 밖으로 흘러나온 것처럼 보인다. */
+  .courseMetrics > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+
+  /* 2열에서 항목이 홀수면 마지막 카드가 반칸만 채워 빈 자리가 눈에 띈다. */
+  .summaryBar > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
   .page { gap: var(--admin-gap-md); }
   .pageHeading { min-height: auto; }
   .pageHeading > div > p:last-child { font-size: var(--admin-text-md); }

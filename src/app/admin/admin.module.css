@@ -790,6 +790,13 @@ a.kpiCardAlert:focus-visible {
 }
 
 @media (max-width: 760px) {
+
+  /* 2열에서 항목이 홀수면 마지막 카드가 반칸만 채워 빈 자리가 눈에 띈다. */
+  .kpiGrid > *:last-child:nth-child(odd),
+  .summaryGrid > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   .pageHeading {
     min-height: auto;
   }
@@ -809,13 +816,19 @@ a.kpiCardAlert:focus-visible {
     padding-inline: var(--admin-panel-pad-mobile);
   }
 
-  .topbar > div:first-child,
+  /* 현재 화면 이름은 남긴다. 전부 숨기면 상단바 왼쪽이 비고, 좁은 화면에서는
+     사이드바 메뉴도 가로로 잘려 자기가 어느 화면인지 알 방법이 없어진다. */
+  .topbarSection,
   .adminMeta {
     display: none;
   }
 
+  .topbarTitle {
+    font-size: var(--admin-text-md);
+  }
+
   .adminAccount {
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
   }
 
