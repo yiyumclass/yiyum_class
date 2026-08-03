@@ -46,6 +46,7 @@ import {
   ArrowUpIcon,
   CheckIcon,
   ChevronIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
   DatabaseIcon,
@@ -111,6 +112,12 @@ export default function AdminCourseManager({
   const [movingId, setMovingId] = useState<string | null>(null);
   const selectedCourse =
     courses.find((course) => course.id === values.course) ?? courses[0] ?? null;
+  /*
+   * 좁은 화면에서는 목록과 편집을 한 화면에 나란히 둘 수 없다. 예전에는 목록을
+   * 가로 스크롤 띠로 눌러 담았는데, 강의가 늘어나면 옆으로 계속 밀어야 해서 쓸 수 없다.
+   * URL에 강의가 지정됐는지로 목록 화면과 편집 화면을 나눈다. 넓은 화면은 그대로 둘 다 보인다.
+   */
+  const isEditorView = values.course.length > 0 && selectedCourse !== null;
   const allLessons = courses.flatMap((course) =>
     course.sections.flatMap((section) => section.lessons)
   );
@@ -195,7 +202,10 @@ export default function AdminCourseManager({
         />
       </section>
 
-      <section className={styles.courseWorkspace}>
+      <section
+        className={styles.courseWorkspace}
+        data-view={isEditorView ? "editor" : "list"}
+      >
         <aside className={styles.courseRail} aria-label="강의 목록">
           <div className={styles.railHeader}>
             <div>
@@ -275,6 +285,16 @@ export default function AdminCourseManager({
         </aside>
 
         <div className={styles.editorPanel}>
+          {/* 좁은 화면에서만 보인다. 넓은 화면은 목록이 옆에 그대로 있어 필요 없다. */}
+          <button
+            type="button"
+            className={styles.backToList}
+            onClick={() => setValues({ course: "" })}
+          >
+            <ChevronLeftIcon />
+            강의 목록
+          </button>
+
           {selectedCourse ? (
             <CourseEditor
               course={selectedCourse}

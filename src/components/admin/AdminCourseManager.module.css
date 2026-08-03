@@ -508,6 +508,9 @@
   line-height: 1.5;
 }
 
+/* 넓은 화면에서는 목록이 옆에 그대로 있어 돌아갈 곳이 없다. */
+.backToList { display: none; }
+
 .editorPanel {
   min-width: 0;
   padding: var(--admin-panel-pad);
@@ -1634,18 +1637,64 @@
   }
 }
 
+/*
+ * 목록과 편집을 나란히 둘 폭이 안 나오면 두 화면으로 나눈다.
+ *
+ * 예전에는 목록을 가로 스크롤 띠로 눌러 담았는데, 강의가 늘어나면 옆으로 계속
+ * 밀어야 해서 실제로는 쓸 수 없었다. 목록은 세로 행으로 쌓고, 강의를 고르면
+ * 편집 화면만 보여준 뒤 "강의 목록" 버튼으로 되돌아오게 한다.
+ * 어느 화면을 볼지는 URL의 course 값이 정하므로 뒤로가기도 그대로 동작한다.
+ */
 @media (max-width: 1200px) {
   .courseWorkspace { grid-template-columns: 1fr; }
+
   .courseRail {
     border-right: 0;
     border-bottom: 1px solid #ded7cc;
   }
+
   .courseList {
     padding: var(--admin-pad-sm) var(--admin-pad-md) var(--admin-pad-md);
-    grid-auto-columns: minmax(280px, 320px);
-    grid-auto-flow: column;
-    overflow-x: auto;
+    grid-auto-flow: row;
+    gap: var(--admin-gap-xs);
+    overflow-x: visible;
   }
+
+  .courseWorkspace[data-view="editor"] .courseRail { display: none; }
+  .courseWorkspace[data-view="list"] .editorPanel { display: none; }
+
+  .backToList {
+    min-height: var(--admin-control-md);
+    margin-bottom: var(--admin-gap-md);
+    padding: 0 var(--admin-pad-md) 0 var(--admin-pad-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--admin-gap-xs);
+    border: 1px solid var(--admin-line-strong);
+    border-radius: var(--admin-radius-md);
+    background: var(--admin-surface);
+    color: var(--admin-ink);
+    font: inherit;
+    font-size: var(--admin-text-sm);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .backToList svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .backToList:focus-visible {
+    outline: 2px solid var(--admin-accent);
+    outline-offset: 2px;
+  }
+
   .railEmpty { min-height: calc(var(--admin-empty-height) - var(--admin-gap-lg) * 3); }
 }
 
