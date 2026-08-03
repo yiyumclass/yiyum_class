@@ -371,6 +371,8 @@
 
 .filter,
 .filterActive {
+  min-width: var(--admin-filter-min-width);
+  justify-content: center;
   min-height: var(--admin-control-md);
   padding: 0 var(--admin-pad-md);
   border: 0;

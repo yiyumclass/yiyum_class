@@ -62,7 +62,7 @@
 .toolbar { min-height: calc(var(--admin-control-md) + var(--admin-gap-md) * 2); padding: var(--admin-gap-md) var(--admin-panel-pad); border-bottom: 1px solid #e5ded4; background: #f7f3ed; display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-md); }
 .statusFilters, .toolbarControls { display: flex; align-items: center; gap: var(--admin-gap-xs); }
 .toolbarControls { gap: var(--admin-gap-sm); }
-.filter, .filterActive { min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-sm); border: 0; border-radius: var(--admin-radius-sm); background: transparent; color: #887f73; font-family: inherit; font-size: var(--admin-text-xs); font-weight: 600; cursor: pointer; }
+.filter, .filterActive { min-width: var(--admin-filter-min-width); min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-md); border: 0; border-radius: var(--admin-radius-sm); background: transparent; color: #887f73; display: inline-flex; align-items: center; justify-content: center; font-family: inherit; font-size: var(--admin-text-sm); font-weight: 600; cursor: pointer; }
 .filter:hover { background: #ede6dc; color: #514a42; }
 .filterActive { background: #e5d8ca; color: #7e402b; }
 .searchField, .selectField { position: relative; display: flex; align-items: center; }

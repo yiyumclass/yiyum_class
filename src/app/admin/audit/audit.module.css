@@ -7,7 +7,7 @@
 .total { flex: 0 0 auto; min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-md); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-pill); background: #fbf8f3; color: #6b6259; display: inline-flex; align-items: center; font-size: var(--admin-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .filters { display: flex; flex-wrap: wrap; gap: var(--admin-gap-xs); }
-.filter, .filterActive { min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-sm); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-sm); display: inline-flex; align-items: center; font-size: var(--admin-text-xs); font-weight: 600; }
+.filter, .filterActive { min-width: var(--admin-filter-min-width); min-height: var(--admin-control-sm); padding: 0 var(--admin-pad-md); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-sm); display: inline-flex; align-items: center; justify-content: center; font-size: var(--admin-text-sm); font-weight: 600; }
 .filter { background: transparent; color: #887f73; }
 .filter:hover { background: #f1ece3; color: #514a42; }
 .filterActive { border-color: #3b332b; background: #3b332b; color: #fbf8f3; }
@@ -62,7 +62,7 @@
 .pagination { padding-top: var(--admin-gap-md); display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-sm); flex-wrap: wrap; }
 .pager { display: flex; align-items: center; gap: var(--admin-gap-sm); }
 .pageSizes { display: flex; align-items: center; gap: 4px; }
-.pageSize, .pageSizeActive { min-height: var(--admin-control-md); padding: 0 var(--admin-pad-sm); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-md); display: inline-flex; align-items: center; font-size: var(--admin-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pageSize, .pageSizeActive { min-width: var(--admin-filter-min-width); justify-content: center; min-height: var(--admin-control-md); padding: 0 var(--admin-pad-sm); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-md); display: inline-flex; align-items: center; font-size: var(--admin-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
 .pageSize { color: #8f867a; background: transparent; }
 .pageSize:hover { background: #f1ece3; }
 .pageSizeActive { border-color: #c9b6a5; background: #f4ebe2; color: #7e4a36; }

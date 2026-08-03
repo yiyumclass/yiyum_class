@@ -843,7 +843,13 @@ a.kpiCardAlert:focus-visible {
   }
 
   .content {
-    padding: var(--admin-gap-lg) var(--admin-panel-pad-mobile) 42px;
+    /*
+     * 아래쪽을 넉넉히 비운다. 모바일 사파리는 스크롤을 끝까지 내려도 하단 주소창이
+     * 화면을 덮어, 42px만으로는 맨 끝 버튼(페이지 이동 등)이 가려진다.
+     * 홈 인디케이터가 있는 기기에서는 안전영역만큼 더 준다.
+     */
+    padding: var(--admin-gap-lg) var(--admin-panel-pad-mobile)
+      calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   .dashboard {
