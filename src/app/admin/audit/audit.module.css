@@ -59,7 +59,14 @@
 .targetLabel { display: inline-block; max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; color: #7c7367; }
 
 /* 공용 AdminPagination과 같은 컨트롤 등급(md)을 써서 화면이 바뀌어도 같아 보이게 한다. */
-.pagination { padding-top: var(--admin-gap-md); display: flex; align-items: center; justify-content: center; gap: var(--admin-gap-sm); }
+.pagination { padding-top: var(--admin-gap-md); display: flex; align-items: center; justify-content: space-between; gap: var(--admin-gap-sm); flex-wrap: wrap; }
+.pager { display: flex; align-items: center; gap: var(--admin-gap-sm); }
+.pageSizes { display: flex; align-items: center; gap: 4px; }
+.pageSize, .pageSizeActive { min-height: var(--admin-control-md); padding: 0 var(--admin-pad-sm); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-md); display: inline-flex; align-items: center; font-size: var(--admin-text-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pageSize { color: #8f867a; background: transparent; }
+.pageSize:hover { background: #f1ece3; }
+.pageSizeActive { border-color: #c9b6a5; background: #f4ebe2; color: #7e4a36; }
+.pageSize:focus-visible, .pageSizeActive:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 .pagination a, .pagination span[aria-disabled], .pageState { min-height: var(--admin-control-md); padding: 0 var(--admin-pad-md); border: 1px solid #ddd6ca; border-radius: var(--admin-radius-md); display: inline-flex; align-items: center; font-size: var(--admin-text-sm); font-weight: 600; }
 .pagination a { color: #3b332b; background: #fbf8f3; }
 .pagination a:hover { background: #f1ece3; }
@@ -75,6 +82,10 @@
 }
 
 @media (max-width: 760px) {
+  /* 좁은 화면에서는 선택지와 이동 버튼을 각각 한 줄로 펴 손가락이 닿게 한다. */
+  .pagination { justify-content: center; }
+  .pageSizes, .pager { width: 100%; justify-content: center; }
+
   .heading { flex-direction: column; }
 
   /* 좁은 화면 카드 변환은 공용 .cardTable이 맡는다. 고정 열 폭은 여기서 해제한다. */

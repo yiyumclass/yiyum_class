@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import AdminAuditCsvButton from "@/components/admin/AdminAuditCsvButton";
 import tableStyles from "@/components/admin/AdminTable.module.css";
 import {
+  AUDIT_PAGE_SIZES,
   AUDIT_TARGET_TYPES,
+  COMPACT_AUDIT_PAGE_SIZE,
   loadAdminAuditPage,
   resolveAuditFilters,
+  resolveAuditPageSize,
   type AdminAuditFilterInput,
 } from "@/lib/admin/audit";
 import {
@@ -24,7 +28,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type AuditSearchParams = AdminAuditFilterInput & { page?: string };
+type AuditSearchParams = AdminAuditFilterInput & { page?: string; size?: string };
 
 export default async function AdminAuditPage({
   searchParams,
@@ -32,7 +36,20 @@ export default async function AdminAuditPage({
   searchParams: Promise<AuditSearchParams>;
 }) {
   await requireOwnerAdmin();
-  const query = await searchParams;
+  const [query, requestHeaders] = await Promise.all([searchParams, headers()]);
+
+  /*
+   * 좁은 화면에서는 기록 한 건이 카드 한 장으로 펼쳐져 25건이면 페이지가 6000px을
+   * 넘는다. 서버는 화면 폭을 알 수 없으므로 요청 헤더로 기본값만 정하고, 운영자가
+   * 아래 선택지로 언제든 바꿀 수 있게 둔다. 값이 틀려도 보이는 건수만 달라진다.
+   */
+  const isNarrowClient = /Mobi|Android|iPhone|iPod/i.test(
+    requestHeaders.get("user-agent") ?? ""
+  );
+  const pageSize = resolveAuditPageSize(
+    query.size,
+    isNarrowClient ? COMPACT_AUDIT_PAGE_SIZE : undefined
+  );
 
   // 화면에 되돌려 줄 값과 실제 조회 조건을 나눈다. 조회 조건은 검증을 통과한 것만
   // 남으므로, 잘못된 값이 들어와도 필터가 조용히 사라진 것처럼 보이지 않게 한다.
@@ -50,6 +67,7 @@ export default async function AdminAuditPage({
     loadAdminAuditPage({
       ...filters,
       page: Number.isFinite(requestedPage) ? requestedPage : 1,
+      pageSize,
     }),
     loadManagedAdminUsers(),
   ]);
@@ -62,7 +80,7 @@ export default async function AdminAuditPage({
     Boolean(filters.to);
 
   // 페이지 이동으로 걸어 둔 조건이 날아가면 사고 조사 중 처음부터 다시 걸어야 한다.
-  const buildHref = (next: { page?: number; target?: string | null }) => {
+  const buildHref = (next: { page?: number; target?: string | null; size?: number }) => {
     const params = new URLSearchParams();
     const resolvedTarget =
       next.target === undefined ? filters.targetType : next.target;
@@ -71,6 +89,10 @@ export default async function AdminAuditPage({
     if (filters.actorUserId) params.set("actor", filters.actorUserId);
     if (query.from) params.set("from", query.from);
     if (query.to) params.set("to", query.to);
+    const resolvedSize = next.size ?? pageSize;
+    // 기본값과 같으면 쿼리에 남기지 않는다. 다만 좁은 화면 기본값(10)을 넓은 화면에서
+    // 이어받는 일이 없도록, 운영자가 고른 값은 항상 URL에 적는다.
+    if (next.size !== undefined || query.size) params.set("size", String(resolvedSize));
     if (next.page && next.page > 1) params.set("page", String(next.page));
     const search = params.toString();
     return search ? `/admin/audit?${search}` : "/admin/audit";
@@ -246,23 +268,38 @@ export default async function AdminAuditPage({
                 </table>
               </div>
 
-              {result.pageCount > 1 && (
-                <nav className={styles.pagination} aria-label="페이지 이동">
-                  {result.page > 1 ? (
-                    <Link href={buildHref({ page: result.page - 1 })}>이전</Link>
-                  ) : (
-                    <span aria-disabled="true">이전</span>
-                  )}
-                  <span className={styles.pageState}>
-                    {result.page} / {result.pageCount}
-                  </span>
-                  {result.page < result.pageCount ? (
-                    <Link href={buildHref({ page: result.page + 1 })}>다음</Link>
-                  ) : (
-                    <span aria-disabled="true">다음</span>
-                  )}
-                </nav>
-              )}
+              <nav className={styles.pagination} aria-label="페이지 이동">
+                <div className={styles.pageSizes} role="group" aria-label="페이지당 기록 수">
+                  {AUDIT_PAGE_SIZES.map((size) => (
+                    <Link
+                      key={size}
+                      href={buildHref({ size, page: 1 })}
+                      className={size === pageSize ? styles.pageSizeActive : styles.pageSize}
+                      aria-current={size === pageSize ? "true" : undefined}
+                    >
+                      {size}건
+                    </Link>
+                  ))}
+                </div>
+
+                {result.pageCount > 1 && (
+                  <div className={styles.pager}>
+                    {result.page > 1 ? (
+                      <Link href={buildHref({ page: result.page - 1 })}>이전</Link>
+                    ) : (
+                      <span aria-disabled="true">이전</span>
+                    )}
+                    <span className={styles.pageState}>
+                      {result.page} / {result.pageCount}
+                    </span>
+                    {result.page < result.pageCount ? (
+                      <Link href={buildHref({ page: result.page + 1 })}>다음</Link>
+                    ) : (
+                      <span aria-disabled="true">다음</span>
+                    )}
+                  </div>
+                )}
+              </nav>
             </>
           ) : (
             <p className={styles.notice} role="status">

@@ -38,7 +38,23 @@ export const AUDIT_TARGET_TYPES = [
 
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
+/**
+ * 한 페이지에 보여줄 기록 수.
+ *
+ * 좁은 화면에서는 한 건이 카드 한 장으로 펼쳐져 25건이면 페이지가 6000px을 넘는다.
+ * 기본값을 화면 폭에 맞춰 고르되, 운영자가 직접 바꿀 수 있게 선택지를 함께 둔다.
+ */
+export const AUDIT_PAGE_SIZES = [10, 25, 50, 100] as const;
 export const AUDIT_PAGE_SIZE = 25;
+export const COMPACT_AUDIT_PAGE_SIZE = 10;
+
+export function resolveAuditPageSize(
+  value: string | undefined,
+  fallback: number = AUDIT_PAGE_SIZE
+) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return (AUDIT_PAGE_SIZES as readonly number[]).includes(parsed) ? parsed : fallback;
+}
 
 export type AdminAuditPage = {
   entries: AdminAuditEntry[];
@@ -123,7 +139,7 @@ export function resolveAuditFilters(input: AdminAuditFilterInput): AdminAuditFil
  * 사후 추적이 불가능하다.
  */
 export async function loadAdminAuditPage(
-  options: AdminAuditFilters & { page: number }
+  options: AdminAuditFilters & { page: number; pageSize?: number }
 ): Promise<AdminAuditPage> {
   const admin = await requireAdmin();
   if (admin.role !== "owner") {
@@ -132,7 +148,10 @@ export async function loadAdminAuditPage(
 
   const supabase = await createClient();
   const page = Number.isInteger(options.page) && options.page > 0 ? options.page : 1;
-  const from = (page - 1) * AUDIT_PAGE_SIZE;
+  const pageSize = (AUDIT_PAGE_SIZES as readonly number[]).includes(options.pageSize ?? 0)
+    ? (options.pageSize as number)
+    : AUDIT_PAGE_SIZE;
+  const from = (page - 1) * pageSize;
 
   let query = supabase
     .from("admin_audit_logs")
@@ -140,7 +159,7 @@ export async function loadAdminAuditPage(
       count: "exact",
     })
     .order("created_at", { ascending: false })
-    .range(from, from + AUDIT_PAGE_SIZE - 1);
+    .range(from, from + pageSize - 1);
 
   if (options.targetType) query = query.eq("target_type", options.targetType);
   if (options.action) query = query.eq("action", options.action);
@@ -161,7 +180,7 @@ export async function loadAdminAuditPage(
     entries: await decorateAuditRows(supabase, data ?? []),
     total,
     page,
-    pageCount: Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE)),
+    pageCount: Math.max(1, Math.ceil(total / pageSize)),
     available: true,
   };
 }
