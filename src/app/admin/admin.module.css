@@ -434,7 +434,6 @@
 .kpiCard,
 .kpiCardAlert,
 .summaryCard {
-  min-height: calc(var(--admin-control-lg) * 2 + var(--admin-gap-md) * 2);
   padding: var(--admin-panel-pad);
   border: 1px solid #e0d9ce;
   border-radius: var(--admin-radius-md);
@@ -442,36 +441,47 @@
   color: inherit;
   display: flex;
   flex-direction: column;
-  gap: var(--admin-gap-xs);
+  gap: var(--admin-gap-sm);
   transition: border-color 160ms ease;
 }
 
+/*
+ * 라벨과 설명은 줄 수와 무관하게 같은 높이를 차지한다.
+ * "최근 30일 신규 가입"은 한 줄, "30일 내 만료 예정 수강권"은 두 줄이라 그대로 두면
+ * 나란히 놓인 카드의 숫자가 서로 다른 높이에서 시작해 눈이 기댈 선이 없어진다.
+ */
 .kpiCard p,
 .kpiCardAlert p {
   margin: 0;
-  display: inline-flex;
-  align-items: center;
+  min-height: calc(var(--admin-text-sm) * 2 * 1.45);
+  display: flex;
+  align-items: flex-start;
   gap: var(--admin-gap-xs);
   color: #8f867a;
   font-size: var(--admin-text-sm);
   font-weight: 600;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .kpiCard strong,
 .kpiCardAlert strong {
-  margin-top: auto;
   color: #2d2822;
   font-size: var(--admin-text-display);
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
 }
 
 .kpiCard small,
 .kpiCardAlert small {
+  margin-top: auto;
+  min-height: calc(var(--admin-text-xs) * 2 * 1.5);
   color: #a2988b;
   font-size: var(--admin-text-xs);
+  line-height: 1.5;
+  word-break: keep-all;
 }
 
 .kpiCardAlert {

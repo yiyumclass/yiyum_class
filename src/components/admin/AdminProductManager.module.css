@@ -1257,6 +1257,22 @@
 }
 
 @media (max-width: 760px) {
+  /* 라벨이 한 줄이든 두 줄이든 숫자가 같은 높이에서 시작해야 카드끼리 나란히 읽힌다.
+     em 기준이라 화면마다 라벨 글자 크기가 달라도 두 줄만큼 잡힌다. */
+  /* 같은 행의 다른 카드가 더 높으면 내용이 세로 가운데로 밀려 숫자 높이가 어긋난다. */
+  .summaryItem {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .summaryItem > span:first-child {
+    min-height: 2.9em;
+    display: flex;
+    align-items: flex-start;
+    line-height: 1.45;
+    word-break: keep-all;
+  }
+
 
   /* 2열에서 항목이 홀수면 마지막 카드가 반칸만 채워 빈 자리가 눈에 띈다. */
   .summaryBar > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
