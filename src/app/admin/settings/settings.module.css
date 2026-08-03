@@ -81,3 +81,17 @@
 @media (max-width: 560px) {
   .form { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 760px) {
+  /* 이름·이메일·등록정보가 여러 줄이 되면 상태 배지가 가운데로 내려가 이름과 어긋난다. */
+  .row, .rowInactive { align-items: start; }
+
+  /* 좁은 화면에서 등록일과 회원 UUID를 한 줄로 눌러 담으면 뒷부분이 잘린다.
+     운영자 권한 화면에서 UUID는 식별에 쓰는 값이라 전부 보여야 한다. */
+  .identity .meta {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    word-break: break-all;
+  }
+}

@@ -1209,6 +1209,9 @@
   .summaryItem > span:first-child {
     min-height: 2.9em;
     display: flex;
+    /* 라벨 안에 보조 설명(<small>)이 들어가는 화면이 있다. 세로로 쌓지 않으면
+       설명이 라벨 옆에 붙어 라벨 폭을 눌러 글자가 세로로 쪼개진다. */
+    flex-direction: column;
     align-items: flex-start;
     line-height: 1.45;
     word-break: keep-all;
