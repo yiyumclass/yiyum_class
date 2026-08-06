@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { SyntheticEvent } from "react";
+import MuxPlayer from "@mux/mux-player-react";
 import {
   useCallback,
   useEffect,
@@ -11,6 +11,19 @@ import {
   useState,
 } from "react";
 import styles from "./CourseClassroom.module.css";
+
+/**
+ * video 태그와 Mux Player 가 공통으로 갖는 재생 상태.
+ * 진도 저장·이어보기는 이 세 가지만 쓰므로 플레이어 종류를 몰라도 된다.
+ */
+type PlayerElement = Pick<
+  HTMLMediaElement,
+  | "currentTime"
+  | "duration"
+  | "readyState"
+  | "addEventListener"
+  | "removeEventListener"
+>;
 import type {
   Course,
   CourseLesson,
@@ -99,15 +112,22 @@ export default function CourseClassroom({
   const [videoReloadNonce, setVideoReloadNonce] = useState(0);
   const videoRecoveryAttemptsRef = useRef(0);
   const videoResumePositionRef = useRef(0);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // video 태그와 Mux Player 를 함께 쓴다. 진도 로직이 건드리는 속성은 양쪽 다 같아서
+  // 그 부분만 추려 하나의 타입으로 다룬다.
+  const videoRef = useRef<PlayerElement | null>(null);
   const saveChainRef = useRef<Promise<void>>(Promise.resolve());
   const lastQueuedPositionsRef = useRef<Record<string, number>>({
     ...initialProgress.positionsByLessonId,
   });
   const autoCompletionSuppressedRef = useRef<Set<string>>(new Set());
-  const restoredVideoElementsRef = useRef<WeakSet<HTMLVideoElement>>(
+  const restoredVideoElementsRef = useRef<WeakSet<PlayerElement>>(
     new WeakSet()
   );
+  const [muxPlayback, setMuxPlayback] = useState<{
+    lessonId: string;
+    playbackId: string;
+    token: string;
+  } | null>(null);
 
   const activeLesson =
     availableFlatLessons.find((item) => item.id === activeLessonId) ??
@@ -137,6 +157,49 @@ export default function CourseClassroom({
       ? `${activeLesson.videoSrc}${activeLesson.videoSrc.includes("?") ? "&" : "?"}reload=${videoReloadNonce}`
       : activeLesson.videoSrc
     : undefined;
+
+  // Mux 는 서명 토큰이 필요하다. 차시가 바뀌거나 만료로 다시 불러올 때마다 새로 받는다.
+  useEffect(() => {
+    // 다른 차시의 토큰이 남아 있어도 렌더에서 lessonId 를 비교해 걸러내므로
+    // 여기서 따로 비우지 않는다.
+    if (!activeLesson.videoSrc) return;
+
+    let cancelled = false;
+    const lessonId = activeLesson.id;
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `${activeLesson.videoSrc}?format=json&reload=${videoReloadNonce}`,
+          { cache: "no-store" }
+        );
+        if (!response.ok) throw new Error(`status ${response.status}`);
+
+        const data = (await response.json()) as {
+          playbackId?: string;
+          token?: string;
+        };
+        if (cancelled) return;
+        if (!data.playbackId || !data.token) throw new Error("missing playback");
+
+        setMuxPlayback({
+          lessonId,
+          playbackId: data.playbackId,
+          token: data.token,
+        });
+      } catch {
+        if (!cancelled) setVideoPlaybackState("failed");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeLesson.id,
+    activeLesson.videoSrc,
+    videoReloadNonce,
+  ]);
 
   const enqueueProgressSave = useCallback(
     (payload: ProgressSavePayload, { retry = false }: { retry?: boolean } = {}) => {
@@ -372,8 +435,7 @@ export default function CourseClassroom({
     persistActiveVideo(isCurrentComplete ? "incomplete" : "complete");
   };
 
-  const handleVideoProgress = (event: SyntheticEvent<HTMLVideoElement>) => {
-    const video = event.currentTarget;
+  const handleVideoProgress = (video: PlayerElement) => {
     const currentPosition = Math.floor(video.currentTime);
     const lastQueuedPosition =
       lastQueuedPositionsRef.current[activeLesson.id] ?? 0;
@@ -415,7 +477,7 @@ export default function CourseClassroom({
     }
   };
 
-  const handleVideoEnded = (event: SyntheticEvent<HTMLVideoElement>) => {
+  const handleVideoEnded = (video: PlayerElement) => {
     const isAutoCompletionSuppressed =
       autoCompletionSuppressedRef.current.has(activeLesson.id);
 
@@ -427,8 +489,8 @@ export default function CourseClassroom({
     queueProgressSave(
       activeLesson.id,
       activeLesson.durationSeconds,
-      event.currentTarget.duration,
-      event.currentTarget.duration,
+      video.duration,
+      video.duration,
       isAutoCompletionSuppressed ? "preserve" : "complete"
     );
   };
@@ -484,24 +546,34 @@ export default function CourseClassroom({
           <div className={styles.playerFrame}>
             {activeVideoSrc ? (
               <>
-                <video
-                  key={activeLesson.id}
-                  ref={videoRef}
-                  className={styles.video}
-                  src={activeVideoSrc}
-                  poster={course.posterSrc || undefined}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  aria-label={`${activeLesson.title} 강의 영상`}
-                  onTimeUpdate={handleVideoProgress}
-                  onPause={() => persistActiveVideo()}
-                  onEnded={handleVideoEnded}
-                  onError={handleVideoError}
-                  onWaiting={() => setIsVideoBuffering(true)}
-                  onCanPlay={handleVideoPlayable}
-                  onPlaying={handleVideoPlayable}
-                />
+                {muxPlayback && muxPlayback.lessonId === activeLesson.id ? (
+                  <MuxPlayer
+                    key={`${activeLesson.id}-${videoReloadNonce}`}
+                    ref={(element) => {
+                      videoRef.current = element;
+                    }}
+                    className={styles.video}
+                    playbackId={muxPlayback.playbackId}
+                    tokens={{ playback: muxPlayback.token }}
+                    streamType="on-demand"
+                    poster={course.posterSrc || undefined}
+                    playsInline
+                    preload="metadata"
+                    accentColor="#D9825E"
+                    title={`${activeLesson.title} 강의 영상`}
+                    onTimeUpdate={() => {
+                      if (videoRef.current) handleVideoProgress(videoRef.current);
+                    }}
+                    onPause={() => persistActiveVideo()}
+                    onEnded={() => {
+                      if (videoRef.current) handleVideoEnded(videoRef.current);
+                    }}
+                    onError={handleVideoError}
+                    onWaiting={() => setIsVideoBuffering(true)}
+                    onCanPlay={handleVideoPlayable}
+                    onPlaying={handleVideoPlayable}
+                  />
+                ) : null}
                 {videoPlaybackState === "failed" ? (
                   <div className={styles.videoErrorOverlay} role="alert">
                     <strong>영상을 불러오지 못했습니다</strong>
