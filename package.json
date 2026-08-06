@@ -12,6 +12,9 @@
     "verify:admin-tabs": "node scripts/verify-admin-tabs-live.mjs"
   },
   "dependencies": {
+    "@mux/mux-node": "^14.1.1",
+    "@mux/mux-player-react": "^3.13.2",
+    "@mux/upchunk": "^3.5.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
     "@tosspayments/tosspayments-sdk": "^2.7.1",

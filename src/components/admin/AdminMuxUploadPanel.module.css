@@ -1,0 +1,118 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-gap-sm);
+  padding: var(--admin-pad-md);
+  border: 1px dashed var(--admin-line-strong);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-canvas);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-gap-xs);
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--admin-ink);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--admin-ink-muted);
+}
+
+.picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: var(--admin-control-md);
+  padding: 0 var(--admin-pad-md);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-pill);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.picker:focus-within {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pickerLabel {
+  pointer-events: none;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-gap-sm);
+  flex-wrap: wrap;
+}
+
+.progress {
+  flex: 1 1 180px;
+  min-width: 0;
+  height: 8px;
+}
+
+.progressValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--admin-ink);
+}
+
+.cancel {
+  min-height: var(--admin-control-sm);
+  padding: 0 var(--admin-pad-sm);
+  border: 1px solid var(--admin-line-strong);
+  border-radius: var(--admin-radius-pill);
+  background: transparent;
+  color: var(--admin-ink-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.message {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--admin-ink-muted);
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--admin-danger);
+}
+
+.player {
+  overflow: hidden;
+  border-radius: var(--admin-radius-sm);
+  background: #000;
+}
+
+.player mux-player {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
