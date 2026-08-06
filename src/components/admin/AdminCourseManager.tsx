@@ -34,7 +34,6 @@ import {
   formatVideoFileSize,
   readVideoFileDuration,
   validateCourseVideoFile,
-  MAX_COURSE_VIDEO_BYTES,
 } from "@/lib/admin/video-file";
 import { useTableParams } from "@/lib/admin/use-table-params";
 import AdminDialog, { AdminDialogActions } from "./AdminDialog";
@@ -97,8 +96,6 @@ const initialFormState: CourseFormState = {
  */
 const courseParamDefaults = { course: "" };
 
-const MAX_COURSE_VIDEO_MB = Math.floor(MAX_COURSE_VIDEO_BYTES / (1024 * 1024));
-
 export default function AdminCourseManager({
   courses,
   availableProducts,
@@ -125,7 +122,7 @@ export default function AdminCourseManager({
     courses: courses.length,
     sections: courses.reduce((total, course) => total + course.sections.length, 0),
     lessons: allLessons.length,
-    connectedVideos: allLessons.filter((lesson) => lesson.videoPath).length,
+    connectedVideos: allLessons.filter((lesson) => lesson.hasVideo).length,
   };
 
   const moveItem = async (
@@ -371,10 +368,8 @@ export default function AdminCourseManager({
       )}
       {dialog?.type === "manage-video" && (
         <AdminLessonVideoDialog
-          courseSlug={dialog.courseSlug}
           sectionTitle={dialog.sectionTitle}
           lesson={dialog.lesson}
-          storageReady={videoStorageReady}
           initialFile={dialog.initialFile}
           autoStart={dialog.autoStart}
           onClose={() => setDialog(null)}
@@ -434,7 +429,7 @@ function CourseEditor({
     .filter((section) => section.status === "published")
     .flatMap((section) => section.lessons.filter((lesson) => lesson.status === "published"));
   const missingPublishedVideoCount = publishedLessons.filter(
-    (lesson) => !lesson.videoPath
+    (lesson) => !lesson.hasVideo
   ).length;
   const curriculumReady =
     publishedLessons.length > 0 && missingPublishedVideoCount === 0;
@@ -661,13 +656,9 @@ function CourseSectionCard({
                 <strong>{lesson.title}</strong>
                 <small>{lesson.key} · {formatDuration(lesson.durationSeconds)}</small>
               </span>
-              <span className={lesson.videoPath ? styles.videoReady : styles.videoMissing}>
-                {lesson.videoPath ? <VideoIcon /> : <AlertIcon />}
-                {lesson.videoPath
-                  ? lesson.videoProvider === "supabase"
-                    ? "업로드 완료"
-                    : "기존 영상"
-                  : "영상 미연결"}
+              <span className={lesson.hasVideo ? styles.videoReady : styles.videoMissing}>
+                {lesson.hasVideo ? <VideoIcon /> : <AlertIcon />}
+                {formatVideoStatus(lesson)}
               </span>
               <span className={`${styles.compactStatus} ${styles[lesson.status]}`}>
                 {formatStatus(lesson.status)}
@@ -685,7 +676,7 @@ function CourseSectionCard({
                   />
                   <button
                     type="button"
-                    className={lesson.videoPath ? styles.videoActionReady : styles.videoAction}
+                    className={lesson.hasVideo ? styles.videoActionReady : styles.videoAction}
                     disabled={!videoStorageReady}
                     title={
                       videoStorageReady
@@ -701,7 +692,7 @@ function CourseSectionCard({
                       })
                     }
                   >
-                    {lesson.videoPath ? "영상 관리" : "영상 업로드"}
+                    {lesson.hasVideo ? "영상 관리" : "영상 업로드"}
                   </button>
                   <button
                     type="button"
@@ -1066,7 +1057,7 @@ function LessonDialog(props:
     } catch {
       setVideoFile(null);
       setVideoError(
-        "영상 정보를 읽지 못했습니다. 재생 가능한 MP4 파일인지 확인해 주세요."
+        "영상 길이를 읽지 못했습니다. 재생 가능한 동영상 파일인지 확인해 주세요."
       );
     } finally {
       setVideoReading(false);
@@ -1122,8 +1113,8 @@ function LessonDialog(props:
             <p className={styles.videoCreateConstraint}>
               <AlertIcon />
               <span>
-                <strong>MP4 형식, 최대 {MAX_COURSE_VIDEO_MB}MB까지 올릴 수 있습니다.</strong>
-                <small>이 조건을 넘는 파일은 선택해도 업로드되지 않습니다.</small>
+                <strong>동영상 파일을 그대로 올리면 됩니다.</strong>
+                <small>형식과 용량 제한 없이 Mux 가 화질을 자동으로 나눕니다.</small>
               </span>
             </p>
 
@@ -1237,7 +1228,7 @@ function LessonDialog(props:
           <div className={styles.videoManagementHint}>
             <VideoIcon />
             <span>
-              <strong>{lesson?.videoPath ? "영상이 연결되어 있습니다." : "연결된 영상이 없습니다."}</strong>
+              <strong>{lesson?.hasVideo ? "영상이 연결되어 있습니다." : "연결된 영상이 없습니다."}</strong>
               <small>강의 목록의 영상 관리 버튼에서 파일 업로드와 교체를 진행할 수 있습니다.</small>
             </span>
           </div>
@@ -1448,9 +1439,22 @@ function countLessons(course: AdminCourse) {
 
 function countConnectedVideos(course: AdminCourse) {
   return course.sections.reduce(
-    (total, section) => total + section.lessons.filter((lesson) => lesson.videoPath).length,
+    (total, section) => total + section.lessons.filter((lesson) => lesson.hasVideo).length,
     0
   );
+}
+
+/**
+ * 업로드 직후에는 아직 재생할 수 없다. "영상 없음"과 "변환 중"을 구분해야
+ * 운영자가 기다리면 되는 상태인지 다시 올려야 하는 상태인지 안다.
+ */
+function formatVideoStatus(lesson: AdminLesson) {
+  if (lesson.hasVideo) return "영상 연결됨";
+  if (lesson.videoStatus === "preparing" || lesson.videoStatus === "waiting") {
+    return "변환 중";
+  }
+  if (lesson.videoStatus === "errored") return "변환 실패";
+  return "영상 미연결";
 }
 
 function formatStatus(status: AdminCourseStatus) {

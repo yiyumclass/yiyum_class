@@ -94,7 +94,7 @@ export default async function AdminDashboardPage() {
       courseTotal +
       course.sections.reduce(
         (sectionTotal, section) =>
-          sectionTotal + section.lessons.filter((lesson) => lesson.videoPath).length,
+          sectionTotal + section.lessons.filter((lesson) => lesson.hasVideo).length,
         0
       ),
     0

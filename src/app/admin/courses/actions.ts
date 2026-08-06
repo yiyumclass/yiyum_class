@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminCourseStatus, AdminLesson } from "@/lib/admin/courses";
+import { getMuxClient } from "@/lib/mux/client";
 import { createClient } from "@/lib/supabase/server";
 import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
 
@@ -30,16 +31,7 @@ export type CourseMutationResult = {
   message: string;
 };
 
-export type LessonVideoFinalizeInput = {
-  objectPath: string;
-  fileName: string;
-  contentType: string;
-  sizeBytes: number;
-  durationSeconds: number;
-};
-
 const courseVideoBucket = "course-videos";
-const maxCourseVideoBytes = 50 * 1024 * 1024;
 
 const contentStatuses: AdminCourseStatus[] = [
   "draft",
@@ -300,12 +292,8 @@ export async function createLessonAction(
     key: createdLesson.lesson_key,
     title: createdLesson.title,
     durationSeconds: createdLesson.duration_seconds,
-    videoPath: null,
-    videoProvider: null,
-    videoFileName: null,
-    videoContentType: null,
-    videoSizeBytes: null,
-    videoUploadedAt: null,
+    hasVideo: false,
+    videoStatus: null,
     status: createdLesson.status,
     isPreview: createdLesson.is_preview,
     sortOrder: createdLesson.sort_order,
@@ -331,11 +319,11 @@ export async function updateLessonAction(
   if (values.status === "published") {
     const { data: currentLesson, error: currentLessonError } = await supabase
       .from("lessons")
-      .select("video_path")
+      .select("mux_status")
       .eq("id", lessonId)
-      .maybeSingle<{ video_path: string | null }>();
+      .maybeSingle<{ mux_status: string | null }>();
 
-    if (currentLessonError || !currentLesson?.video_path) {
+    if (currentLessonError || currentLesson?.mux_status !== "ready") {
       return {
         status: "error",
         message: "영상을 업로드한 뒤 차시를 공개해 주세요.",
@@ -364,81 +352,6 @@ export async function updateLessonAction(
   return success("차시 정보를 수정했습니다.");
 }
 
-export async function finalizeLessonVideoAction(
-  lessonId: string,
-  input: LessonVideoFinalizeInput
-): Promise<CourseMutationResult> {
-  await requireAdmin();
-  if (!isUuid(lessonId)) {
-    return { ok: false, message: "영상을 연결할 차시를 확인해 주세요." };
-  }
-
-  const validationMessage = validateVideoFinalizeInput(lessonId, input);
-  if (validationMessage) return { ok: false, message: validationMessage };
-
-  const supabase = await createClient();
-  const { data: currentLesson, error: lessonError } = await supabase
-    .from("lessons")
-    .select("video_path, video_provider")
-    .eq("id", lessonId)
-    .maybeSingle<{ video_path: string | null; video_provider: string | null }>();
-
-  if (lessonError || !currentLesson) {
-    await removeUploadedVideo(supabase, input.objectPath);
-    return { ok: false, message: "영상을 연결할 차시를 찾지 못했습니다." };
-  }
-
-  const folderPath = input.objectPath.slice(0, input.objectPath.lastIndexOf("/"));
-  const objectName = input.objectPath.slice(input.objectPath.lastIndexOf("/") + 1);
-  const { data: uploadedObjects, error: storageError } = await supabase.storage
-    .from(courseVideoBucket)
-    .list(folderPath, { limit: 20, search: objectName });
-
-  if (storageError || !uploadedObjects?.some((item) => item.name === objectName)) {
-    await removeUploadedVideo(supabase, input.objectPath);
-    return {
-      ok: false,
-      message: "업로드된 영상을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-    };
-  }
-
-  const uploadedAt = new Date().toISOString();
-  const { error: updateError } = await supabase
-    .from("lessons")
-    .update({
-      video_path: input.objectPath,
-      video_provider: "supabase",
-      video_file_name: input.fileName,
-      video_content_type: input.contentType,
-      video_size_bytes: Math.round(input.sizeBytes),
-      video_uploaded_at: uploadedAt,
-      duration_seconds: Math.max(1, Math.round(input.durationSeconds)),
-    })
-    .eq("id", lessonId);
-
-  if (updateError) {
-    console.error("Failed to connect lesson video:", updateError.message);
-    await removeUploadedVideo(supabase, input.objectPath);
-    return videoMutationError(updateError.code, "영상을 차시에 연결하지 못했습니다.");
-  }
-
-  if (
-    currentLesson.video_provider === "supabase" &&
-    currentLesson.video_path &&
-    currentLesson.video_path !== input.objectPath
-  ) {
-    const { error: cleanupError } = await supabase.storage
-      .from(courseVideoBucket)
-      .remove([currentLesson.video_path]);
-    if (cleanupError) {
-      console.error("Failed to remove replaced lesson video:", cleanupError.message);
-    }
-  }
-
-  revalidateCourses();
-  return { ok: true, message: "영상 업로드와 차시 연결을 완료했습니다." };
-}
-
 export async function removeLessonVideoAction(
   lessonId: string
 ): Promise<CourseMutationResult> {
@@ -450,11 +363,12 @@ export async function removeLessonVideoAction(
   const supabase = await createClient();
   const { data: lesson, error: lessonError } = await supabase
     .from("lessons")
-    .select("video_path, video_provider, status")
+    .select("video_path, video_provider, mux_asset_id, status")
     .eq("id", lessonId)
     .maybeSingle<{
       video_path: string | null;
       video_provider: string | null;
+      mux_asset_id: string | null;
       status: AdminCourseStatus;
     }>();
 
@@ -471,6 +385,11 @@ export async function removeLessonVideoAction(
       video_content_type: null,
       video_size_bytes: null,
       video_uploaded_at: null,
+      // Mux 쪽 연결도 함께 끊는다. 남겨두면 재생 매니페스트에 계속 잡힌다.
+      mux_upload_id: null,
+      mux_asset_id: null,
+      mux_playback_id: null,
+      mux_status: null,
       status: lesson.status === "published" ? "draft" : lesson.status,
     })
     .eq("id", lessonId);
@@ -478,6 +397,19 @@ export async function removeLessonVideoAction(
   if (updateError) {
     console.error("Failed to disconnect lesson video:", updateError.message);
     return videoMutationError(updateError.code, "영상을 삭제하지 못했습니다.");
+  }
+
+  // Mux 에 남겨두면 보관 비용이 계속 나간다. 실패해도 차시 연결은 이미 끊겼으므로
+  // 여기서 되돌리지 않고 로그만 남긴다.
+  if (lesson.mux_asset_id) {
+    try {
+      await getMuxClient().video.assets.delete(lesson.mux_asset_id);
+    } catch (error) {
+      console.error(
+        "Failed to delete Mux asset:",
+        error instanceof Error ? error.message : "unknown error"
+      );
+    }
   }
 
   if (lesson.video_provider === "supabase" && lesson.video_path) {
@@ -642,14 +574,14 @@ async function validateCoursePublishReadiness(
 
   const { data: lessons, error: lessonError } = await supabase
     .from("lessons")
-    .select("video_path")
+    .select("mux_status")
     .in("section_id", sections.map((section) => section.id))
     .eq("status", "published")
-    .returns<Array<{ video_path: string | null }>>();
+    .returns<Array<{ mux_status: string | null }>>();
 
   if (lessonError) return "차시 공개 준비 상태를 확인하지 못했습니다.";
   if (!lessons || lessons.length === 0) return "공개할 차시를 먼저 추가해 주세요.";
-  if (lessons.some((lesson) => !lesson.video_path)) {
+  if (lessons.some((lesson) => lesson.mux_status !== "ready")) {
     return "영상이 연결되지 않은 차시가 있어 강의를 공개할 수 없습니다.";
   }
   return null;
@@ -708,45 +640,6 @@ function mutationError(code: string | undefined, message: string): CourseFormSta
   };
 }
 
-function validateVideoFinalizeInput(
-  lessonId: string,
-  input: LessonVideoFinalizeInput
-) {
-  if (
-    typeof input.objectPath !== "string" ||
-    !new RegExp(`^lessons/${lessonId}/[0-9a-f-]{36}\\.mp4$`, "i").test(
-      input.objectPath
-    )
-  ) {
-    return "업로드된 영상 경로가 올바르지 않습니다.";
-  }
-  if (
-    typeof input.fileName !== "string" ||
-    !input.fileName.trim() ||
-    input.fileName.length > 255
-  ) {
-    return "영상 파일명을 확인해 주세요.";
-  }
-  if (input.contentType !== "video/mp4") {
-    return "현재는 MP4 영상만 업로드할 수 있습니다.";
-  }
-  if (
-    !Number.isFinite(input.sizeBytes) ||
-    input.sizeBytes <= 0 ||
-    input.sizeBytes > maxCourseVideoBytes
-  ) {
-    return "영상은 50MB 이하의 MP4 파일로 업로드해 주세요.";
-  }
-  if (
-    !Number.isFinite(input.durationSeconds) ||
-    input.durationSeconds <= 0 ||
-    input.durationSeconds > 12 * 60 * 60
-  ) {
-    return "영상 재생 시간을 확인하지 못했습니다.";
-  }
-  return null;
-}
-
 function videoMutationError(
   code: string | undefined,
   message: string
@@ -759,16 +652,6 @@ function videoMutationError(
       ? "현재 영상 저장 기능을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요."
       : `${message} 잠시 후 다시 시도해 주세요.`,
   };
-}
-
-async function removeUploadedVideo(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  objectPath: string
-) {
-  const { error } = await supabase.storage
-    .from(courseVideoBucket)
-    .remove([objectPath]);
-  if (error) console.error("Failed to clean up uploaded video:", error.message);
 }
 
 function revalidateCourses() {

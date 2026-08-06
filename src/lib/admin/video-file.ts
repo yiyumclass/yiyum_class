@@ -1,15 +1,22 @@
-export const MAX_COURSE_VIDEO_BYTES = 50 * 1024 * 1024;
-
+/**
+ * Mux 가 변환을 맡으므로 형식과 용량을 좁게 잡지 않는다.
+ * mov, mkv, avi, ProRes 모두 그대로 올려도 된다.
+ *
+ * 다만 영상이 아닌 파일은 통째로 올린 뒤에야 실패하므로 여기서 먼저 걸러낸다.
+ */
 export function validateCourseVideoFile(file: File) {
-  const extensionValid = file.name.toLowerCase().endsWith(".mp4");
-  const typeValid = file.type === "video/mp4" || file.type === "";
-
-  if (!extensionValid || !typeValid) {
-    return "현재는 MP4 영상만 업로드할 수 있습니다.";
-  }
   if (file.size <= 0) return "내용이 없는 파일은 업로드할 수 없습니다.";
-  if (file.size > MAX_COURSE_VIDEO_BYTES) {
-    return `파일 용량이 ${formatVideoFileSize(file.size)}입니다. 현재는 50MB 이하 영상만 업로드할 수 있습니다.`;
+
+  if (file.type) {
+    if (!file.type.startsWith("video/")) {
+      return "영상 파일이 아닙니다. 동영상 파일을 선택해 주세요.";
+    }
+    return null;
+  }
+
+  // 일부 브라우저는 mkv 같은 형식에 빈 type 을 준다. 그때만 확장자로 판단한다.
+  if (!/\.(mp4|mov|m4v|mkv|avi|webm|mpg|mpeg|wmv|flv|ts)$/i.test(file.name)) {
+    return "영상 파일인지 확인하지 못했습니다. 동영상 파일을 선택해 주세요.";
   }
   return null;
 }

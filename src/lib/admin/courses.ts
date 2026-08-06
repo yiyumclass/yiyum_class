@@ -11,17 +11,22 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AdminCourseStatus = "draft" | "published" | "archived";
 
+// Mux 인코딩 단계. ready 여야 실제로 재생할 수 있다.
+export type LessonVideoStatus =
+  | "waiting"
+  | "preparing"
+  | "ready"
+  | "errored"
+  | null;
+
 export type AdminLesson = {
   id: string;
   key: string;
   title: string;
   durationSeconds: number;
-  videoPath: string | null;
-  videoProvider: "local" | "supabase" | null;
-  videoFileName: string | null;
-  videoContentType: string | null;
-  videoSizeBytes: number | null;
-  videoUploadedAt: string | null;
+  // 관리자 화면 전체가 "재생 가능한가"만 보면 되도록 여기서 한 번 판정한다.
+  hasVideo: boolean;
+  videoStatus: LessonVideoStatus;
   status: AdminCourseStatus;
   isPreview: boolean;
   sortOrder: number;
@@ -101,12 +106,8 @@ type LessonRow = {
   lesson_key: string;
   title: string;
   duration_seconds: number;
-  video_path: string | null;
-  video_provider: "local" | "supabase" | null;
-  video_file_name: string | null;
-  video_content_type: string | null;
-  video_size_bytes: number | null;
-  video_uploaded_at: string | null;
+  mux_status: LessonVideoStatus;
+  mux_playback_id: string | null;
   status: AdminCourseStatus;
   is_preview: boolean;
   sort_order: number;
@@ -176,7 +177,7 @@ export async function loadAdminCourses(): Promise<AdminCoursesResult> {
     const expandedResult = await supabase
       .from("lessons")
       .select(
-        "id, section_id, lesson_key, title, duration_seconds, video_path, video_provider, video_file_name, video_content_type, video_size_bytes, video_uploaded_at, status, is_preview, sort_order, updated_at"
+        "id, section_id, lesson_key, title, duration_seconds, mux_status, mux_playback_id, status, is_preview, sort_order, updated_at"
       )
       .in("section_id", sectionIds)
       .order("sort_order", { ascending: true })
@@ -187,7 +188,7 @@ export async function loadAdminCourses(): Promise<AdminCoursesResult> {
       const legacyResult = await supabase
         .from("lessons")
         .select(
-          "id, section_id, lesson_key, title, duration_seconds, video_path, status, is_preview, sort_order, updated_at"
+          "id, section_id, lesson_key, title, duration_seconds, status, is_preview, sort_order, updated_at"
         )
         .in("section_id", sectionIds)
         .order("sort_order", { ascending: true })
@@ -273,12 +274,8 @@ function mapLesson(lesson: LessonRow): AdminLesson {
     key: lesson.lesson_key,
     title: lesson.title,
     durationSeconds: lesson.duration_seconds,
-    videoPath: lesson.video_path,
-    videoProvider: lesson.video_provider,
-    videoFileName: lesson.video_file_name,
-    videoContentType: lesson.video_content_type,
-    videoSizeBytes: lesson.video_size_bytes,
-    videoUploadedAt: lesson.video_uploaded_at,
+    hasVideo: lesson.mux_status === "ready" && Boolean(lesson.mux_playback_id),
+    videoStatus: lesson.mux_status,
     status: lesson.status,
     isPreview: lesson.is_preview,
     sortOrder: lesson.sort_order,
@@ -352,12 +349,8 @@ function buildCatalogFallback(): AdminCourse[] {
           key: lesson.id,
           title: lesson.title,
           durationSeconds: lesson.durationSeconds,
-          videoPath: lesson.videoSrc ?? null,
-          videoProvider: lesson.videoSrc ? "local" : null,
-          videoFileName: lesson.videoSrc?.split("/").at(-1) ?? null,
-          videoContentType: lesson.videoSrc ? "video/mp4" : null,
-          videoSizeBytes: null,
-          videoUploadedAt: null,
+          hasVideo: Boolean(lesson.videoSrc),
+          videoStatus: lesson.videoSrc ? "ready" : null,
           status: lesson.videoSrc ? "published" : "draft",
           isPreview: false,
           sortOrder: lessonIndex + 1,
@@ -368,28 +361,12 @@ function buildCatalogFallback(): AdminCourse[] {
   });
 }
 
-type LegacyLessonRow = Omit<
-  LessonRow,
-  | "video_provider"
-  | "video_file_name"
-  | "video_content_type"
-  | "video_size_bytes"
-  | "video_uploaded_at"
->;
+// Mux 컬럼이 아직 적용되지 않은 DB 를 위한 축소 조회.
+// 이 경우 영상 상태를 알 수 없으므로 "연결 없음"으로 다룬다.
+type LegacyLessonRow = Omit<LessonRow, "mux_status" | "mux_playback_id">;
 
 function normalizeLegacyLesson(lesson: LegacyLessonRow): LessonRow {
-  return {
-    ...lesson,
-    video_provider: lesson.video_path
-      ? lesson.video_path.startsWith("/")
-        ? "local"
-        : "supabase"
-      : null,
-    video_file_name: lesson.video_path?.split("/").at(-1) ?? null,
-    video_content_type: lesson.video_path ? "video/mp4" : null,
-    video_size_bytes: null,
-    video_uploaded_at: null,
-  };
+  return { ...lesson, mux_status: null, mux_playback_id: null };
 }
 
 function isVideoStorageSchemaMissing(code: string) {
