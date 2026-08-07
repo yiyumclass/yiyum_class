@@ -819,8 +819,20 @@ export default function CourseClassroom({
                               aria-label={`${itemGlobalIndex + 1}강 ${item.title}, ${lessonProgressLabel}`}
                               onClick={() => openLesson(flatItem)}
                             >
-                              <span className={isComplete ? styles.lessonCheckDone : styles.lessonCheck}>
-                                {isComplete ? <CheckIcon /> : String(itemGlobalIndex + 1).padStart(2, "0")}
+                              <span
+                                className={
+                                  isComplete
+                                    ? styles.lessonCheckDone
+                                    : isComingSoon
+                                      ? styles.lessonCheckLocked
+                                      : styles.lessonCheck
+                                }
+                              >
+                                {isComplete ? (
+                                  <CheckMarkIcon />
+                                ) : !isComingSoon && lessonProgress > 0 ? (
+                                  <LessonProgressRing percent={lessonProgress} />
+                                ) : null}
                               </span>
                               <span className={styles.lessonRowCopy}>
                                 <strong>{item.title}</strong>
@@ -894,6 +906,36 @@ function PlayIcon() {
   return (
     <svg viewBox="0 0 28 28" aria-hidden="true">
       <path d="m10.5 8 9 6-9 6Z" />
+    </svg>
+  );
+}
+
+/** 원 둘레에 시청 진행률을 그린다. 미시청은 빈 원, 완료는 채운 원이라 세 상태가 한눈에 갈린다. */
+const LESSON_RING_RADIUS = 12.5;
+const LESSON_RING_CIRCUMFERENCE = 2 * Math.PI * LESSON_RING_RADIUS;
+
+function LessonProgressRing({ percent }: { percent: number }) {
+  const clamped = Math.min(100, Math.max(0, percent));
+  const filled = (clamped / 100) * LESSON_RING_CIRCUMFERENCE;
+
+  return (
+    <svg className={styles.lessonProgressRing} viewBox="0 0 26 26" aria-hidden="true">
+      <circle
+        cx="13"
+        cy="13"
+        r={LESSON_RING_RADIUS}
+        strokeDasharray={`${filled} ${LESSON_RING_CIRCUMFERENCE - filled}`}
+        transform="rotate(-90 13 13)"
+      />
+    </svg>
+  );
+}
+
+/** 채운 원 위에 얹는 체크. CheckIcon과 달리 테두리 원을 그리지 않는다. */
+function CheckMarkIcon() {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden="true">
+      <path d="m4.6 9.3 2.9 2.9 5.9-6.1" />
     </svg>
   );
 }
