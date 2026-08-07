@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminCoursesPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = await loadAdminCourses();
 
   return (
@@ -21,6 +21,7 @@ export default async function AdminCoursesPage() {
         availableProducts={result.availableProducts}
         databaseReady={result.databaseReady}
         videoStorageReady={result.videoStorageReady}
+        canDeleteCourse={admin.role === "owner"}
         sourceMessage={result.message}
       />
     </Suspense>

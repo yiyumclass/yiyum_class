@@ -9,6 +9,9 @@ const ACTION_LABELS: Record<string, string> = {
   "course_sections.updated": "챕터를 변경했습니다",
   "lessons.created": "차시를 추가했습니다",
   "lessons.updated": "차시를 변경했습니다",
+  "courses.deleted": "강의를 삭제했습니다",
+  "course_sections.deleted": "챕터를 삭제했습니다",
+  "lessons.deleted": "차시를 삭제했습니다",
   "entitlement.granted": "수강권을 지급했습니다",
   "entitlement.updated": "수강권을 변경했습니다",
   "entitlement.revoked": "수강권을 회수했습니다",
@@ -16,6 +19,10 @@ const ACTION_LABELS: Record<string, string> = {
   "payment.refunded": "결제를 환불했습니다",
   "admin_user.granted": "운영자 권한을 부여했습니다",
   "admin_user.revoked": "운영자 권한을 해제했습니다",
+  // 실제 RPC 가 남기는 이름은 upserted/deactivated 다. 위 두 줄은 옛 이름이라
+  // 화면에 잡히지 않았다.
+  "admin_user.upserted": "운영자 권한을 부여하거나 변경했습니다",
+  "admin_user.deactivated": "운영자 권한을 해제했습니다",
 };
 
 const TARGET_LABELS: Record<string, string> = {

@@ -22,6 +22,12 @@ import {
   updateLessonAction,
   type CourseFormState,
 } from "@/app/admin/courses/actions";
+import {
+  archiveContentAction,
+  deleteCourseAction,
+  deleteCourseSectionAction,
+  deleteLessonAction,
+} from "@/app/admin/courses/delete-actions";
 import type {
   AdminCourse,
   AdminCourseSection,
@@ -61,6 +67,7 @@ type AdminCourseManagerProps = {
   availableProducts: CourseProductOption[];
   databaseReady: boolean;
   videoStorageReady: boolean;
+  canDeleteCourse: boolean;
   sourceMessage: string | null;
 };
 
@@ -84,6 +91,11 @@ type DialogState =
       autoStart?: boolean;
     };
 
+type DeleteContentHandler = (
+  kind: "lesson" | "section" | "course",
+  target: { id: string; title: string; childCount?: number }
+) => Promise<void>;
+
 const initialFormState: CourseFormState = {
   status: "idle",
   message: "",
@@ -101,12 +113,14 @@ export default function AdminCourseManager({
   availableProducts,
   databaseReady,
   videoStorageReady,
+  canDeleteCourse,
   sourceMessage,
 }: AdminCourseManagerProps) {
-  const { toast } = useAdminFeedback();
+  const { toast, confirm } = useAdminFeedback();
   const { values, setValues } = useTableParams(courseParamDefaults);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const selectedCourse =
     courses.find((course) => course.id === values.course) ?? courses[0] ?? null;
   /*
@@ -123,6 +137,70 @@ export default function AdminCourseManager({
     sections: courses.reduce((total, course) => total + course.sections.length, 0),
     lessons: allLessons.length,
     connectedVideos: allLessons.filter((lesson) => lesson.hasVideo).length,
+  };
+
+  /**
+   * 되돌릴 수 없는 작업이라 무엇이 함께 사라지는지 먼저 알린다.
+   * 수강 기록이 있으면 서버가 거부하며, 그때는 보관 처리를 안내받는다.
+   */
+  const deleteContent = async (
+    kind: "lesson" | "section" | "course",
+    target: { id: string; title: string; childCount?: number }
+  ) => {
+    if (!databaseReady || deletingId) return;
+
+    const label =
+      kind === "lesson" ? "차시" : kind === "section" ? "챕터" : "강의";
+    const cascade =
+      kind === "lesson"
+        ? "연결된 영상도 함께 삭제됩니다."
+        : `안에 있는 ${target.childCount ?? 0}개 항목과 연결된 영상도 함께 삭제됩니다.`;
+
+    const confirmed = await confirm({
+      title: `${label} "${target.title}"을(를) 삭제할까요?`,
+      description: `${cascade} 되돌릴 수 없습니다. 수강 기록이 있으면 삭제되지 않고 보관 처리를 안내합니다.`,
+      confirmLabel: `${label} 삭제`,
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    setDeletingId(target.id);
+    try {
+      const action =
+        kind === "lesson"
+          ? deleteLessonAction
+          : kind === "section"
+            ? deleteCourseSectionAction
+            : deleteCourseAction;
+      const result = await action(target.id);
+
+      // 막혔을 때 안내만 띄우고 끝내면 운영자는 다음에 뭘 해야 할지 모른 채 남는다.
+      // 대안인 보관 처리를 그 자리에서 이어갈 수 있게 한다.
+      if (!result.ok && result.canArchive) {
+        const archive = await confirm({
+          title: `${label}을(를) 보관 처리할까요?`,
+          description: `${result.message}\n\n보관하면 수강생 화면에서는 사라지고 관리자 화면에는 남습니다. 언제든 다시 공개할 수 있습니다.`,
+          confirmLabel: "보관 처리",
+        });
+        if (!archive) {
+          toast(result.message, "error");
+          return;
+        }
+        const archived = await archiveContentAction(kind, target.id);
+        toast(archived.message, archived.ok ? "success" : "error");
+        return;
+      }
+
+      toast(result.message, result.ok ? "success" : "error");
+      if (result.ok && kind === "course") setValues({ course: "" });
+    } catch {
+      toast(
+        `${label}을(를) 삭제하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.`,
+        "error"
+      );
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const moveItem = async (
@@ -298,8 +376,11 @@ export default function AdminCourseManager({
               editable={databaseReady && selectedCourse.source === "database"}
               videoStorageReady={videoStorageReady}
               movingId={movingId}
+              deletingId={deletingId}
+              canDeleteCourse={canDeleteCourse}
               onOpenDialog={setDialog}
               onMove={moveItem}
+              onDelete={deleteContent}
             />
           ) : (
             <div className={styles.editorEmpty}>
@@ -409,19 +490,25 @@ function CourseEditor({
   editable,
   videoStorageReady,
   movingId,
+  deletingId,
+  canDeleteCourse,
   onOpenDialog,
   onMove,
+  onDelete,
 }: {
   course: AdminCourse;
   editable: boolean;
   videoStorageReady: boolean;
   movingId: string | null;
+  deletingId: string | null;
+  canDeleteCourse: boolean;
   onOpenDialog: (dialog: DialogState) => void;
   onMove: (
     kind: "section" | "lesson",
     itemId: string,
     direction: -1 | 1
   ) => Promise<void>;
+  onDelete: DeleteContentHandler;
 }) {
   const lessonCount = countLessons(course);
   const videoCount = countConnectedVideos(course);
@@ -473,6 +560,22 @@ function CourseEditor({
               onClick={() => onOpenDialog({ type: "edit-course", course })}
             >
               기본 정보 수정
+            </button>
+          )}
+          {editable && canDeleteCourse && (
+            <button
+              type="button"
+              className={styles.dangerButton}
+              disabled={deletingId !== null}
+              onClick={() =>
+                void onDelete("course", {
+                  id: course.id,
+                  title: course.title,
+                  childCount: countLessons(course),
+                })
+              }
+            >
+              강의 삭제
             </button>
           )}
           {course.source === "database" && (
@@ -549,8 +652,10 @@ function CourseEditor({
             editable={editable}
             videoStorageReady={videoStorageReady}
             movingId={movingId}
+            deletingId={deletingId}
             onOpenDialog={onOpenDialog}
             onMove={onMove}
+            onDelete={onDelete}
           />
         ))}
       </div>
@@ -582,8 +687,10 @@ function CourseSectionCard({
   editable,
   videoStorageReady,
   movingId,
+  deletingId,
   onOpenDialog,
   onMove,
+  onDelete,
 }: {
   section: AdminCourseSection;
   courseSlug: string;
@@ -592,12 +699,14 @@ function CourseSectionCard({
   editable: boolean;
   videoStorageReady: boolean;
   movingId: string | null;
+  deletingId: string | null;
   onOpenDialog: (dialog: DialogState) => void;
   onMove: (
     kind: "section" | "lesson",
     itemId: string,
     direction: -1 | 1
   ) => Promise<void>;
+  onDelete: DeleteContentHandler;
 }) {
   return (
     <details className={styles.sectionCard} open={sectionIndex === 0}>
@@ -628,6 +737,20 @@ function CourseSectionCard({
               onClick={() => onOpenDialog({ type: "edit-section", section })}
             >
               챕터 수정
+            </button>
+            <button
+              type="button"
+              className={styles.dangerButton}
+              disabled={deletingId !== null}
+              onClick={() =>
+                void onDelete("section", {
+                  id: section.id,
+                  title: section.title,
+                  childCount: section.lessons.length,
+                })
+              }
+            >
+              챕터 삭제
             </button>
             <button
               type="button"
@@ -701,6 +824,19 @@ function CourseSectionCard({
                     }
                   >
                     수정
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.dangerButton}
+                    disabled={deletingId !== null}
+                    onClick={() =>
+                      void onDelete("lesson", {
+                        id: lesson.id,
+                        title: lesson.title,
+                      })
+                    }
+                  >
+                    삭제
                   </button>
                 </span>
               )}

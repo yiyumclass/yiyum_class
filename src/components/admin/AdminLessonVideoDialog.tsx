@@ -39,7 +39,8 @@ export default function AdminLessonVideoDialog({
 
     const confirmed = await confirm({
       title: "연결된 영상을 삭제할까요?",
-      description: "영상을 삭제하면 차시는 자동으로 작성 중 상태로 변경됩니다.",
+      description:
+        "영상을 삭제하면 차시는 자동으로 작성 중 상태로 변경되고, Mux 보관 자리도 하나 돌아옵니다. 수강 기록은 그대로 남습니다.",
       confirmLabel: "영상 삭제",
       tone: "danger",
     });
@@ -118,6 +119,11 @@ export default function AdminLessonVideoDialog({
                   </span>
                 </div>
 
+                {/* 접은 강의를 통째로 지우지 않고도 보관 비용을 줄일 수 있다는 걸 알려준다. */}
+                <p className={styles.removeHint}>
+                  강의를 접었다면 영상만 지워도 됩니다. 차시와 수강 기록은 남고
+                  Mux 보관 자리만 돌아옵니다.
+                </p>
                 <button
                   type="button"
                   className={styles.removeButton}

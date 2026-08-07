@@ -434,3 +434,10 @@
   .dropzone,
   .progressTrack > span { transition: none; }
 }
+
+.removeHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--admin-ink-muted);
+}
