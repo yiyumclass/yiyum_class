@@ -637,6 +637,22 @@
   color: #91887c;
 }
 
+/* 정가는 판매가보다 작고 흐리게 둔다. 눈이 먼저 닿아야 하는 값은 실제로 낼 돈이다. */
+.priceWithList {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  white-space: normal;
+}
+
+.priceWithList s {
+  color: #a0968a;
+  font-size: var(--admin-text-xs);
+  font-weight: 500;
+}
+
 .statusBadge {
   min-height: var(--admin-badge-height);
   padding: 0 var(--admin-pad-sm);
@@ -657,6 +673,12 @@
 .statusBadge.draft {
   background: #eee9e0;
   color: #81776b;
+}
+
+/* 품절은 판매 중지와 다르게 읽혀야 한다. 아직 살아있는 상품이라는 뜻이다. */
+.statusBadge.sold_out {
+  background: #f6e2e0;
+  color: #a2544b;
 }
 
 .statusBadge.paused {

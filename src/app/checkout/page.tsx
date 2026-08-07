@@ -150,6 +150,12 @@ export default async function CheckoutPage({
           >
             마이 클래스에서 확인하기
           </Link>
+        ) : product.soldOut ? (
+          <p role="status" style={{ color: "#B7A995", fontSize: 14, lineHeight: 1.7 }}>
+            지금은 신청을 받지 않습니다.
+            <br />
+            다음 모집이 열리면 안내드릴게요.
+          </p>
         ) : isFreeProduct ? (
           <FreeEnrollmentForm productSlug={product.slug} />
         ) : canRequestTossPayment ? (
@@ -167,7 +173,9 @@ export default async function CheckoutPage({
           </p>
         )}
         <p style={{ fontSize: 12, color: "#7C7367", lineHeight: 1.7, margin: "16px 0 0" }}>
-          {isFreeProduct ? (
+          {product.soldOut && !alreadyEnrolled ? (
+            <>재입고 소식은 카카오톡 채널로 먼저 알려드려요.</>
+          ) : isFreeProduct ? (
             <>신청 완료 후 마이 클래스에서 바로 확인할 수 있어요.</>
           ) : (
             <>

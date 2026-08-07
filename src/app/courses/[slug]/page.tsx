@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
+import { resolveSalePrice } from "@/lib/store/pricing";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 import styles from "./course-detail.module.css";
 
@@ -35,6 +36,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
     (total, lesson) => total + lesson.durationSeconds,
     0
   );
+  const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
 
   return (
     <div className={styles.page}>
@@ -104,16 +106,37 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             <div className={styles.purchaseArea}>
               <div className={styles.price}>
                 <span>수강료 · 부가세 포함</span>
+                {sale.listPriceKrw !== null && (
+                  <div className={styles.saleRow}>
+                    <span className={styles.discount}>
+                      {sale.discountPercent}% 할인
+                    </span>
+                    <s className={styles.listPrice}>
+                      {formatPrice(sale.listPriceKrw)}원
+                    </s>
+                  </div>
+                )}
                 <strong className="serif">
                   {formatPrice(item.priceKrw)}<small>원</small>
                 </strong>
               </div>
               <div className={styles.actions}>
-                <Link href={item.checkoutHref} className={styles.primaryAction}>
-                  수강 신청 <ArrowIcon />
-                </Link>
+                {item.soldOut ? (
+                  <span className={styles.soldOutAction} aria-disabled="true">
+                    품절
+                  </span>
+                ) : (
+                  <Link href={item.checkoutHref} className={styles.primaryAction}>
+                    수강 신청 <ArrowIcon />
+                  </Link>
+                )}
               </div>
             </div>
+            {item.soldOut && (
+              <p className={styles.soldOutNotice} role="status">
+                지금은 신청을 받지 않습니다. 다음 모집이 열리면 안내드릴게요.
+              </p>
+            )}
           </div>
         </section>
 
@@ -171,11 +194,19 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
         <section className={styles.bottomCta}>
           <div>
             <span>READY TO START?</span>
-            <h2 className="serif">내 속도에 맞춰 시작해 보세요.</h2>
+            <h2 className="serif">
+              {item.soldOut
+                ? "이번 모집은 마감되었어요."
+                : "내 속도에 맞춰 시작해 보세요."}
+            </h2>
           </div>
           <div>
             <strong className="serif">{formatPrice(item.priceKrw)}원</strong>
-            <Link href={item.checkoutHref}>수강 신청 <ArrowIcon /></Link>
+            {item.soldOut ? (
+              <span className={styles.soldOutAction} aria-disabled="true">품절</span>
+            ) : (
+              <Link href={item.checkoutHref}>수강 신청 <ArrowIcon /></Link>
+            )}
           </div>
         </section>
       </main>

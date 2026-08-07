@@ -56,7 +56,7 @@ export type AdminMemberProductOption = {
   title: string;
   productType: "course" | "ebook";
   accessPeriodDays: number | null;
-  status: "draft" | "active" | "paused";
+  status: "draft" | "active" | "sold_out" | "paused";
 };
 
 export type AdminMemberSummary = {

@@ -61,6 +61,7 @@ const typeFilters: Array<{ value: TypeFilter; label: string }> = [
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "모든 상태" },
   { value: "active", label: "판매 중" },
+  { value: "sold_out", label: "품절" },
   { value: "draft", label: "작성 중" },
   { value: "paused", label: "판매 중지" },
   { value: "archived", label: "보관" },
@@ -163,6 +164,7 @@ export default function AdminProductManager({
   const summary = {
     total: filteredProducts.length,
     active: filteredProducts.filter((product) => product.status === "active").length,
+    soldOut: filteredProducts.filter((product) => product.status === "sold_out").length,
     draft: filteredProducts.filter((product) => product.status === "draft").length,
     paused: filteredProducts.filter((product) => product.status === "paused").length,
     archived: filteredProducts.filter((product) => product.status === "archived").length,
@@ -206,6 +208,7 @@ export default function AdminProductManager({
         { header: "slug", value: (product) => product.slug },
         { header: "유형", value: (product) => formatProductType(product.productType) },
         { header: "판매가", value: (product) => product.priceKrw },
+        { header: "정가", value: (product) => product.listPriceKrw ?? "" },
         { header: "이용기간(일)", value: (product) => product.accessPeriodDays ?? "제한 없음" },
         { header: "상태", value: (product) => formatStatus(product.status) },
         { header: "최근수정", value: (product) => formatUpdatedAt(product.updatedAt) },
@@ -286,6 +289,12 @@ export default function AdminProductManager({
             tone="active"
             active={statusFilter === "active"}
             onSelect={() => setValues({ status: "active" })}
+          />
+          <SummaryItem
+            label="품절"
+            value={summary.soldOut}
+            active={statusFilter === "sold_out"}
+            onSelect={() => setValues({ status: "sold_out" })}
           />
           <SummaryItem
             label="작성 중"
@@ -552,7 +561,14 @@ function ProductRow({
       </td>
       <td data-label="유형">{formatProductType(product.productType)}</td>
       <td data-label="판매가" className={styles.priceCell}>
-        {formatPrice(product.priceKrw)}
+        {product.listPriceKrw !== null && product.listPriceKrw > product.priceKrw ? (
+          <span className={styles.priceWithList}>
+            <s>{formatPrice(product.listPriceKrw)}</s>
+            <strong>{formatPrice(product.priceKrw)}</strong>
+          </span>
+        ) : (
+          formatPrice(product.priceKrw)
+        )}
       </td>
       <td data-label="이용 기간" className={styles.periodCell}>
         {formatAccessPeriod(product.accessPeriodDays)}
@@ -716,6 +732,20 @@ function ProductEditDialog({
               description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
               required
             />
+            <FormField
+              label="정가"
+              name="listPriceKrw"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1000"
+              suffix="원"
+              defaultValue={
+                product.listPriceKrw === null ? "" : String(product.listPriceKrw)
+              }
+              error={state.fieldErrors.listPriceKrw}
+              description="비워두면 세일 표시가 붙지 않습니다. 넣으면 판매 화면에 취소선으로 함께 보입니다."
+            />
           </div>
 
           <label className={styles.formField}>
@@ -742,12 +772,15 @@ function ProductEditDialog({
                 <select name="status" defaultValue={product.status}>
                   <option value="draft">작성 중</option>
                   <option value="active">판매 중</option>
+                  <option value="sold_out">품절</option>
                   <option value="paused">판매 중지</option>
                   <option value="archived">보관</option>
                 </select>
                 <ChevronIcon />
               </span>
-              <small>판매 중 상태만 공개 상품 목록에 표시됩니다.</small>
+              <small>
+                품절은 목록에 남고 결제만 막힙니다. 판매 중지는 목록에서 내려갑니다.
+              </small>
             </label>
 
             <fieldset className={`${styles.accessFieldset} ${styles.editAccessFieldset}`}>
@@ -903,6 +936,18 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
               error={state.fieldErrors.priceKrw}
               description="0원 상품은 결제 없이 무료 신청으로 처리됩니다."
               required
+            />
+            <FormField
+              label="정가"
+              name="listPriceKrw"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1000"
+              placeholder="550000"
+              suffix="원"
+              error={state.fieldErrors.listPriceKrw}
+              description="할인 전 가격입니다. 비워두면 세일 표시가 붙지 않습니다."
             />
             <label className={styles.formField}>
               <span>등록 상태</span>
@@ -1118,7 +1163,8 @@ function getNextStatusAction(status: AdminProductStatus) {
     Record<AdminProductStatus, { label: string; status: AdminProductStatus }>
   > = {
     draft: { label: "판매 시작", status: "active" },
-    active: { label: "판매 중지", status: "paused" },
+    active: { label: "품절 처리", status: "sold_out" },
+    sold_out: { label: "판매 재개", status: "active" },
     paused: { label: "판매 재개", status: "active" },
   };
   return actions[status] ?? null;
@@ -1166,6 +1212,7 @@ function formatStatus(status: AdminProductStatus) {
   const labels: Record<AdminProductStatus, string> = {
     draft: "작성 중",
     active: "판매 중",
+    sold_out: "품절",
     paused: "판매 중지",
     archived: "보관",
   };

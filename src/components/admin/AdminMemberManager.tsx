@@ -1046,7 +1046,12 @@ function formatSource(source: AdminMemberEntitlement["source"]) {
 }
 
 function formatProductStatus(status: AdminMemberProductOption["status"]) {
-  return { active: "판매 중", draft: "작성 중", paused: "판매 중지" }[status];
+  return {
+    active: "판매 중",
+    draft: "작성 중",
+    sold_out: "품절",
+    paused: "판매 중지",
+  }[status];
 }
 
 function formatNumber(value: number) {

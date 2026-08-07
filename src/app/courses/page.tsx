@@ -7,6 +7,7 @@ import {
   loadPublicCourseCatalog,
   type PublicCourseCatalogItem,
 } from "@/lib/store/public-course-catalog";
+import { resolveSalePrice } from "@/lib/store/pricing";
 import styles from "./courses.module.css";
 
 export const metadata: Metadata = {
@@ -92,6 +93,7 @@ function CourseCard({
     (total, lesson) => total + lesson.durationSeconds,
     0
   );
+  const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
 
   return (
     <article className={styles.courseCard}>
@@ -119,6 +121,7 @@ function CourseCard({
           </div>
         )}
         <span className={styles.vodBadge}>VOD CLASS</span>
+        {item.soldOut && <span className={styles.soldOutBadge}>SOLD OUT</span>}
         <span className={styles.instructor}>
           {item.course.instructor || item.title}
         </span>
@@ -146,6 +149,12 @@ function CourseCard({
         <div className={styles.cardFooter}>
           <div className={styles.price}>
             <span>부가세 포함</span>
+            {sale.listPriceKrw !== null && (
+              <div className={styles.saleRow}>
+                <span className={styles.discount}>{sale.discountPercent}% 할인</span>
+                <s className={styles.listPrice}>{formatPrice(sale.listPriceKrw)}원</s>
+              </div>
+            )}
             <strong className="serif">
               {formatPrice(item.priceKrw)}<small>원</small>
             </strong>

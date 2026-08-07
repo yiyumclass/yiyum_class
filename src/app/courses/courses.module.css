@@ -154,6 +154,20 @@
   background: linear-gradient(180deg, rgba(25, 20, 16, 0.03) 45%, rgba(25, 20, 16, 0.7) 100%);
 }
 
+/* 품절이어도 카드는 남는다. 다음 기수를 기다리게 하려면 상품이 보여야 한다. */
+.soldOutBadge {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #3f3932;
+  color: #fffaf3;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
 .vodBadge {
   position: absolute;
   top: 17px;
@@ -267,6 +281,26 @@
 .price small {
   margin-left: 3px;
   color: #b85c38;
+  font-size: 12px;
+}
+
+/* 정가는 실제로 낼 돈보다 작고 흐리게 둔다. 할인율은 숫자만으로도 읽히지만
+   '할인'을 붙여야 색을 구분하지 못해도 무슨 값인지 알 수 있다. */
+.saleRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.discount {
+  color: #b85c38;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.listPrice {
+  color: #9a9186;
   font-size: 12px;
 }
 

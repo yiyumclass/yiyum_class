@@ -14,6 +14,7 @@ export type CreateProductState = {
       | "title"
       | "slug"
       | "priceKrw"
+      | "listPriceKrw"
       | "accessPeriodDays"
       | "summary"
       | "thumbnailPath"
@@ -31,6 +32,7 @@ export type ProductMutationResult = {
 const productStatuses: AdminProductStatus[] = [
   "draft",
   "active",
+  "sold_out",
   "paused",
   "archived",
 ];
@@ -58,6 +60,7 @@ export async function createProductAction(
     title: values.title,
     summary: values.summary,
     price_krw: values.priceKrw,
+    list_price_krw: values.listPriceKrw,
     access_period_days:
       values.accessMode === "period" ? values.accessPeriodDays : null,
     status: values.status,
@@ -180,6 +183,7 @@ export async function updateProductAction(
       title: values.title,
       summary: values.summary,
       price_krw: values.priceKrw,
+      list_price_krw: values.listPriceKrw,
       access_period_days:
         values.accessMode === "period" ? values.accessPeriodDays : null,
       status: values.status,
@@ -225,6 +229,8 @@ type ProductFormValues = {
   slug: string;
   summary: string;
   priceKrw: number;
+  /** 할인 전 정가. 비워두면 null이고 세일 표시가 붙지 않는다. */
+  listPriceKrw: number | null;
   accessMode: "period" | "lifetime";
   accessPeriodDays: number;
   status: "draft" | "active";
@@ -250,6 +256,7 @@ function readProductForm(formData: FormData): ProductFormValues {
     slug: readString(formData, "slug").toLowerCase(),
     summary: readString(formData, "summary"),
     priceKrw: readNumber(formData, "priceKrw"),
+    listPriceKrw: readOptionalNumber(formData, "listPriceKrw"),
     accessMode: accessMode === "lifetime" ? "lifetime" : "period",
     accessPeriodDays: readNumber(formData, "accessPeriodDays"),
     status: status === "active" ? "active" : "draft",
@@ -266,6 +273,7 @@ function readEditableProductForm(formData: FormData): EditableProductFormValues 
     title: readString(formData, "title"),
     summary: readString(formData, "summary"),
     priceKrw: readNumber(formData, "priceKrw"),
+    listPriceKrw: readOptionalNumber(formData, "listPriceKrw"),
     accessMode: accessMode === "lifetime" ? "lifetime" : "period",
     accessPeriodDays: readNumber(formData, "accessPeriodDays"),
     status: productStatuses.includes(rawStatus) ? rawStatus : "draft",
@@ -287,6 +295,11 @@ function validateProductForm(values: ProductFormValues) {
 
   if (!Number.isInteger(values.priceKrw) || values.priceKrw < 0) {
     errors.priceKrw = "판매가는 0원 이상의 숫자로 입력해 주세요.";
+  }
+
+  const listPriceError = validateListPrice(values);
+  if (listPriceError) {
+    errors.listPriceKrw = listPriceError;
   }
 
   if (
@@ -322,6 +335,11 @@ function validateEditableProductForm(values: EditableProductFormValues) {
     errors.priceKrw = "판매가는 0원 이상의 숫자로 입력해 주세요.";
   }
 
+  const listPriceError = validateListPrice(values);
+  if (listPriceError) {
+    errors.listPriceKrw = listPriceError;
+  }
+
   if (
     values.accessMode === "period" &&
     (!Number.isInteger(values.accessPeriodDays) || values.accessPeriodDays < 1)
@@ -344,6 +362,24 @@ function validateEditableProductForm(values: EditableProductFormValues) {
   return errors;
 }
 
+/** 정가는 비워도 되지만, 넣었다면 판매가보다 낮을 수 없다. 낮으면 취소선이 뒤집힌다. */
+function validateListPrice(values: {
+  priceKrw: number;
+  listPriceKrw: number | null;
+}) {
+  if (values.listPriceKrw === null) return null;
+
+  if (!Number.isInteger(values.listPriceKrw) || values.listPriceKrw < 0) {
+    return "정가는 0원 이상의 숫자로 입력하거나 비워 주세요.";
+  }
+
+  if (Number.isInteger(values.priceKrw) && values.listPriceKrw < values.priceKrw) {
+    return "정가는 판매가보다 낮을 수 없습니다. 할인 전 가격을 입력해 주세요.";
+  }
+
+  return null;
+}
+
 function revalidatePublicCatalog(slug: string) {
   revalidatePath("/");
   revalidatePath("/courses");
@@ -363,10 +399,18 @@ function readNumber(formData: FormData, key: string) {
   return raw ? Number(raw) : Number.NaN;
 }
 
+/** 빈 값과 0을 구분한다. 비우면 세일 아님, 0은 잘못 입력한 값이라 검증에서 걸러진다. */
+function readOptionalNumber(formData: FormData, key: string) {
+  const raw = readString(formData, key).replaceAll(",", "");
+  if (!raw) return null;
+  return Number(raw);
+}
+
 function formatStatus(status: AdminProductStatus) {
   const labels: Record<AdminProductStatus, string> = {
     draft: "작성 중",
     active: "판매 중",
+    sold_out: "품절",
     paused: "판매 중지",
     archived: "보관",
   };

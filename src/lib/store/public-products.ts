@@ -11,6 +11,10 @@ export type PublicProduct = {
   title: string;
   summary: string;
   priceKrw: number;
+  /** 할인 전 정가. null이면 세일이 아니다. */
+  listPriceKrw: number | null;
+  /** 품절이면 목록에는 남지만 결제는 막힌다. */
+  soldOut: boolean;
   accessPeriodDays: number | null;
   accessLabel: string;
   detailHref: string;
@@ -23,6 +27,8 @@ type ProductRow = {
   title: string;
   summary: string;
   price_krw: number;
+  list_price_krw: number | null;
+  status: "active" | "sold_out";
   access_period_days: number | null;
   detail_path: string | null;
 };
@@ -49,6 +55,8 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
     title: row.title,
     summary: row.summary,
     priceKrw: row.price_krw,
+    listPriceKrw: row.list_price_krw,
+    soldOut: row.status === "sold_out",
     accessPeriodDays: row.access_period_days,
     accessLabel:
       row.access_period_days === null
@@ -68,6 +76,8 @@ function buildTemporaryProduct(slug: string): PublicProduct | null {
     title: "작은 계정을 수익으로 연결하는 법",
     summary: "수익화 계정의 방향과 실행 순서를 한 권에 정리한 실전 워크북",
     priceKrw: 0,
+    listPriceKrw: null,
+    soldOut: false,
     accessPeriodDays: null,
     accessLabel: "기간 제한 없이 이용",
     detailHref: "/",

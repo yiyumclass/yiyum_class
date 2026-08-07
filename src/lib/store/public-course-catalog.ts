@@ -14,6 +14,10 @@ export type PublicCourseCatalogItem = {
   title: string;
   summary: string;
   priceKrw: number;
+  /** 할인 전 정가. null이면 세일이 아니다. */
+  listPriceKrw: number | null;
+  /** 품절이면 목록에는 남지만 결제는 막힌다. */
+  soldOut: boolean;
   accessPeriodDays: number | null;
   accessLabel: string;
   thumbnailSrc: string | null;
@@ -34,6 +38,8 @@ type ProductRow = {
   title: string;
   summary: string;
   price_krw: number;
+  list_price_krw: number | null;
+  status: "active" | "sold_out";
   access_period_days: number | null;
   thumbnail_path: string | null;
   detail_path: string | null;
@@ -312,6 +318,10 @@ function buildCourseCatalogFromEntitledRows(rows: EntitledCourseOutlineRow[]) {
           title: row.product_title,
           summary: row.product_summary,
           price_krw: row.product_price_krw,
+          // 이미 구매한 강의라 판매 화면이 뜨지 않는다. 세일과 품절 표시는 쓰이지 않아
+          // 조회 RPC도 그 값을 내려주지 않는다.
+          list_price_krw: null,
+          status: "active",
           access_period_days: row.product_access_period_days,
           thumbnail_path: row.product_thumbnail_path,
           detail_path: row.product_detail_path,
@@ -469,6 +479,8 @@ function mapProductRow(
     title: product.title,
     summary: product.summary || course.description,
     priceKrw: product.price_krw,
+    listPriceKrw: product.list_price_krw,
+    soldOut: product.status === "sold_out",
     accessPeriodDays: product.access_period_days,
     accessLabel: formatAccessPeriod(product.access_period_days),
     thumbnailSrc: resolveLocalImage(product.thumbnail_path, course.posterSrc),
@@ -495,6 +507,8 @@ function buildFallbackCatalog(): PublicCourseCatalogItem[] {
         title: course.title,
         summary: course.description || product.tagline,
         priceKrw: product.price,
+        listPriceKrw: null,
+        soldOut: false,
         accessPeriodDays,
         accessLabel: formatAccessPeriod(accessPeriodDays),
         thumbnailSrc: course.posterSrc,

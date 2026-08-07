@@ -10,7 +10,12 @@ import { courseProducts } from "@/lib/store/course-products";
 import { createClient } from "@/lib/supabase/server";
 
 export type AdminProductType = "course" | "ebook";
-export type AdminProductStatus = "draft" | "active" | "paused" | "archived";
+export type AdminProductStatus =
+  | "draft"
+  | "active"
+  | "sold_out"
+  | "paused"
+  | "archived";
 
 export type AdminProduct = {
   id: string;
@@ -19,6 +24,8 @@ export type AdminProduct = {
   title: string;
   summary: string;
   priceKrw: number;
+  /** 할인 전 정가. null이면 세일이 아니다. */
+  listPriceKrw: number | null;
   accessPeriodDays: number | null;
   status: AdminProductStatus;
   thumbnailPath: string | null;
@@ -40,6 +47,7 @@ type ProductRow = {
   title: string;
   summary: string;
   price_krw: number;
+  list_price_krw: number | null;
   access_period_days: number | null;
   status: AdminProductStatus;
   thumbnail_path: string | null;
@@ -53,7 +61,7 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, slug, product_type, title, summary, price_krw, access_period_days, status, thumbnail_path, detail_path, updated_at"
+      "id, slug, product_type, title, summary, price_krw, list_price_krw, access_period_days, status, thumbnail_path, detail_path, updated_at"
     )
     .order("updated_at", { ascending: false })
     .returns<ProductRow[]>();
@@ -96,6 +104,7 @@ function mapProductRow(row: ProductRow): AdminProduct {
     title: row.title,
     summary: row.summary,
     priceKrw: row.price_krw,
+    listPriceKrw: row.list_price_krw,
     accessPeriodDays: row.access_period_days,
     status: row.status,
     thumbnailPath: row.thumbnail_path,
@@ -116,6 +125,7 @@ function buildCatalogFallback(): AdminProduct[] {
       title: course?.title ?? product.courseSlug,
       summary: course?.description ?? product.tagline,
       priceKrw: product.price,
+      listPriceKrw: null,
       accessPeriodDays: readAccessPeriod(product.accessLabel),
       status: "active",
       thumbnailPath: course?.posterSrc ?? null,
