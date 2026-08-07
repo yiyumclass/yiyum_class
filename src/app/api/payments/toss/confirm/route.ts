@@ -13,6 +13,7 @@ import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductType } from "@/lib/store/product-type";
 
 export const runtime = "nodejs";
 
@@ -37,7 +38,7 @@ type EntitlementRow = {
 
 type CompletedPaymentRow = {
   product_slug: string;
-  product_type: "course" | "ebook";
+  product_type: ProductType;
   expires_at: string | null;
 };
 

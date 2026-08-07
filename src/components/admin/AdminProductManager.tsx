@@ -29,6 +29,7 @@ import { useAdminFeedback } from "./AdminFeedback";
 import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "./AdminPagination";
 import {
   BookIcon,
+  ChatIcon,
   CheckIcon,
   ChevronIcon,
   DatabaseIcon,
@@ -39,6 +40,7 @@ import {
 } from "./icons";
 import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminProductManager.module.css";
+import { formatProductType } from "@/lib/store/product-type";
 
 type AdminProductManagerProps = {
   products: AdminProduct[];
@@ -56,6 +58,7 @@ const typeFilters: Array<{ value: TypeFilter; label: string }> = [
   { value: "all", label: "전체" },
   { value: "course", label: "VOD 강의" },
   { value: "ebook", label: "전자책" },
+  { value: "consulting", label: "1:1 컨설팅" },
 ];
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
@@ -551,7 +554,7 @@ function ProductRow({
       <td>
         <div className={styles.productIdentity}>
           <span className={styles.productThumbnail} aria-hidden="true">
-            {product.productType === "course" ? <PlayIcon /> : <BookIcon />}
+            {productTypeIcon(product.productType)}
           </span>
           <span className={styles.productCopy}>
             <strong>{product.title}</strong>
@@ -906,6 +909,10 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
               <input type="radio" name="productType" value="ebook" />
               <span><BookIcon /><strong>전자책</strong><small>파일 또는 리더 연결</small></span>
             </label>
+            <label>
+              <input type="radio" name="productType" value="consulting" />
+              <span><ChatIcon /><strong>1:1 컨설팅</strong><small>줌 라이브 세션</small></span>
+            </label>
           </fieldset>
 
           <div className={styles.formGrid}>
@@ -1204,10 +1211,6 @@ function getStatusConfirmRequest(
   };
 }
 
-function formatProductType(type: AdminProductType) {
-  return type === "course" ? "VOD 강의" : "전자책";
-}
-
 function formatStatus(status: AdminProductStatus) {
   const labels: Record<AdminProductStatus, string> = {
     draft: "작성 중",
@@ -1235,4 +1238,8 @@ function formatUpdatedAt(value: string | null) {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(value));
+}
+
+function productTypeIcon(type: AdminProductType) {
+  return { course: <PlayIcon />, ebook: <BookIcon />, consulting: <ChatIcon /> }[type];
 }

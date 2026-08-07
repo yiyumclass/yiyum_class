@@ -26,4 +26,13 @@ export type EbookLibraryItem = BaseLibraryItem & {
   status: "preparing" | "available" | "completed";
 };
 
-export type LibraryItem = CourseLibraryItem | EbookLibraryItem;
+/** 컨설팅은 재생할 것도 내려받을 것도 없다. 예약이 어디까지 갔는지만 보여준다. */
+export type ConsultingLibraryItem = BaseLibraryItem & {
+  kind: "consulting";
+  status: "preparing" | "available" | "completed";
+};
+
+export type LibraryItem =
+  | CourseLibraryItem
+  | EbookLibraryItem
+  | ConsultingLibraryItem;

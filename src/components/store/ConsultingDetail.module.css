@@ -1,0 +1,492 @@
+/* 상세 페이지 히어로 아래에 이어 붙는다. 좌우 여백은 커리큘럼 섹션과 같은
+   계산식을 써서 히어로와 세로선이 맞도록 한다. */
+.detail {
+  --gutter: max(40px, calc((100vw - 1120px) / 2));
+}
+
+.detail section {
+  padding: 84px var(--gutter);
+}
+
+.eyebrow {
+  color: #a26b50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+/* ---------------------------------------------------------------- 도입 */
+
+.intro {
+  background: #fdfaf5;
+}
+
+/* 헤드라인과 본문을 나란히 둔다. 한 줄로 흘리면 넓은 화면에서 오른쪽 절반이
+   통째로 비어 페이지가 성기게 읽힌다. */
+.introGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+}
+
+/* 지정한 줄이 컬럼보다 길면 브라우저가 그 줄을 다시 쪼갠다. 원고가 정한
+   줄바꿈이 살아 있도록 가장 긴 줄이 들어갈 크기로 맞춘다. */
+.headline {
+  margin: 16px 0 0;
+  font-size: clamp(30px, 3.3vw, 42px);
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  color: #201c17;
+}
+
+/* 줄바꿈 위치는 원고가 정한다. 좁아지면 각 줄이 다시 자연스럽게 접힌다. */
+.headline span {
+  display: block;
+}
+
+.lead {
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.lead p {
+  margin: 0;
+  max-width: 46ch;
+  color: #5f574d;
+  font-size: 16px;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+/* 리드의 마지막 문단이 결론으로 넘어가는 다리라 굵게 둔다. 인용문이 항상
+   마지막이므로 그 앞 문단을 가리킨다. */
+.lead > p:nth-last-child(2) {
+  color: #201c17;
+  font-weight: 650;
+}
+
+/* 리드의 결론. 본문 크기로 두면 그냥 흘러가서, 크기와 선으로 붙잡는다.
+   왼쪽 헤드라인이 길어 오른쪽 단이 짧게 끝나므로 이 문장까지 오른쪽에 두어야
+   두 단의 높이가 맞는다. */
+.lead > .promise {
+  max-width: none;
+  margin: 12px 0 0;
+  padding-left: 22px;
+  border-left: 2px solid #b85c38;
+  font-size: clamp(19px, 1.9vw, 25px);
+  line-height: 1.6;
+  letter-spacing: -0.02em;
+  color: #201c17;
+  font-weight: 400;
+  text-wrap: pretty;
+}
+
+.lead > .promise span {
+  display: block;
+}
+
+/* ------------------------------------------------------- 이런 순간에 */
+
+.needs {
+  background: #f4eee4;
+}
+
+.needs h3 {
+  margin: 0 0 28px;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.02em;
+  color: #201c17;
+}
+
+.needs ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.needs li {
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: #fdfaf5;
+  box-shadow: inset 2px 0 0 #e2d3c2;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 13px;
+  color: #4e483f;
+  font-size: 15px;
+  line-height: 1.6;
+  text-wrap: pretty;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.needs li:hover {
+  box-shadow: inset 2px 0 0 #b85c38;
+  transform: translateY(-2px);
+}
+
+.checkIcon {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  fill: none;
+  stroke: #b85c38;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ------------------------------------------------------- 다루는 것 */
+
+.covers {
+  background: #fbf8f2;
+}
+
+.coversHeading {
+  margin-bottom: 38px;
+  padding-top: 18px;
+  border-top: 1px solid #201c17;
+}
+
+.coversHeading span {
+  color: #a26b50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.coversHeading h3 {
+  margin: 10px 0 0;
+  font-size: clamp(26px, 3.4vw, 36px);
+  letter-spacing: -0.02em;
+  color: #201c17;
+}
+
+.coverList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  background: #e6ded2;
+  border: 1px solid #e6ded2;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.coverList li {
+  padding: 28px 26px;
+  background: #fdfaf5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  transition: background 200ms ease;
+}
+
+.coverList li:hover {
+  background: #fffdf9;
+}
+
+.coverList li:hover .coverNumber {
+  color: #b85c38;
+}
+
+.coverNumber {
+  color: #c2a98d;
+  font-size: 34px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.coverList strong {
+  display: block;
+  color: #201c17;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.coverList p {
+  margin: 9px 0 0;
+  max-width: 40ch;
+  color: #6b6459;
+  font-size: 14px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------- 진행 방식 */
+
+.process {
+  background: #211d18;
+  color: #f8f1e7;
+}
+
+.process h3 {
+  margin: 0 0 30px;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.02em;
+}
+
+.process dl {
+  margin: 0;
+  display: grid;
+  gap: 1px;
+  background: rgba(248, 241, 231, 0.16);
+  border-top: 1px solid rgba(248, 241, 231, 0.16);
+  border-bottom: 1px solid rgba(248, 241, 231, 0.16);
+}
+
+.process dl > div {
+  padding: 22px 2px;
+  background: #211d18;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 20px;
+  align-items: baseline;
+}
+
+.process dt {
+  color: #a2988a;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.process dd {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+/* 방식과 시간은 한눈에 확인하는 값이라 문장보다 크게 둔다. */
+.process dl > div:not(:last-child) dd {
+  font-size: clamp(20px, 2vw, 26px);
+  letter-spacing: -0.02em;
+}
+
+/* ------------------------------------------------------- 추천 대상 */
+
+/* 두 카드는 한 쌍으로 읽힌다. 내용 길이가 달라 높이가 어긋나면 오른쪽이
+   덜 중요한 것처럼 보인다. stretch 로 두어 같은 높이로 세운다. */
+.fit {
+  background: #fdfaf5;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.fitColumn {
+  padding: 30px 28px;
+  border: 1px solid #e6ded2;
+  border-radius: 14px;
+  background: #fbf8f2;
+}
+
+.fitColumn strong {
+  display: block;
+  margin-bottom: 18px;
+  color: #201c17;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.fitColumn ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.fitColumn li {
+  padding-left: 16px;
+  position: relative;
+  color: #5f574d;
+  font-size: 15px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.fitColumn li::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b85c38;
+}
+
+/* 신중히 고려는 권유가 아니라 만류다. 강조색을 빼서 톤을 낮춘다. */
+.fitCaution {
+  background: #f4f1ec;
+}
+
+.fitCaution li::before {
+  background: #b4aa9c;
+}
+
+/* ------------------------------------------------------------- FAQ */
+
+.faq {
+  background: #f4eee4;
+}
+
+.faqHeading {
+  margin-bottom: 30px;
+  padding-top: 18px;
+  border-top: 1px solid #201c17;
+}
+
+.faqHeading span {
+  color: #a26b50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.faqHeading h3 {
+  margin: 10px 0 0;
+  font-size: clamp(26px, 3.4vw, 36px);
+  letter-spacing: -0.02em;
+  color: #201c17;
+}
+
+.faqList {
+  display: grid;
+  gap: 10px;
+}
+
+.faqList details {
+  border-radius: 12px;
+  background: #fdfaf5;
+  overflow: hidden;
+}
+
+.faqList summary {
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faqList summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqLabel {
+  color: #b85c38;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.faqList summary strong {
+  color: #201c17;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.chevronIcon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: #9a9186;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 200ms ease;
+}
+
+.faqList details[open] .chevronIcon {
+  transform: rotate(180deg);
+}
+
+.faqList p {
+  margin: 0;
+  padding: 0 22px 22px 58px;
+  color: #5f574d;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* ---------------------------------------------------------- 좁은 화면 */
+
+@media (max-width: 980px) {
+  .introGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .lead {
+    padding-top: 0;
+  }
+
+  .promise {
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 860px) {
+  .coverList,
+  .fit,
+  .needs ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .detail section {
+    padding: 60px 22px;
+  }
+
+  .process dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .faqList p {
+    padding-left: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevronIcon,
+  .needs li,
+  .coverList li {
+    transition: none;
+  }
+
+  .needs li:hover {
+    transform: none;
+  }
+}

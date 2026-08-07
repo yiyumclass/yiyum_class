@@ -3,6 +3,7 @@ import "server-only";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_EXPORT_LIMIT, isSetupError } from "@/lib/admin/list-params";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type AdminEntitlementSource = "free_checkout" | "payment" | "admin_grant";
 export type AdminEntitlementStatus = "active" | "revoked";
@@ -34,7 +35,7 @@ export type AdminMemberEntitlement = {
   id: string;
   productId: string;
   productTitle: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   source: AdminEntitlementSource;
   status: AdminEntitlementStatus;
   grantedAt: string;
@@ -54,7 +55,7 @@ export type AdminMember = {
 export type AdminMemberProductOption = {
   id: string;
   title: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   accessPeriodDays: number | null;
   status: "draft" | "active" | "sold_out" | "paused";
 };
@@ -84,7 +85,7 @@ type AdminMemberRow = {
   entitlement_id: string | null;
   product_id: string | null;
   product_title: string | null;
-  product_type: "course" | "ebook" | null;
+  product_type: ProductType | null;
   entitlement_source: AdminEntitlementSource | null;
   entitlement_status: AdminEntitlementStatus | null;
   granted_at: string | null;

@@ -1,10 +1,11 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { formatProductType, type ProductType } from "@/lib/store/product-type";
 
 export type ProductEntitlement = {
   productSlug: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   expiresAt: string | null;
 };
 
@@ -133,7 +134,9 @@ export async function hasActiveProductEntitlement(
 }
 
 function resolveDetailHref(product: ProductLibraryRow) {
-  if (product.product_type === "course") return `/courses/${product.product_slug}`;
+  if (product.product_type === "course" || product.product_type === "consulting") {
+    return `/courses/${product.product_slug}`;
+  }
   if (product.detail_path?.startsWith("/") && !product.detail_path.startsWith("/checkout")) {
     return product.detail_path;
   }
@@ -150,5 +153,5 @@ function formatFallbackProductTitle(
     .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
     .join(" ");
 
-  return readableSlug || (productType === "course" ? "VOD 강의" : "전자책");
+  return readableSlug || formatProductType(productType);
 }

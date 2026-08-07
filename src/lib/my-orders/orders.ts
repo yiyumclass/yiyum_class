@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type MyOrderSource = "free_checkout" | "payment" | "admin_grant";
 export type MyPaymentStatus =
@@ -24,7 +25,7 @@ export type MyOrder = {
   orderUid: string;
   productSlug: string;
   productTitle: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   amountKrw: number;
   source: MyOrderSource;
   paymentStatus: MyPaymentStatus;

@@ -6,6 +6,7 @@ import type {
   MyPaymentStatus,
 } from "@/lib/my-orders/orders";
 import styles from "@/app/my/orders/orders.module.css";
+import { formatProductType, type ProductType } from "@/lib/store/product-type";
 
 type MyOrderHistoryProps = {
   displayName: string;
@@ -134,11 +135,11 @@ function OrderCard({ order }: { order: MyOrder }) {
 
       <div className={styles.productRow}>
         <div className={styles.productMark} aria-hidden="true">
-          <span>{order.productType === "course" ? "VOD" : "PDF"}</span>
+          <span>{shortTypeLabel(order.productType)}</span>
           <strong>Y</strong>
         </div>
         <div className={styles.productCopy}>
-          <span>{order.productType === "course" ? "VOD 클래스" : "전자책"}</span>
+          <span>{formatProductType(order.productType)}</span>
           <h3 className="serif">{order.productTitle}</h3>
           <p>
             {sourceLabels[order.source]} · {formatAmount(order.amountKrw)}
@@ -286,4 +287,9 @@ function ChevronIcon() {
       <path d="m7 9 5 5 5-5" />
     </svg>
   );
+}
+
+/** 카드 위 작은 배지. 유형이 늘면 여기서도 컴파일이 막힌다. */
+function shortTypeLabel(type: ProductType) {
+  return { course: "VOD", ebook: "PDF", consulting: "1:1" }[type];
 }

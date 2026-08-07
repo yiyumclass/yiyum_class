@@ -4,8 +4,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
+import ConsultingDetail from "@/components/store/ConsultingDetail";
 import { resolveSalePrice } from "@/lib/store/pricing";
-import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import { loadPublicSaleDetail } from "@/lib/store/public-sale";
 import styles from "./course-detail.module.css";
 
 type CourseDetailPageProps = {
@@ -16,9 +17,9 @@ export async function generateMetadata({
   params,
 }: CourseDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const item = await loadPublicCourseBySlug(slug);
+  const item = await loadPublicSaleDetail(slug);
 
-  if (!item) return { title: "강의를 찾을 수 없습니다 | 이윰 클래스" };
+  if (!item) return { title: "페이지를 찾을 수 없습니다 | 이윰 클래스" };
 
   return {
     title: `${item.title} | 이윰 클래스`,
@@ -28,14 +29,11 @@ export async function generateMetadata({
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
   const { slug } = await params;
-  const item = await loadPublicCourseBySlug(slug);
+  const item = await loadPublicSaleDetail(slug);
   if (!item) notFound();
 
-  const lessons = item.course.sections.flatMap((section) => section.lessons);
-  const totalDurationSeconds = lessons.reduce(
-    (total, lesson) => total + lesson.durationSeconds,
-    0
-  );
+  const course = item.course;
+  const lessons = course?.course.sections.flatMap((section) => section.lessons) ?? [];
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
 
   return (
@@ -44,7 +42,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
 
       <main>
         <div className={styles.breadcrumb}>
-          <Link href="/courses">강의</Link>
+          <Link href="/courses">클래스</Link>
           <span aria-hidden="true">/</span>
           <span>{item.title}</span>
         </div>
@@ -55,7 +53,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               <>
                 <Image
                   src={item.thumbnailSrc}
-                  alt={`${item.course.instructor || "이윰"}의 ${item.title}`}
+                  alt={`${item.visualCaption}의 ${item.title}`}
                   fill
                   priority
                   sizes="(max-width: 760px) 100vw, 43vw"
@@ -69,43 +67,29 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <strong className="serif">{item.title.slice(0, 1)}</strong>
               </div>
             )}
-            <span className={styles.imageLabel}>YIYUM VOD CLASS</span>
-            <span className={styles.instructor}>
-              {item.course.instructor || item.title}
-            </span>
+            <span className={styles.imageLabel}>{item.visualLabel}</span>
+            <span className={styles.instructor}>{item.visualCaption}</span>
           </div>
 
           <div className={styles.heroContent}>
-            <span className={styles.eyebrow}>SNS · MONETIZATION</span>
+            <span className={styles.eyebrow}>{item.eyebrow}</span>
             <h1 id="course-title" className="serif">{item.title}</h1>
             <p className={styles.summary}>{item.summary}</p>
 
             <dl className={styles.facts}>
-              <div>
-                <dt>커리큘럼</dt>
-                <dd>
-                  {item.outlineReady
-                    ? `${item.course.sections.length}개 챕터 · ${lessons.length}강`
-                    : "준비 중"}
-                </dd>
-              </div>
-              <div>
-                <dt>총 재생 시간</dt>
-                <dd>{item.outlineReady ? formatCourseDuration(totalDurationSeconds) : "안내 예정"}</dd>
-              </div>
-              <div>
-                <dt>수강 기간</dt>
-                <dd>{item.accessLabel}</dd>
-              </div>
-              <div>
-                <dt>수강 방식</dt>
-                <dd>마이 클래스에서 VOD 재생</dd>
-              </div>
+              {item.facts.map((fact) => (
+                <div key={fact.label}>
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.value}</dd>
+                </div>
+              ))}
             </dl>
 
             <div className={styles.purchaseArea}>
               <div className={styles.price}>
-                <span>수강료 · 부가세 포함</span>
+                <span>
+                  {item.productType === "consulting" ? "이용료" : "수강료"} · 부가세 포함
+                </span>
                 {sale.listPriceKrw !== null && (
                   <div className={styles.saleRow}>
                     <span className={styles.discount}>
@@ -127,7 +111,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                   </span>
                 ) : (
                   <Link href={item.checkoutHref} className={styles.primaryAction}>
-                    수강 신청 <ArrowIcon />
+                    {item.ctaLabel} <ArrowIcon />
                   </Link>
                 )}
               </div>
@@ -140,6 +124,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
           </div>
         </section>
 
+        {course ? (
         <section
           id="curriculum"
           className={styles.curriculum}
@@ -151,15 +136,15 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
               <h2 id="curriculum-title" className="serif">강의 구성</h2>
             </div>
             <p>
-              {item.outlineReady
-                ? `${item.course.sections.length}개 챕터 · 총 ${lessons.length}강`
+              {course.outlineReady
+                ? `${course.course.sections.length}개 챕터 · 총 ${lessons.length}강`
                 : "상세 커리큘럼 준비 중"}
             </p>
           </div>
 
-          {item.course.sections.length > 0 ? (
+          {course.course.sections.length > 0 ? (
             <div className={styles.sectionList}>
-              {item.course.sections.map((section, sectionIndex) => (
+              {course.course.sections.map((section, sectionIndex) => (
                 <details key={section.id} open={sectionIndex === 0}>
                   <summary>
                     <span className={`serif ${styles.sectionNumber}`}>
@@ -190,6 +175,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             <div className={styles.curriculumEmpty}>상세 커리큘럼을 준비하고 있습니다.</div>
           )}
         </section>
+        ) : (
+          <ConsultingDetail slug={item.slug} />
+        )}
 
         <section className={styles.bottomCta}>
           <div>
@@ -197,7 +185,9 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             <h2 className="serif">
               {item.soldOut
                 ? "이번 모집은 마감되었어요."
-                : "내 속도에 맞춰 시작해 보세요."}
+                : item.productType === "consulting"
+                  ? "계정을 함께 열어볼 준비가 되셨다면."
+                  : "내 속도에 맞춰 시작해 보세요."}
             </h2>
           </div>
           <div>
@@ -205,7 +195,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             {item.soldOut ? (
               <span className={styles.soldOutAction} aria-disabled="true">품절</span>
             ) : (
-              <Link href={item.checkoutHref}>수강 신청 <ArrowIcon /></Link>
+              <Link href={item.checkoutHref}>{item.ctaLabel} <ArrowIcon /></Link>
             )}
           </div>
         </section>
@@ -214,14 +204,6 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       <SiteFooter />
     </div>
   );
-}
-
-function formatCourseDuration(seconds: number) {
-  if (seconds <= 0) return "안내 예정";
-  const totalMinutes = Math.round(seconds / 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
 function formatLessonDuration(seconds: number) {

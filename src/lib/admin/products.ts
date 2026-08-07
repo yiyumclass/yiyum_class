@@ -8,8 +8,10 @@ import {
 } from "@/lib/runtime/catalog-fallback";
 import { courseProducts } from "@/lib/store/course-products";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductType } from "@/lib/store/product-type";
 
-export type AdminProductType = "course" | "ebook";
+/** 어드민도 같은 유형 목록을 쓴다. 둘이 갈라지면 저장은 되는데 화면이 모르는 값이 생긴다. */
+export type AdminProductType = ProductType;
 export type AdminProductStatus =
   | "draft"
   | "active"

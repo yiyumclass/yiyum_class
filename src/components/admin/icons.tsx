@@ -155,6 +155,14 @@ export function BookIcon({ className }: IconProps) {
   );
 }
 
+export function ChatIcon({ className }: IconProps) {
+  return (
+    <Icon viewBox="0 0 24 24" className={className}>
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 3.5v-3.5A2.5 2.5 0 0 1 4 13.5v-7Z" />
+    </Icon>
+  );
+}
+
 export function MemberIcon({ className }: IconProps) {
   return (
     <Icon viewBox="0 0 24 24" className={className}>

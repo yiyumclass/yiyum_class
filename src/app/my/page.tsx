@@ -8,6 +8,7 @@ import {
   loadCourseProgress,
 } from "@/lib/learning/progress";
 import {
+  buildConsultingLibraryItem,
   buildEbookLibraryItem,
   buildCourseLibraryItem,
 } from "@/lib/my-class/library-data";
@@ -64,6 +65,24 @@ export default async function MyPage() {
         contentReady: catalogItem.contentReady,
       });
     })
+  );
+
+  items.push(
+    ...entitlements
+      .filter((entitlement) => entitlement.productType === "consulting")
+      .map((entitlement) =>
+        buildConsultingLibraryItem({
+          slug: entitlement.productSlug,
+          title: entitlement.title,
+          description:
+            entitlement.summary ||
+            "결제해 주셔서 감사합니다. 카카오톡과 이메일로 보내드린 설문 폼을 작성해 주시면 48시간 이내로 연락드릴게요.",
+          accessLabel: formatLibraryAccessLabel(
+            entitlement.expiresAt,
+            entitlement.accessPeriodDays
+          ),
+        })
+      )
   );
 
   items.push(

@@ -4,7 +4,11 @@ import {
   calculateLessonProgressPercent,
   getAvailableLessons,
 } from "@/lib/learning/progress";
-import type { CourseLibraryItem, EbookLibraryItem } from "@/lib/my-class/types";
+import type {
+  ConsultingLibraryItem,
+  CourseLibraryItem,
+  EbookLibraryItem,
+} from "@/lib/my-class/types";
 
 type CourseLibraryDetails = {
   description?: string;
@@ -140,6 +144,34 @@ export function buildEbookLibraryItem(details: EbookLibraryDetails): EbookLibrar
     lastActivity: "아직 열지 않음",
     lastActivityAt: null,
     ctaLabel: details.ctaLabel ?? "전자책 준비 중",
+  };
+}
+
+export type ConsultingLibraryDetails = {
+  slug: string;
+  title: string;
+  description: string;
+  accessLabel: string;
+};
+
+/**
+ * 결제 직후 상태로 만든다. 컨설팅은 결제가 끝이 아니라 시작이라, 다음에 뭘
+ * 해야 하는지 여기서 알려주지 않으면 결제하고 아무 일도 없는 것처럼 보인다.
+ */
+export function buildConsultingLibraryItem(
+  details: ConsultingLibraryDetails
+): ConsultingLibraryItem {
+  return {
+    id: `${details.slug}-consulting`,
+    kind: "consulting",
+    title: details.title,
+    description: details.description,
+    status: "available",
+    statusLabel: "예약 안내 발송",
+    accessLabel: details.accessLabel,
+    lastActivity: "결제 완료",
+    lastActivityAt: null,
+    ctaLabel: "카카오톡 문의",
   };
 }
 

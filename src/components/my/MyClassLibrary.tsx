@@ -7,12 +7,13 @@ import { useState } from "react";
 import styles from "@/app/my/my.module.css";
 import type { CourseLibraryItem, LibraryItem } from "@/lib/my-class/types";
 
-type Filter = "all" | "course" | "ebook" | "completed";
+type Filter = "all" | "course" | "ebook" | "consulting" | "completed";
 
 const filters: Array<{ id: Filter; label: string }> = [
   { id: "all", label: "전체" },
   { id: "course", label: "VOD 강의" },
   { id: "ebook", label: "전자책" },
+  { id: "consulting", label: "1:1 컨설팅" },
   { id: "completed", label: "완료" },
 ];
 
@@ -228,11 +229,21 @@ function SummaryItem({ label, value, suffix }: { label: string; value: number; s
 
 function ContentCard({ item }: { item: LibraryItem }) {
   const isCourse = item.kind === "course";
+  const isConsulting = item.kind === "consulting";
 
   return (
     <article className={styles.contentCard}>
       <div className={isCourse ? styles.courseVisual : styles.ebookVisual}>
-        {isCourse ? (
+        {isConsulting ? (
+          <div className={styles.bookCover} aria-label="1:1 컨설팅">
+            <span>YIYUM LIVE · 1:1</span>
+            <strong className="serif">
+              계정을 함께
+              <br />열어보는 30분
+            </strong>
+            <i>Zoom consulting</i>
+          </div>
+        ) : isCourse ? (
           <>
             <Image
               src="/assets/profile.jpg"
@@ -257,7 +268,7 @@ function ContentCard({ item }: { item: LibraryItem }) {
 
       <div className={styles.cardBody}>
         <div className={styles.cardTopline}>
-          <span className={styles.kindLabel}>{isCourse ? "VOD 강의" : "전자책"}</span>
+          <span className={styles.kindLabel}>{kindLabel(item.kind)}</span>
           <span className={styles.statusBadge}>{item.statusLabel}</span>
         </div>
 
@@ -288,6 +299,10 @@ function ContentCard({ item }: { item: LibraryItem }) {
               <span style={{ width: `${item.progress}%` }} />
             </div>
           </div>
+        ) : isConsulting ? (
+          <div className={styles.ebookMeta}>
+            <ChatIcon /> 설문 폼 작성 후 48시간 이내 연락
+          </div>
         ) : (
           <div className={styles.ebookMeta}>
             <BookIcon /> 디지털 파일 등록 준비 중
@@ -313,6 +328,10 @@ function ContentCard({ item }: { item: LibraryItem }) {
           <Link href={item.href} className={styles.cardButton}>
             {item.ctaLabel} <ArrowIcon />
           </Link>
+        ) : isConsulting ? (
+          <Link href="/contact" className={styles.cardButton}>
+            {item.ctaLabel} <ArrowIcon />
+          </Link>
         ) : item.status === "preparing" ? (
           <span className={`${styles.cardButton} ${styles.cardButtonDisabled}`} aria-disabled="true">
             {item.ctaLabel}
@@ -324,6 +343,19 @@ function ContentCard({ item }: { item: LibraryItem }) {
         )}
       </div>
     </article>
+  );
+}
+
+/** Record라 유형이 늘면 라벨을 빠뜨린 채로는 컴파일이 되지 않는다. */
+function kindLabel(kind: LibraryItem["kind"]) {
+  return { course: "VOD 강의", ebook: "전자책", consulting: "1:1 컨설팅" }[kind];
+}
+
+function ChatIcon() {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden="true">
+      <path d="M2.5 5A2.5 2.5 0 0 1 5 2.5h8A2.5 2.5 0 0 1 15.5 5v5A2.5 2.5 0 0 1 13 12.5H7.5L4 15.2V12.5A2.5 2.5 0 0 1 2.5 10V5Z" />
+    </svg>
   );
 }
 

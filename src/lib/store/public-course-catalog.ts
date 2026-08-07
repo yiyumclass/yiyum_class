@@ -7,6 +7,7 @@ import type { Course, CourseLesson, CourseSection } from "@/lib/learning/types";
 import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
 import { courseProducts } from "./course-products";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type PublicCourseCatalogItem = {
   productId: string;
@@ -128,7 +129,7 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
   }
 
   const products = ((productRows ?? []) as unknown as Array<
-    ProductRow & { product_type: "course" | "ebook" }
+    ProductRow & { product_type: ProductType }
   >).filter((product) => product.product_type === "course");
   if (products.length === 0) return [];
 

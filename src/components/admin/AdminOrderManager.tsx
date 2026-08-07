@@ -43,6 +43,7 @@ import {
 } from "./icons";
 import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminOrderManager.module.css";
+import { formatProductType } from "@/lib/store/product-type";
 
 type AdminOrderManagerProps = {
   /** 서버가 이미 거르고 정렬하고 잘라 준 한 페이지. 화면은 더 거르지 않는다. */
@@ -495,7 +496,7 @@ const orderCsvColumns = [
   { header: "상품명", value: (order: AdminOrder) => order.productTitle },
   {
     header: "상품유형",
-    value: (order: AdminOrder) => (order.productType === "course" ? "VOD 강의" : "전자책"),
+    value: (order: AdminOrder) => formatProductType(order.productType),
   },
   { header: "경로", value: (order: AdminOrder) => formatSource(order.source) },
   { header: "결제금액", value: (order: AdminOrder) => order.amountKrw ?? "" },
@@ -697,7 +698,7 @@ function OrderRow({
       <td data-label="상품">
         <span className={styles.productCell}>
           <strong>{order.productTitle}</strong>
-          <small>{order.productType === "course" ? "VOD 강의" : "전자책"}</small>
+          <small>{formatProductType(order.productType)}</small>
           <span className={styles.crossLinks}>
             <Link
               href={`/admin/products?q=${encodeURIComponent(order.productSlug)}`}
@@ -892,7 +893,7 @@ function OrderDetailDialog({
         <DetailRow label="상품" value={order.productTitle} />
         <DetailRow
           label="상품 유형"
-          value={order.productType === "course" ? "VOD 강의" : "전자책"}
+          value={formatProductType(order.productType)}
         />
       </DetailSection>
 

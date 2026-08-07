@@ -3,11 +3,12 @@ import "server-only";
 import { cache } from "react";
 import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type PublicProduct = {
   id: string;
   slug: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   title: string;
   summary: string;
   priceKrw: number;
@@ -17,6 +18,7 @@ export type PublicProduct = {
   soldOut: boolean;
   accessPeriodDays: number | null;
   accessLabel: string;
+  thumbnailSrc: string | null;
   detailHref: string;
 };
 
@@ -30,6 +32,7 @@ type ProductRow = {
   list_price_krw: number | null;
   status: "active" | "sold_out";
   access_period_days: number | null;
+  thumbnail_path: string | null;
   detail_path: string | null;
 };
 
@@ -48,6 +51,30 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
   const row = Array.isArray(data) ? (data[0] as ProductRow | undefined) : undefined;
   if (!row) return canUseLocalCatalogFallback() ? buildTemporaryProduct(slug) : null;
 
+  return mapProductRow(row);
+});
+
+/** 강의가 아닌 상품을 판매 목록에 함께 실을 때 쓴다. 강의는 커리큘럼이 필요해 별도 로더가 있다. */
+export const loadPublicProductsByType = cache(async function loadPublicProductsByType(
+  productType: ProductType
+): Promise<PublicProduct[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase.rpc("get_public_products", {
+    target_slug: null,
+  });
+
+  if (error) {
+    console.error("Failed to load public products:", error.message);
+    return [];
+  }
+
+  const rows = (Array.isArray(data) ? data : []) as ProductRow[];
+  return rows
+    .filter((row) => row.product_type === productType)
+    .map(mapProductRow);
+});
+
+function mapProductRow(row: ProductRow): PublicProduct {
   return {
     id: row.id,
     slug: row.slug,
@@ -62,9 +89,10 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
       row.access_period_days === null
         ? "기간 제한 없이 이용"
         : `${row.access_period_days}일 이용`,
+    thumbnailSrc: row.thumbnail_path?.startsWith("/") ? row.thumbnail_path : null,
     detailHref: resolveDetailHref(row),
   };
-});
+}
 
 function buildTemporaryProduct(slug: string): PublicProduct | null {
   if (slug !== "small-account-ebook") return null;
@@ -80,12 +108,15 @@ function buildTemporaryProduct(slug: string): PublicProduct | null {
     soldOut: false,
     accessPeriodDays: null,
     accessLabel: "기간 제한 없이 이용",
+    thumbnailSrc: null,
     detailHref: "/",
   };
 }
 
 function resolveDetailHref(product: ProductRow) {
-  if (product.product_type === "course") return `/courses/${product.slug}`;
+  if (product.product_type === "course" || product.product_type === "consulting") {
+    return `/courses/${product.slug}`;
+  }
   if (product.detail_path?.startsWith("/") && !product.detail_path.startsWith("/checkout")) {
     return product.detail_path;
   }

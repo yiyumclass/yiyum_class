@@ -3,11 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
-import {
-  loadPublicCourseCatalog,
-  type PublicCourseCatalogItem,
-} from "@/lib/store/public-course-catalog";
 import { resolveSalePrice } from "@/lib/store/pricing";
+import { loadPublicSaleCatalog, type SaleCard } from "@/lib/store/public-sale";
 import styles from "./courses.module.css";
 
 export const metadata: Metadata = {
@@ -16,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CoursesPage() {
-  const catalog = await loadPublicCourseCatalog();
+  const catalog = await loadPublicSaleCatalog();
 
   return (
     <div className={styles.page}>
@@ -42,22 +39,22 @@ export default async function CoursesPage() {
           <div className={styles.sectionHeading}>
             <div>
               <span className={`serif ${styles.sectionNumber}`}>01</span>
-              <h2 id="catalog-title" className="serif">전체 강의</h2>
+              <h2 id="catalog-title" className="serif">전체 클래스</h2>
             </div>
             <span className={styles.courseCount}>
-              {String(catalog.length).padStart(2, "0")} COURSE
+              {String(catalog.length).padStart(2, "0")} CLASS
             </span>
           </div>
 
           {catalog.length > 0 ? (
             <div className={styles.courseGrid}>
               {catalog.map((item, index) => (
-                <CourseCard key={item.productId} item={item} priority={index < 3} />
+                <CourseCard key={item.key} item={item} priority={index < 3} />
               ))}
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <strong>현재 판매 중인 강의가 없습니다.</strong>
+              <strong>현재 판매 중인 클래스가 없습니다.</strong>
               <p>새로운 클래스를 준비하고 있어요. 조금만 기다려 주세요.</p>
             </div>
           )}
@@ -85,14 +82,9 @@ function CourseCard({
   item,
   priority,
 }: {
-  item: PublicCourseCatalogItem;
+  item: SaleCard;
   priority: boolean;
 }) {
-  const lessons = item.course.sections.flatMap((section) => section.lessons);
-  const totalDurationSeconds = lessons.reduce(
-    (total, lesson) => total + lesson.durationSeconds,
-    0
-  );
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
 
   return (
@@ -106,7 +98,7 @@ function CourseCard({
           <>
             <Image
               src={item.thumbnailSrc}
-              alt={`${item.course.instructor || "이윰"}의 ${item.title}`}
+              alt={`${item.visualCaption}의 ${item.title}`}
               fill
               priority={priority}
               sizes="(max-width: 680px) 100vw, (max-width: 1020px) 50vw, 33vw"
@@ -120,30 +112,22 @@ function CourseCard({
             <strong className="serif">{item.title.slice(0, 1)}</strong>
           </div>
         )}
-        <span className={styles.vodBadge}>VOD CLASS</span>
+        <span className={styles.vodBadge}>{item.visualLabel}</span>
         {item.soldOut && <span className={styles.soldOutBadge}>SOLD OUT</span>}
-        <span className={styles.instructor}>
-          {item.course.instructor || item.title}
-        </span>
+        <span className={styles.instructor}>{item.visualCaption}</span>
       </Link>
 
       <div className={styles.courseBody}>
-        <span className={styles.category}>SNS · MONETIZATION</span>
+        <span className={styles.category}>{item.eyebrow}</span>
         <h3 className="serif">
           <Link href={item.detailHref}>{item.title}</Link>
         </h3>
         <p className={styles.summary}>{item.summary}</p>
 
-        <div className={styles.courseMeta} aria-label="강의 정보">
-          {item.outlineReady ? (
-            <>
-              <span>{lessons.length}강</span>
-              <span>{formatCourseDuration(totalDurationSeconds)}</span>
-            </>
-          ) : (
-            <span>커리큘럼 준비 중</span>
-          )}
-          <span>{item.accessLabel}</span>
+        <div className={styles.courseMeta} aria-label="상품 정보">
+          {item.metaItems.map((meta) => (
+            <span key={meta}>{meta}</span>
+          ))}
         </div>
 
         <div className={styles.cardFooter}>
@@ -160,7 +144,7 @@ function CourseCard({
             </strong>
           </div>
           <Link href={item.detailHref} className={styles.detailAction}>
-            강의 보기 <ArrowIcon />
+            {item.productType === "consulting" ? "자세히 보기" : "강의 보기"} <ArrowIcon />
           </Link>
         </div>
       </div>
@@ -186,14 +170,6 @@ function GuideItem({
       </div>
     </article>
   );
-}
-
-function formatCourseDuration(seconds: number) {
-  if (seconds <= 0) return "재생 시간 안내 예정";
-  const totalMinutes = Math.round(seconds / 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return hours > 0 ? `${hours}시간 ${minutes}분` : `${minutes}분`;
 }
 
 function formatPrice(price: number) {

@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminProductStatus } from "@/lib/admin/products";
 import { createClient } from "@/lib/supabase/server";
 import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type CreateProductState = {
   status: "idle" | "error" | "success";
@@ -28,6 +29,8 @@ export type ProductMutationResult = {
   ok: boolean;
   message: string;
 };
+
+const productTypes: ProductType[] = ["course", "ebook", "consulting"];
 
 const productStatuses: AdminProductStatus[] = [
   "draft",
@@ -224,7 +227,7 @@ export async function updateProductAction(
 }
 
 type ProductFormValues = {
-  productType: "course" | "ebook";
+  productType: ProductType;
   title: string;
   slug: string;
   summary: string;
@@ -251,7 +254,9 @@ function readProductForm(formData: FormData): ProductFormValues {
   const status = readString(formData, "status");
 
   return {
-    productType: productType === "ebook" ? "ebook" : "course",
+    productType: productTypes.includes(productType as ProductType)
+      ? (productType as ProductType)
+      : "course",
     title: readString(formData, "title"),
     slug: readString(formData, "slug").toLowerCase(),
     summary: readString(formData, "summary"),

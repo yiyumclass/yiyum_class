@@ -3,6 +3,7 @@ import "server-only";
 import { requireAdmin } from "@/lib/admin/auth";
 import { ADMIN_EXPORT_LIMIT, isSetupError } from "@/lib/admin/list-params";
 import { createClient } from "@/lib/supabase/server";
+import type { ProductType } from "@/lib/store/product-type";
 
 export type AdminOrderSource = "free_checkout" | "payment" | "admin_grant";
 export type AdminOrderStatus = "active" | "revoked";
@@ -49,7 +50,7 @@ export type AdminOrder = {
   productId: string;
   productSlug: string;
   productTitle: string;
-  productType: "course" | "ebook";
+  productType: ProductType;
   source: AdminOrderSource;
   status: AdminOrderStatus;
   paymentStatus: AdminPaymentStatus;
@@ -98,7 +99,7 @@ type AdminOrderRow = {
   product_id: string;
   product_slug: string;
   product_title: string;
-  product_type: "course" | "ebook";
+  product_type: ProductType;
   source: AdminOrderSource;
   payment_status: AdminPaymentStatus;
   entitlement_status: AdminOrderStatus;
