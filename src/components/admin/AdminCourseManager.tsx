@@ -547,7 +547,7 @@ function CourseEditor({
             </em>
           </div>
           <h2>{course.title}</h2>
-          <p>/{course.slug} · 강사 {course.instructor || "미입력"}</p>
+          <p>/{course.slug} · 코치 {course.instructor || "미입력"}</p>
         </div>
         <div className={styles.editorHeaderActions}>
           <span className={`${styles.statusBadge} ${styles[course.status]}`}>
@@ -1032,7 +1032,7 @@ function CourseFields({
           required
         />
         <TextField
-          label="강사명"
+          label="코치명"
           name="instructor"
           defaultValue={course?.instructor}
           error={state.fieldErrors.instructor}

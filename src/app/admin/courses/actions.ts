@@ -522,7 +522,7 @@ function validateCourseForm(values: CourseValues) {
     errors.description = "강의 소개는 1,000자 이하로 입력해 주세요.";
   }
   if (values.instructor.length > 80) {
-    errors.instructor = "강사명은 80자 이하로 입력해 주세요.";
+    errors.instructor = "코치명은 80자 이하로 입력해 주세요.";
   }
   if (values.posterPath && !isSafeLocalPath(values.posterPath)) {
     errors.posterPath = "사이트 내부 이미지 경로를 /로 시작해 입력해 주세요.";
