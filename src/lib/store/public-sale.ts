@@ -2,6 +2,14 @@ import "server-only";
 
 import { cache } from "react";
 import { consultingCopyBySlug } from "@/lib/store/consulting-copy";
+import {
+  loadProductPages,
+  type ProductPageView,
+} from "@/lib/store/product-pages";
+import {
+  loadPublicDetailItems,
+  type PublicDetailItem,
+} from "@/lib/store/public-detail-items";
 import type { ProductType } from "@/lib/store/product-type";
 import {
   loadPublicCourseBySlug,
@@ -51,6 +59,22 @@ export type SaleDetail = SaleCard & {
   /** 강의일 때만 채워진다. 히어로 아래에 커리큘럼을 그린다. */
   course: PublicCourseCatalogItem | null;
   ctaLabel: string;
+  /** 히어로 버튼이 가는 곳. 보낼 데가 없으면 버튼을 그리지 않는다. */
+  ctaHref: string | null;
+  /** 잠금을 푸는 곳. 무료 자료는 로그인만 하면 된다. */
+  unlockHref: string;
+  unlockLabel: string;
+  /** 상세 소개 문단. 빈 줄로 나눈다. */
+  detailParagraphs: string[];
+  /** 상세에 반복해 나오는 항목 */
+  detailItems: PublicDetailItem[];
+  /** 내려받을 자료가 붙어 있는지 */
+  hasFile: boolean;
+  /** 자료 뷰어가 그릴 페이지. 자료가 아니면 비어 있다. */
+  pageView: ProductPageView;
+  headerActive: "courses" | "ebook" | "library";
+  breadcrumbHref: string;
+  breadcrumbLabel: string;
 };
 
 export const loadPublicSaleCatalog = cache(async function loadPublicSaleCatalog(): Promise<
@@ -64,6 +88,14 @@ export const loadPublicSaleCatalog = cache(async function loadPublicSaleCatalog(
   return [...courses.map(mapCourseCard), ...consultings.map(mapConsultingCard)];
 });
 
+/** 무료자료실 목록. 유료 클래스와 섞지 않는다. */
+export const loadPublicResourceCatalog = cache(async function loadPublicResourceCatalog(): Promise<
+  SaleCard[]
+> {
+  const resources = await loadPublicProductsByType("ebook");
+  return resources.map(mapResourceCard);
+});
+
 export const loadPublicSaleDetail = cache(async function loadPublicSaleDetail(
   slug: string
 ): Promise<SaleDetail | null> {
@@ -71,10 +103,35 @@ export const loadPublicSaleDetail = cache(async function loadPublicSaleDetail(
   if (course) return mapCourseDetail(course);
 
   const product = await loadPublicProductBySlug(slug);
-  if (!product || product.productType !== "consulting") return null;
+  if (!product) return null;
 
-  return mapConsultingDetail(product);
+  if (product.productType === "consulting") {
+    const detailItems = await loadPublicDetailItems(slug);
+    return mapConsultingDetail(product, detailItems);
+  }
+
+  const [detailItems, pageView] = await Promise.all([
+    loadPublicDetailItems(slug),
+    loadProductPages(slug),
+  ]);
+  return mapResourceDetail(product, detailItems, pageView);
 });
+
+const emptyPageView: ProductPageView = {
+  pages: [],
+  totalCount: 0,
+  unlockedCount: 0,
+  lockedCount: 0,
+};
+
+/** 빈 줄로 나눈 문단. 관리자가 넣은 줄바꿈을 그대로 살린다. */
+function splitParagraphs(value: string | null) {
+  if (!value) return [];
+  return value
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
 
 function mapCourseCard(item: PublicCourseCatalogItem): SaleCard {
   const lessons = item.course.sections.flatMap((section) => section.lessons);
@@ -132,6 +189,16 @@ function mapCourseDetail(item: PublicCourseCatalogItem): SaleDetail {
     ],
     course: item,
     ctaLabel: "수강 신청",
+    ctaHref: item.checkoutHref,
+    unlockHref: item.checkoutHref,
+    unlockLabel: "수강 신청",
+    detailParagraphs: [],
+    detailItems: [],
+    hasFile: false,
+    pageView: emptyPageView,
+    headerActive: "courses",
+    breadcrumbHref: "/courses",
+    breadcrumbLabel: "클래스",
   };
 }
 
@@ -156,7 +223,10 @@ function mapConsultingCard(product: PublicProduct): SaleCard {
   };
 }
 
-function mapConsultingDetail(product: PublicProduct): SaleDetail {
+function mapConsultingDetail(
+  product: PublicProduct,
+  detailItems: PublicDetailItem[]
+): SaleDetail {
   const card = mapConsultingCard(product);
   const copy = consultingCopyBySlug[product.slug];
 
@@ -173,6 +243,93 @@ function mapConsultingDetail(product: PublicProduct): SaleDetail {
     ],
     course: null,
     ctaLabel: "예약하기",
+    ctaHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
+    unlockHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
+    unlockLabel: "예약하기",
+    detailParagraphs: splitParagraphs(product.detailBody),
+    detailItems,
+    hasFile: product.hasFile,
+    pageView: emptyPageView,
+    headerActive: "courses",
+    breadcrumbHref: "/courses",
+    breadcrumbLabel: "클래스",
+  };
+}
+
+function mapResourceCard(product: PublicProduct): SaleCard {
+  return {
+    key: product.id,
+    productType: "ebook",
+    slug: product.slug,
+    title: product.title,
+    summary: product.summary,
+    priceKrw: product.priceKrw,
+    listPriceKrw: product.listPriceKrw,
+    soldOut: product.soldOut,
+    thumbnailSrc: product.thumbnailSrc,
+    detailHref: `/library/${product.slug}`,
+    visualLabel: product.priceKrw === 0 ? "FREE" : "DIGITAL",
+    visualCaption: "이윰",
+    eyebrow: "FREE · LIBRARY",
+    metaItems: [
+      product.priceKrw === 0 ? "무료 자료" : "디지털 자료",
+      product.accessLabel,
+    ],
+  };
+}
+
+function mapResourceDetail(
+  product: PublicProduct,
+  detailItems: PublicDetailItem[],
+  pageView: ProductPageView
+): SaleDetail {
+  const card = mapResourceCard(product);
+  const free = product.priceKrw === 0;
+
+  return {
+    ...card,
+    visualLabel: free ? "YIYUM FREE LIBRARY" : "YIYUM LIBRARY",
+    checkoutHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
+    accessLabel: product.accessLabel,
+    facts: [
+      {
+        label: "형태",
+        value: free ? "이 화면에서 읽는 자료" : "내려받는 디지털 자료",
+      },
+      { label: "비용", value: free ? "무료" : "유료" },
+      {
+        label: "분량",
+        value:
+          pageView.totalCount > 0
+            ? `${pageView.totalCount}장`
+            : product.hasFile
+              ? "신청 후 마이 클래스에서"
+              : "자료 준비 중",
+      },
+      { label: "이용 기간", value: product.accessLabel },
+    ],
+    course: null,
+    // 무료 자료는 내려받는 것이 아니라 이 화면에서 읽는다. "받기"라는 말이
+    // 남아 있으면 파일이 오기를 기다리게 된다.
+    ctaLabel: free ? "바로 읽어보기" : "구매하기",
+    ctaHref: free
+      ? pageView.totalCount > 0
+        ? "#resource-viewer"
+        : null
+      : `/checkout?product=${encodeURIComponent(product.slug)}`,
+    unlockHref: free
+      ? `/login?next=${encodeURIComponent(`/library/${product.slug}`)}`
+      : `/checkout?product=${encodeURIComponent(product.slug)}`,
+    unlockLabel: free ? "로그인하고 이어보기" : "구매하고 이어보기",
+    detailParagraphs: splitParagraphs(product.detailBody),
+    detailItems,
+    hasFile: product.hasFile,
+    pageView,
+    headerActive: free ? "library" : "ebook",
+    // 상세 주소는 /library 하나로 두고 목록만 나눈다. 주소까지 가르면 값이
+    // 바뀔 때마다 링크가 깨진다. 돌아갈 곳은 지금 값에 맞춰 정한다.
+    breadcrumbHref: free ? "/library" : "/ebooks",
+    breadcrumbLabel: free ? "무료자료" : "전자책",
   };
 }
 

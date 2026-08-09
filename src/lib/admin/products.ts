@@ -25,6 +25,8 @@ export type AdminProduct = {
   productType: AdminProductType;
   title: string;
   summary: string;
+  /** 상세 소개 문단. 빈 줄로 문단을 나눈다. */
+  detailBody: string;
   priceKrw: number;
   /** 할인 전 정가. null이면 세일이 아니다. */
   listPriceKrw: number | null;
@@ -32,8 +34,29 @@ export type AdminProduct = {
   status: AdminProductStatus;
   thumbnailPath: string | null;
   detailPath: string | null;
+  /** 내려받을 자료. 버킷 내부 경로만 담는다. */
+  file: AdminProductFile | null;
+  /** 변환해 둔 페이지 수 */
+  pageCount: number;
+  /** 로그인 없이 볼 수 있는 앞쪽 장수 */
+  previewPageCount: number;
   updatedAt: string | null;
   source: "database" | "catalog";
+};
+
+export type AdminProductFile = {
+  path: string;
+  name: string;
+  contentType: string | null;
+  sizeBytes: number | null;
+  uploadedAt: string | null;
+};
+
+export type AdminProductDetailItem = {
+  id: string;
+  sortOrder: number;
+  title: string;
+  body: string;
 };
 
 export type AdminProductsResult = {
@@ -48,12 +71,19 @@ type ProductRow = {
   product_type: AdminProductType;
   title: string;
   summary: string;
+  detail_body: string | null;
   price_krw: number;
   list_price_krw: number | null;
   access_period_days: number | null;
   status: AdminProductStatus;
   thumbnail_path: string | null;
   detail_path: string | null;
+  file_path: string | null;
+  file_name: string | null;
+  file_content_type: string | null;
+  file_size_bytes: number | null;
+  file_uploaded_at: string | null;
+  preview_page_count: number | null;
   updated_at: string;
 };
 
@@ -63,7 +93,7 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, slug, product_type, title, summary, price_krw, list_price_krw, access_period_days, status, thumbnail_path, detail_path, updated_at"
+      "id, slug, product_type, title, summary, detail_body, price_krw, list_price_krw, access_period_days, status, thumbnail_path, detail_path, file_path, file_name, file_content_type, file_size_bytes, file_uploaded_at, preview_page_count, updated_at"
     )
     .order("updated_at", { ascending: false })
     .returns<ProductRow[]>();
@@ -91,26 +121,43 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
     };
   }
 
+  const pageCounts = await loadPageCounts(supabase);
+
   return {
-    products: (data ?? []).map(mapProductRow),
+    products: (data ?? []).map((row) => mapProductRow(row, pageCounts)),
     databaseReady: true,
     message: null,
   };
 }
 
-function mapProductRow(row: ProductRow): AdminProduct {
+function mapProductRow(
+  row: ProductRow,
+  pageCountByProduct: Map<string, number>
+): AdminProduct {
   return {
     id: row.id,
     slug: row.slug,
     productType: row.product_type,
     title: row.title,
     summary: row.summary,
+    detailBody: row.detail_body ?? "",
     priceKrw: row.price_krw,
     listPriceKrw: row.list_price_krw,
     accessPeriodDays: row.access_period_days,
     status: row.status,
     thumbnailPath: row.thumbnail_path,
     detailPath: row.detail_path,
+    file: row.file_path
+      ? {
+          path: row.file_path,
+          name: row.file_name ?? row.file_path.split("/").pop() ?? "자료 파일",
+          contentType: row.file_content_type,
+          sizeBytes: row.file_size_bytes,
+          uploadedAt: row.file_uploaded_at,
+        }
+      : null,
+    pageCount: pageCountByProduct.get(row.id) ?? 0,
+    previewPageCount: row.preview_page_count ?? 0,
     updatedAt: row.updated_at,
     source: "database",
   };
@@ -126,12 +173,16 @@ function buildCatalogFallback(): AdminProduct[] {
       productType: "course",
       title: course?.title ?? product.courseSlug,
       summary: course?.description ?? product.tagline,
+      detailBody: "",
       priceKrw: product.price,
       listPriceKrw: null,
       accessPeriodDays: readAccessPeriod(product.accessLabel),
       status: "active",
       thumbnailPath: course?.posterSrc ?? null,
       detailPath: product.detailHref,
+      file: null,
+      pageCount: 0,
+      previewPageCount: 0,
       updatedAt: null,
       source: "catalog",
     };
@@ -141,4 +192,101 @@ function buildCatalogFallback(): AdminProduct[] {
 function readAccessPeriod(label: string) {
   const matchedDays = label.match(/(\d+)일/);
   return matchedDays ? Number(matchedDays[1]) : null;
+}
+
+/** 상품 상세에 붙는 반복 항목. 관리자 편집 화면이 쓴다. */
+export async function loadAdminProductDetailItems(
+  productId: string
+): Promise<AdminProductDetailItem[]> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("product_detail_items")
+    .select("id, sort_order, title, body")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .returns<
+      Array<{ id: string; sort_order: number; title: string; body: string }>
+    >();
+
+  if (error) {
+    console.error("Failed to load product detail items:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    sortOrder: row.sort_order,
+    title: row.title,
+    body: row.body,
+  }));
+}
+
+/**
+ * 상품별 상세 항목을 한 번에 읽는다.
+ *
+ * 편집 창을 열 때마다 따로 부르면 창이 뜨고 나서 목록이 늦게 채워져 깜빡인다.
+ * 항목은 상품당 열 줄 안팎이라 목록과 함께 실어도 부담이 없다.
+ */
+export async function loadAdminDetailItemsByProduct(): Promise<
+  Record<string, AdminProductDetailItem[]>
+> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("product_detail_items")
+    .select("id, product_id, sort_order, title, body")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true })
+    .returns<
+      Array<{
+        id: string;
+        product_id: string;
+        sort_order: number;
+        title: string;
+        body: string;
+      }>
+    >();
+
+  if (error) {
+    // 항목이 없다고 상품 관리를 못 쓰게 만들 이유는 없다.
+    console.error("Failed to load product detail items:", error.message);
+    return {};
+  }
+
+  return (data ?? []).reduce<Record<string, AdminProductDetailItem[]>>(
+    (grouped, row) => {
+      const list = grouped[row.product_id] ?? [];
+      list.push({
+        id: row.id,
+        sortOrder: row.sort_order,
+        title: row.title,
+        body: row.body,
+      });
+      grouped[row.product_id] = list;
+      return grouped;
+    },
+    {}
+  );
+}
+
+type AdminClient = Awaited<ReturnType<typeof createClient>>;
+
+/** 상품별 변환된 페이지 수. 목록에서 미리보기 설정 상태를 바로 보여준다. */
+async function loadPageCounts(supabase: AdminClient) {
+  const { data, error } = await supabase
+    .from("product_pages")
+    .select("product_id")
+    .returns<Array<{ product_id: string }>>();
+
+  if (error) {
+    console.error("Failed to load product page counts:", error.message);
+    return new Map<string, number>();
+  }
+
+  return (data ?? []).reduce((counts, row) => {
+    counts.set(row.product_id, (counts.get(row.product_id) ?? 0) + 1);
+    return counts;
+  }, new Map<string, number>());
 }

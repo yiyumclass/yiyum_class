@@ -305,7 +305,10 @@ function ContentCard({ item }: { item: LibraryItem }) {
           </div>
         ) : (
           <div className={styles.ebookMeta}>
-            <BookIcon /> 디지털 파일 등록 준비 중
+            <BookIcon />{" "}
+            {item.status === "preparing"
+              ? "디지털 파일 등록 준비 중"
+              : "언제든 다시 내려받을 수 있어요"}
           </div>
         )}
 
@@ -337,9 +340,16 @@ function ContentCard({ item }: { item: LibraryItem }) {
             {item.ctaLabel}
           </span>
         ) : (
-          <span className={`${styles.cardButton} ${styles.cardButtonDisabled}`} aria-disabled="true">
-            전자책 경로 확인 필요
-          </span>
+          // 새 창으로 연다. 서명 주소로 넘어가는 사이 목록을 벗어나면
+          // 뒤로 가기가 만료된 주소로 돌아간다.
+          <a
+            href={`/api/library/${item.slug}/download`}
+            className={styles.cardButton}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {item.ctaLabel} <ArrowIcon />
+          </a>
         )}
       </div>
     </article>

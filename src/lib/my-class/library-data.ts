@@ -21,6 +21,8 @@ type EbookLibraryDetails = {
   title: string;
   description: string;
   accessLabel: string;
+  /** 자료 파일이 올라와 있는지. 없으면 준비 중으로 둔다. */
+  hasFile?: boolean;
   ctaLabel?: string;
 };
 
@@ -133,17 +135,20 @@ function formatCourseCtaLabel(status: CourseLibraryItem["status"]): string {
 }
 
 export function buildEbookLibraryItem(details: EbookLibraryDetails): EbookLibraryItem {
+  const ready = details.hasFile === true;
+
   return {
     id: `${details.slug}-ebook`,
     kind: "ebook",
+    slug: details.slug,
     title: details.title,
     description: details.description,
-    status: "preparing",
-    statusLabel: "파일 준비 중",
+    status: ready ? "available" : "preparing",
+    statusLabel: ready ? "내려받기 가능" : "파일 준비 중",
     accessLabel: details.accessLabel,
     lastActivity: "아직 열지 않음",
     lastActivityAt: null,
-    ctaLabel: details.ctaLabel ?? "전자책 준비 중",
+    ctaLabel: details.ctaLabel ?? (ready ? "자료 내려받기" : "자료 준비 중"),
   };
 }
 

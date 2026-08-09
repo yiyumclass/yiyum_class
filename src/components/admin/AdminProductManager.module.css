@@ -955,6 +955,12 @@
   color: #a84f39 !important;
 }
 
+.fieldHint {
+  color: #91887c;
+  font-size: var(--admin-text-xs);
+  line-height: 1.6;
+}
+
 .inputControl > span {
   position: absolute;
   right: 11px;

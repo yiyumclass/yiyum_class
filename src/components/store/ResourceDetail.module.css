@@ -1,0 +1,141 @@
+/* 상세 히어로 아래에 붙는다. 좌우 여백은 클래스 상세와 같은 계산식을 써서
+   히어로와 세로선이 맞도록 한다. */
+.detail {
+  --gutter: max(40px, calc((100vw - 1120px) / 2));
+}
+
+.detail section {
+  padding: 78px var(--gutter);
+}
+
+.eyebrow {
+  color: #a26b50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.intro {
+  background: #fdfaf5;
+}
+
+.intro h2 {
+  margin: 14px 0 0;
+  font-size: clamp(26px, 3.2vw, 38px);
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  color: #201c17;
+}
+
+.lead {
+  max-width: 62ch;
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.lead p {
+  margin: 0;
+  color: #5f574d;
+  font-size: 16px;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+.contents {
+  background: #f4eee4;
+}
+
+.contentsHeading {
+  margin-bottom: 34px;
+  padding-top: 18px;
+  border-top: 1px solid #201c17;
+}
+
+.contentsHeading span {
+  color: #a26b50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.contentsHeading h2 {
+  margin: 10px 0 0;
+  font-size: clamp(26px, 3.2vw, 36px);
+  letter-spacing: -0.02em;
+  color: #201c17;
+}
+
+.itemList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  border: 1px solid #e2d8c9;
+  border-radius: 14px;
+  background: #e2d8c9;
+  overflow: hidden;
+}
+
+.itemList li {
+  padding: 26px 24px;
+  background: #fdfaf5;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.itemNumber {
+  color: #c2a98d;
+  font-size: 30px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.itemList strong {
+  display: block;
+  color: #201c17;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.itemList p {
+  margin: 8px 0 0;
+  max-width: 40ch;
+  color: #6b6459;
+  font-size: 14px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.pending {
+  background: #fbf8f2;
+}
+
+.pending p {
+  margin: 0;
+  padding: 22px 24px;
+  border: 1px dashed #d6cdc0;
+  border-radius: 12px;
+  color: #8b8278;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .itemList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .detail section {
+    padding: 56px 22px;
+  }
+}

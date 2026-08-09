@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import AdminProductManager from "@/components/admin/AdminProductManager";
 import { requireAdmin } from "@/lib/admin/auth";
-import { loadAdminProducts } from "@/lib/admin/products";
+import {
+  loadAdminDetailItemsByProduct,
+  loadAdminProducts,
+} from "@/lib/admin/products";
 import { getPaymentMode } from "@/lib/store/free-enrollment";
 
 export const metadata: Metadata = {
@@ -12,13 +15,17 @@ export const metadata: Metadata = {
 
 export default async function AdminProductsPage() {
   await requireAdmin();
-  const result = await loadAdminProducts();
+  const [result, detailItems] = await Promise.all([
+    loadAdminProducts(),
+    loadAdminDetailItemsByProduct(),
+  ]);
 
   return (
     // 검색·필터 상태를 URL에서 읽으므로 useSearchParams 경계가 필요하다.
     <Suspense>
       <AdminProductManager
         products={result.products}
+        detailItems={detailItems}
         databaseReady={result.databaseReady}
         sourceMessage={result.message}
         paymentMode={getPaymentMode()}

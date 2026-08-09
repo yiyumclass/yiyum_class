@@ -1,0 +1,324 @@
+.block {
+  display: grid;
+  gap: var(--admin-gap-sm, 10px);
+}
+
+.block + .block {
+  margin-top: var(--admin-gap-lg, 26px);
+  padding-top: var(--admin-gap-lg, 26px);
+  border-top: 1px solid #e6ded2;
+}
+
+.block h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #3f3932;
+}
+
+.hint {
+  margin: 0;
+  color: #91887c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+/* ------------------------------------------------------------- 자료 파일 */
+
+.fileRow,
+.emptyFile {
+  margin-top: 4px;
+  padding: 16px 18px;
+  border: 1px solid #e6ded2;
+  border-radius: 10px;
+  background: #fbf8f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fileMeta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.fileMeta strong {
+  color: #3f3932;
+  font-size: 14px;
+  font-weight: 650;
+  word-break: break-all;
+}
+
+.fileMeta span {
+  color: #91887c;
+  font-size: 12px;
+}
+
+.emptyFile p {
+  margin: 0;
+  color: #91887c;
+  font-size: 13px;
+}
+
+.fileActions,
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.previewRow {
+  margin-top: 6px;
+  padding: 16px 18px;
+  border: 1px solid #e6ded2;
+  border-radius: 10px;
+  background: #fdfbf7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.previewInput input {
+  width: 74px;
+  padding: 8px 10px;
+  border: 1px solid #ddd5c8;
+  border-radius: 8px;
+  background: #fff;
+  color: #3f3932;
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewInput input:focus-visible {
+  outline: 2px solid #b85c38;
+  outline-offset: 1px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------- 상세 항목 */
+
+.itemList {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.item {
+  padding: 14px 16px;
+  border: 1px solid #e6ded2;
+  border-radius: 10px;
+  background: #fdfbf7;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+}
+
+.itemNumber {
+  color: #b4a695;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.itemBody {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.itemBody strong {
+  color: #3f3932;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.itemBody p {
+  margin: 0;
+  color: #6b6459;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.itemEdit {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 8px;
+}
+
+.emptyItems {
+  margin: 4px 0 0;
+  padding: 22px;
+  border: 1px dashed #ddd5c8;
+  border-radius: 10px;
+  color: #91887c;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------- 입력 */
+
+.draft {
+  margin-top: 10px;
+  padding: 18px;
+  border: 1px solid #e6ded2;
+  border-radius: 10px;
+  background: #fbf8f2;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.draft label {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+}
+
+.draft label span {
+  color: #6b6459;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.draft input,
+.draft textarea,
+.itemEdit input,
+.itemEdit textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd5c8;
+  border-radius: 8px;
+  background: #fff;
+  color: #3f3932;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.draft input:focus-visible,
+.draft textarea:focus-visible,
+.itemEdit input:focus-visible,
+.itemEdit textarea:focus-visible {
+  outline: 2px solid #b85c38;
+  outline-offset: 1px;
+}
+
+/* --------------------------------------------------------------- 버튼 */
+
+.primaryButton,
+.secondaryButton,
+.dangerButton,
+.iconButton {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.primaryButton {
+  border: 1px solid #b85c38;
+  background: #b85c38;
+  color: #fffaf3;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #a4512f;
+}
+
+.secondaryButton {
+  border: 1px solid #ddd5c8;
+  background: #fff;
+  color: #5f574d;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: #b85c38;
+  color: #b85c38;
+}
+
+.dangerButton {
+  border: 1px solid #e3cdc6;
+  background: #fff;
+  color: #a2544b;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #f9ecea;
+}
+
+.iconButton {
+  width: 34px;
+  padding: 0;
+  border: 1px solid #ddd5c8;
+  background: #fff;
+  color: #6b6459;
+  font-size: 14px;
+}
+
+.iconButton:hover:not(:disabled) {
+  border-color: #b85c38;
+  color: #b85c38;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled,
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .itemActions {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton,
+  .iconButton {
+    transition: none;
+  }
+}

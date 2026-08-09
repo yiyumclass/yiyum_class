@@ -13,6 +13,8 @@ export type ProductLibraryEntitlement = ProductEntitlement & {
   title: string;
   summary: string;
   accessPeriodDays: number | null;
+  /** 내려받을 자료가 붙어 있는지. 경로는 내려받기 경로에서만 확인한다. */
+  hasFile: boolean;
   detailHref: string;
 };
 
@@ -35,6 +37,7 @@ type ProductLibraryRow = EntitlementRow & {
   summary: string;
   access_period_days: number | null;
   detail_path: string | null;
+  has_file: boolean | null;
 };
 
 export async function loadMyActiveProductEntitlements(
@@ -90,6 +93,9 @@ export async function loadMyActiveProductLibrary(
           entitlement.productType === "ebook"
             ? "구매한 전자책 콘텐츠입니다."
             : "구매한 VOD 강의 콘텐츠입니다.",
+        // 상세 조회가 막혔을 때 쓰는 최소 정보라 파일 유무를 알 수 없다.
+        // 있다고 넘겨 내려받기를 열면 눌렀을 때 실패한다.
+        hasFile: false,
         accessPeriodDays: null,
         detailHref:
           entitlement.productType === "course"
@@ -108,6 +114,7 @@ export async function loadMyActiveProductLibrary(
       title: row.title,
       summary: row.summary,
       accessPeriodDays: row.access_period_days,
+      hasFile: Boolean(row.has_file),
       detailHref: resolveDetailHref(row),
     })),
   };

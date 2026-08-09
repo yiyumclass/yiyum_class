@@ -19,12 +19,14 @@ import {
 import type { CreateProductState } from "@/app/admin/products/actions";
 import type {
   AdminProduct,
+  AdminProductDetailItem,
   AdminProductStatus,
   AdminProductType,
 } from "@/lib/admin/products";
 import { exportRowsToCsv } from "@/lib/admin/csv";
 import { useTableParams } from "@/lib/admin/use-table-params";
 import AdminDialog, { AdminDialogActions } from "./AdminDialog";
+import AdminProductDetailDialog from "./AdminProductDetailDialog";
 import { useAdminFeedback } from "./AdminFeedback";
 import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "./AdminPagination";
 import {
@@ -44,6 +46,8 @@ import { formatProductType } from "@/lib/store/product-type";
 
 type AdminProductManagerProps = {
   products: AdminProduct[];
+  /** 상품 id로 묶은 상세 항목. 편집 창을 열 때 곧바로 그린다. */
+  detailItems: Record<string, AdminProductDetailItem[]>;
   databaseReady: boolean;
   sourceMessage: string | null;
   paymentMode: "free" | "toss_test" | "toss_live";
@@ -99,6 +103,7 @@ const productTableDefaults = {
 
 export default function AdminProductManager({
   products,
+  detailItems,
   databaseReady,
   sourceMessage,
   paymentMode,
@@ -107,6 +112,7 @@ export default function AdminProductManager({
   const { values, setValues, numberOf } = useTableParams(productTableDefaults);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const [detailProduct, setDetailProduct] = useState<AdminProduct | null>(null);
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
 
   const query = values.q;
@@ -429,6 +435,7 @@ export default function AdminProductManager({
                       saving={savingProductId === product.id}
                       onStatusChange={updateStatus}
                       onEdit={setEditingProduct}
+                      onEditDetail={setDetailProduct}
                     />
                   ))}
                 </tbody>
@@ -460,6 +467,14 @@ export default function AdminProductManager({
           key={editingProduct.id}
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
+        />
+      )}
+      {detailProduct && (
+        <AdminProductDetailDialog
+          key={detailProduct.id}
+          product={detailProduct}
+          initialItems={detailItems[detailProduct.id] ?? []}
+          onClose={() => setDetailProduct(null)}
         />
       )}
     </div>
@@ -535,6 +550,7 @@ function ProductRow({
   saving,
   onStatusChange,
   onEdit,
+  onEditDetail,
 }: {
   product: AdminProduct;
   databaseReady: boolean;
@@ -544,6 +560,7 @@ function ProductRow({
     nextStatus: AdminProductStatus
   ) => Promise<void>;
   onEdit: (product: AdminProduct) => void;
+  onEditDetail: (product: AdminProduct) => void;
 }) {
   const nextAction = getNextStatusAction(product.status);
   const canEdit = databaseReady && product.source === "database";
@@ -632,6 +649,15 @@ function ProductRow({
             <Link href="/admin/courses" className={styles.rowLink}>
               강의 구성
             </Link>
+          ) : canEdit ? (
+            <button
+              type="button"
+              className={styles.rowAction}
+              disabled={saving}
+              onClick={() => onEditDetail(product)}
+            >
+              자료 구성
+            </button>
           ) : (
             <span className={styles.rowActionSlot} aria-hidden="true" />
           )}
@@ -764,6 +790,30 @@ function ProductEditDialog({
             {state.fieldErrors.summary && (
               <small id="edit-summary-error" className={styles.fieldError}>
                 {state.fieldErrors.summary}
+              </small>
+            )}
+          </label>
+
+          <label className={styles.formField}>
+            <span>상세 소개</span>
+            <textarea
+              name="detailBody"
+              rows={6}
+              maxLength={4000}
+              defaultValue={product.detailBody}
+              placeholder={"상세 페이지에 표시할 소개 문단입니다.\n\n빈 줄로 문단을 나눕니다."}
+              aria-invalid={Boolean(state.fieldErrors.detailBody)}
+              aria-describedby={
+                state.fieldErrors.detailBody ? "edit-detail-body-error" : undefined
+              }
+            />
+            {state.fieldErrors.detailBody ? (
+              <small id="edit-detail-body-error" className={styles.fieldError}>
+                {state.fieldErrors.detailBody}
+              </small>
+            ) : (
+              <small className={styles.fieldHint}>
+                비워두면 상세 페이지에 상품 설명만 표시됩니다.
               </small>
             )}
           </label>

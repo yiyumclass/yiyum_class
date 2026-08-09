@@ -92,7 +92,8 @@ export default async function MyPage() {
         buildEbookLibraryItem({
           slug: entitlement.productSlug,
           title: entitlement.title,
-          description: entitlement.summary || "구매한 전자책 콘텐츠입니다.",
+          description: entitlement.summary || "받아 두신 자료입니다.",
+          hasFile: entitlement.hasFile,
           accessLabel: formatLibraryAccessLabel(
             entitlement.expiresAt,
             entitlement.accessPeriodDays

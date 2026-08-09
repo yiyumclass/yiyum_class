@@ -18,6 +18,7 @@ export type CreateProductState = {
       | "listPriceKrw"
       | "accessPeriodDays"
       | "summary"
+      | "detailBody"
       | "thumbnailPath"
       | "detailPath",
       string
@@ -185,6 +186,7 @@ export async function updateProductAction(
     .update({
       title: values.title,
       summary: values.summary,
+      detail_body: values.detailBody || null,
       price_krw: values.priceKrw,
       list_price_krw: values.listPriceKrw,
       access_period_days:
@@ -246,6 +248,7 @@ type EditableProductFormValues = Omit<
   "productType" | "slug" | "status"
 > & {
   status: AdminProductStatus;
+  detailBody: string;
 };
 
 function readProductForm(formData: FormData): ProductFormValues {
@@ -277,6 +280,7 @@ function readEditableProductForm(formData: FormData): EditableProductFormValues 
   return {
     title: readString(formData, "title"),
     summary: readString(formData, "summary"),
+    detailBody: readString(formData, "detailBody"),
     priceKrw: readNumber(formData, "priceKrw"),
     listPriceKrw: readOptionalNumber(formData, "listPriceKrw"),
     accessMode: accessMode === "lifetime" ? "lifetime" : "period",
@@ -331,6 +335,10 @@ function validateProductForm(values: ProductFormValues) {
 
 function validateEditableProductForm(values: EditableProductFormValues) {
   const errors: CreateProductState["fieldErrors"] = {};
+
+  if (values.detailBody.length > 4000) {
+    errors.detailBody = "자료 소개는 4,000자 이하로 입력해 주세요.";
+  }
 
   if (!values.title || values.title.length > 120) {
     errors.title = "상품명은 1자 이상 120자 이하로 입력해 주세요.";

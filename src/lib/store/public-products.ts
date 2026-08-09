@@ -11,11 +11,15 @@ export type PublicProduct = {
   productType: ProductType;
   title: string;
   summary: string;
+  /** 상세 소개 문단. 빈 줄로 문단을 나눈다. */
+  detailBody: string | null;
   priceKrw: number;
   /** 할인 전 정가. null이면 세일이 아니다. */
   listPriceKrw: number | null;
   /** 품절이면 목록에는 남지만 결제는 막힌다. */
   soldOut: boolean;
+  /** 내려받을 자료가 붙어 있는지. 경로 자체는 공개하지 않는다. */
+  hasFile: boolean;
   accessPeriodDays: number | null;
   accessLabel: string;
   thumbnailSrc: string | null;
@@ -28,12 +32,14 @@ type ProductRow = {
   product_type: PublicProduct["productType"];
   title: string;
   summary: string;
+  detail_body: string | null;
   price_krw: number;
   list_price_krw: number | null;
   status: "active" | "sold_out";
   access_period_days: number | null;
   thumbnail_path: string | null;
   detail_path: string | null;
+  has_file: boolean;
 };
 
 export const loadPublicProductBySlug = cache(async function loadPublicProductBySlug(
@@ -81,9 +87,11 @@ function mapProductRow(row: ProductRow): PublicProduct {
     productType: row.product_type,
     title: row.title,
     summary: row.summary,
+    detailBody: row.detail_body,
     priceKrw: row.price_krw,
     listPriceKrw: row.list_price_krw,
     soldOut: row.status === "sold_out",
+    hasFile: Boolean(row.has_file),
     accessPeriodDays: row.access_period_days,
     accessLabel:
       row.access_period_days === null
@@ -103,9 +111,11 @@ function buildTemporaryProduct(slug: string): PublicProduct | null {
     productType: "ebook",
     title: "작은 계정을 수익으로 연결하는 법",
     summary: "수익화 계정의 방향과 실행 순서를 한 권에 정리한 실전 워크북",
+    detailBody: null,
     priceKrw: 0,
     listPriceKrw: null,
     soldOut: false,
+    hasFile: false,
     accessPeriodDays: null,
     accessLabel: "기간 제한 없이 이용",
     thumbnailSrc: null,
@@ -117,8 +127,10 @@ function resolveDetailHref(product: ProductRow) {
   if (product.product_type === "course" || product.product_type === "consulting") {
     return `/courses/${product.slug}`;
   }
+  // 자료는 상세와 내려받기가 붙은 전용 화면이 있다. 직접 경로를 지정한
+  // 예전 상품만 그 경로를 그대로 쓴다.
   if (product.detail_path?.startsWith("/") && !product.detail_path.startsWith("/checkout")) {
     return product.detail_path;
   }
-  return "/";
+  return `/library/${product.slug}`;
 }

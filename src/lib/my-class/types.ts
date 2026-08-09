@@ -23,6 +23,8 @@ export type CourseLibraryItem = BaseLibraryItem & {
 
 export type EbookLibraryItem = BaseLibraryItem & {
   kind: "ebook";
+  /** 내려받기 경로를 만들 때 쓴다. */
+  slug: string;
   status: "preparing" | "available" | "completed";
 };
 
