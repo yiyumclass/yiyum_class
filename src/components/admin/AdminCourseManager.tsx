@@ -27,6 +27,8 @@ import {
   deleteCourseAction,
   deleteCourseSectionAction,
   deleteLessonAction,
+  forceDeleteLessonAction,
+  getLessonDeletionImpactAction,
 } from "@/app/admin/courses/delete-actions";
 import type {
   AdminCourse,
@@ -68,6 +70,8 @@ type AdminCourseManagerProps = {
   databaseReady: boolean;
   videoStorageReady: boolean;
   canDeleteCourse: boolean;
+  /** owner 만 수강 기록이 있는 차시를 완전 삭제할 수 있다. */
+  canForceDelete: boolean;
   sourceMessage: string | null;
 };
 
@@ -114,6 +118,7 @@ export default function AdminCourseManager({
   databaseReady,
   videoStorageReady,
   canDeleteCourse,
+  canForceDelete,
   sourceMessage,
 }: AdminCourseManagerProps) {
   const { toast, confirm } = useAdminFeedback();
@@ -158,7 +163,11 @@ export default function AdminCourseManager({
 
     const confirmed = await confirm({
       title: `${label} "${target.title}"을(를) 삭제할까요?`,
-      description: `${cascade} 되돌릴 수 없습니다. 수강 기록이 있으면 삭제되지 않고 보관 처리를 안내합니다.`,
+      description: `${cascade} 되돌릴 수 없습니다. 수강 기록이 있으면 ${
+        canForceDelete && kind === "lesson"
+          ? "규모를 알려드린 뒤 완전 삭제 여부를 다시 여쭙습니다."
+          : "삭제되지 않고 보관 처리를 안내합니다."
+      }`,
       confirmLabel: `${label} 삭제`,
       tone: "danger",
     });
@@ -173,6 +182,34 @@ export default function AdminCourseManager({
             ? deleteCourseSectionAction
             : deleteCourseAction;
       const result = await action(target.id);
+
+      // 커리큘럼에서 아예 걷어내야 하는 경우가 있다. 보관만으로는 관리자 목록에
+      // 계속 남으므로, owner 에게는 완전 삭제를 먼저 제안한다. 무엇을 지우는지
+      // 알 수 있도록 걸려 있는 수강 기록 규모를 함께 보여 준다.
+      if (!result.ok && result.canForceDelete && canForceDelete) {
+        const impact = await getLessonDeletionImpactAction(target.id);
+        const scale = impact
+          ? `수강생 ${impact.watcherCount}명의 시청 기록이 있습니다${
+              impact.completedCount > 0
+                ? ` (완강 ${impact.completedCount}명)`
+                : ""
+            }.`
+          : "수강생의 시청 기록이 있습니다.";
+
+        const forced = await confirm({
+          title: `"${target.title}"을(를) 완전 삭제할까요?`,
+          description: `${scale}\n\n기록은 지워지지 않고 "삭제된 차시" 목록에 남아 계속 확인할 수 있습니다. 다만 차시 자체는 되돌릴 수 없습니다.`,
+          confirmLabel: "완전 삭제",
+          tone: "danger",
+        });
+
+        if (forced) {
+          const removed = await forceDeleteLessonAction(target.id);
+          toast(removed.message, removed.ok ? "success" : "error");
+          return;
+        }
+        // 완전 삭제를 물렀다면 보관 처리로 이어 준다.
+      }
 
       // 막혔을 때 안내만 띄우고 끝내면 운영자는 다음에 뭘 해야 할지 모른 채 남는다.
       // 대안인 보관 처리를 그 자리에서 이어갈 수 있게 한다.

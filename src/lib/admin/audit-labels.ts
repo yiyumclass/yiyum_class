@@ -12,6 +12,7 @@ const ACTION_LABELS: Record<string, string> = {
   "courses.deleted": "강의를 삭제했습니다",
   "course_sections.deleted": "챕터를 삭제했습니다",
   "lessons.deleted": "차시를 삭제했습니다",
+  "lessons.force_deleted": "수강 기록이 있는 차시를 완전 삭제했습니다",
   "entitlement.granted": "수강권을 지급했습니다",
   "entitlement.updated": "수강권을 변경했습니다",
   "entitlement.revoked": "수강권을 회수했습니다",

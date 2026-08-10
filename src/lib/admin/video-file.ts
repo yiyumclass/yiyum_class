@@ -1,3 +1,7 @@
+// 시청 시간 표기는 브라우저 API에 기대지 않아 테스트에서 직접 부를 수 있어야 한다.
+// 계산은 watch-progress 에 두고 여기서는 기존 임포트 경로만 유지한다.
+export { formatVideoDuration } from "./watch-progress";
+
 /**
  * Mux 가 변환을 맡으므로 형식과 용량을 좁게 잡지 않는다.
  * mov, mkv, avi, ProRes 모두 그대로 올려도 된다.
@@ -62,14 +66,4 @@ export function readVideoDuration(previewUrl: string) {
 export function formatVideoFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))}KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
-
-export function formatVideoDuration(seconds: number) {
-  const rounded = Math.max(0, Math.round(seconds));
-  const hours = Math.floor(rounded / 3600);
-  const minutes = Math.floor((rounded % 3600) / 60);
-  const rest = rounded % 60;
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`
-    : `${minutes}:${String(rest).padStart(2, "0")}`;
 }

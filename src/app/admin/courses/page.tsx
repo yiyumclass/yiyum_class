@@ -22,6 +22,7 @@ export default async function AdminCoursesPage() {
         databaseReady={result.databaseReady}
         videoStorageReady={result.videoStorageReady}
         canDeleteCourse={admin.role === "owner"}
+        canForceDelete={admin.role === "owner"}
         sourceMessage={result.message}
       />
     </Suspense>

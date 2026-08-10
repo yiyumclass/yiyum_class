@@ -11,6 +11,8 @@ export type DeleteContentResult = {
   message: string;
   // 수강 기록이나 이용권 때문에 막힌 경우에만 true. 화면이 보관 처리를 바로 제안한다.
   canArchive?: boolean;
+  // 수강 기록 때문에 막힌 경우에만 true. owner 라면 완전 삭제를 이어서 제안한다.
+  canForceDelete?: boolean;
 };
 
 type DeleteRow = {
@@ -125,6 +127,9 @@ async function deleteContent(
       ok: false,
       message: describeRejection(row.reason, kind),
       canArchive: row.reason === "has_progress" || row.reason === "has_entitlement",
+      // 차시만 완전 삭제를 연다. 챕터·강의는 한 번에 지워지는 범위가 넓어
+      // 같은 확인 절차로는 규모를 가늠할 수 없다.
+      canForceDelete: kind === "lesson" && row.reason === "has_progress",
     };
   }
 
@@ -145,6 +150,112 @@ export async function deleteCourseSectionAction(sectionId: string) {
 
 export async function deleteCourseAction(courseId: string) {
   return deleteContent("course", courseId);
+}
+
+export type LessonDeletionImpact = {
+  lessonTitle: string;
+  courseSlug: string;
+  hasVideo: boolean;
+  watcherCount: number;
+  completedCount: number;
+};
+
+type ImpactRow = {
+  lesson_title: string;
+  course_slug: string;
+  has_video: boolean;
+  watcher_count: number;
+  completed_count: number;
+};
+
+/**
+ * 완전 삭제를 묻기 전에 걸려 있는 수강 기록 규모를 읽는다.
+ * 숫자를 보여 주지 않으면 운영자는 무엇을 지우는지 모르는 채로 누르게 된다.
+ */
+export async function getLessonDeletionImpactAction(
+  lessonId: string
+): Promise<LessonDeletionImpact | null> {
+  await requireAdmin();
+
+  if (!isUuid(lessonId)) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("lesson_deletion_impact", {
+    target_lesson_id: lessonId,
+  });
+
+  if (error) {
+    console.error("Failed to load lesson deletion impact:", error.code);
+    return null;
+  }
+
+  const row = (Array.isArray(data) ? data[0] : data) as ImpactRow | undefined;
+  if (!row) return null;
+
+  return {
+    lessonTitle: row.lesson_title,
+    courseSlug: row.course_slug,
+    hasVideo: row.has_video,
+    watcherCount: row.watcher_count,
+    completedCount: row.completed_count,
+  };
+}
+
+/**
+ * 수강 기록이 있어도 차시를 지운다. 커리큘럼에서 아예 걷어내는 경우를 위한 길이다.
+ *
+ * 수강 기록 자체는 지우지 않는다. lesson_progress 는 차시를 문자열로 참조하므로
+ * 차시가 사라져도 행은 남고, 삭제 시 남긴 스냅샷으로 다시 읽을 수 있다.
+ */
+export async function forceDeleteLessonAction(
+  lessonId: string
+): Promise<DeleteContentResult> {
+  await requireAdmin();
+
+  if (!isUuid(lessonId)) {
+    return { ok: false, message: "삭제할 차시를 확인해 주세요." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("force_delete_lesson", {
+    target_lesson_id: lessonId,
+  });
+
+  if (error) {
+    console.error("Failed to force delete lesson:", error.code);
+    if (error.code === "42501") {
+      return { ok: false, message: "완전 삭제는 최고 관리자만 할 수 있습니다." };
+    }
+    if (
+      error.code === "42883" ||
+      error.code === "PGRST202" ||
+      error.code === "PGRST205"
+    ) {
+      return { ok: false, message: "완전 삭제 기능 설정이 아직 적용되지 않았습니다." };
+    }
+    return { ok: false, message: "차시를 삭제하지 못했습니다." };
+  }
+
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | (DeleteRow & { watcher_count: number })
+    | null;
+
+  if (!row?.deleted) {
+    return { ok: false, message: "삭제할 차시를 찾지 못했습니다." };
+  }
+
+  await removeMuxAssets(row.mux_asset_ids ?? []);
+
+  revalidatePath("/admin/courses");
+  revalidatePath("/admin");
+  revalidatePath("/admin/progress");
+  return {
+    ok: true,
+    message:
+      row.watcher_count > 0
+        ? `차시를 삭제했습니다. 수강 기록 ${row.watcher_count}건은 "삭제된 차시" 목록에서 계속 확인할 수 있습니다.`
+        : "차시를 삭제했습니다.",
+  };
 }
 
 const tableByKind: Record<ContentKind, string> = {

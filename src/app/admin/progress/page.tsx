@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import AdminDeletedLessons from "@/components/admin/AdminDeletedLessons";
 import AdminLearningProgress from "@/components/admin/AdminLearningProgress";
 import { requireAdmin } from "@/lib/admin/auth";
+import { loadDeletedLessons } from "@/lib/admin/deleted-lessons";
 import {
   ADMIN_LEARNING_SORTS,
   ADMIN_LEARNING_STATUSES,
@@ -64,6 +66,10 @@ export default async function AdminProgressPage({
           offset,
         });
 
+  // 삭제된 차시는 진도 목록과 조건을 공유하지 않는다. 지워진 차시라 강의 필터에
+  // 걸리지 않기 때문이다. 별도로 읽어 목록 아래에 둔다.
+  const deleted = await loadDeletedLessons();
+
   return (
     // 화면이 검색·필터 상태를 URL에서 읽으므로(useSearchParams) 경계를 둔다.
     <Suspense fallback={null}>
@@ -77,6 +83,11 @@ export default async function AdminProgressPage({
         databaseReady={page.databaseReady}
         sourceMessage={page.message}
         referenceTime={new Date().toISOString()}
+      />
+      <AdminDeletedLessons
+        records={deleted.records}
+        databaseReady={deleted.databaseReady}
+        sourceMessage={deleted.message}
       />
     </Suspense>
   );
