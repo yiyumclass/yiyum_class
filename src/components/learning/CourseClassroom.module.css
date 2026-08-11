@@ -728,9 +728,19 @@
 /* 시청 중: 빈 동그라미 테두리 위에 진행한 만큼만 호를 얹는다 */
 .lessonProgressRing {
   position: absolute;
-  inset: 0;
+  /*
+   * 절대 위치는 테두리 안쪽(padding box)을 기준으로 잡힌다. 여기에 크기를 26px로
+   * 고정하면 테두리 1px 만큼 오른쪽 아래로 밀려서, 진도 호가 테두리 원에 얹히지
+   * 않고 어긋난다. 테두리까지 덮도록 되돌린다.
+   */
+  inset: -1px;
   width: 26px;
   height: 26px;
+  /*
+   * 선은 경로를 가운데 두고 그려지므로 두께의 절반이 viewBox 밖으로 나간다.
+   * 기본값(hidden)이면 그 부분이 잘려 호의 끝이 평평해진다.
+   */
+  overflow: visible;
 }
 
 .lessonProgressRing circle {
