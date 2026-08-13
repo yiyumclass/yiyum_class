@@ -261,6 +261,12 @@ export default function AdminCourseManager({
     }
   };
 
+  const connectBlockedReason = !databaseReady
+    ? "현재 강의 관리 기능을 사용할 수 없습니다."
+    : availableProducts.length === 0
+      ? "연결하지 않은 강의 상품이 없습니다. 상품 관리에서 강의 상품을 먼저 등록해 주세요."
+      : null;
+
   return (
     <div className={styles.page}>
       <section className={styles.pageHeading}>
@@ -269,22 +275,25 @@ export default function AdminCourseManager({
           <h1>강의 관리</h1>
           <p>판매 상품과 강의를 연결하고 챕터, 차시와 영상 공개 상태를 관리합니다.</p>
         </div>
-        <button
-          type="button"
-          className={styles.primaryButton}
-          disabled={!databaseReady || availableProducts.length === 0}
-          onClick={() => setDialog({ type: "create-course" })}
-          title={
-            !databaseReady
-              ? "현재 강의 관리 기능을 사용할 수 없습니다."
-              : availableProducts.length === 0
-                ? "연결하지 않은 강의 상품이 없습니다."
-                : undefined
-          }
-        >
-          <PlusIcon />
-          새 강의 연결
-        </button>
+        {/*
+          * 막힌 이유를 title 에만 두면 사실상 감춘 것과 같다. 비활성 버튼은 브라우저가
+          * 툴팁을 띄우지 않는 경우가 있고, 마우스를 올려 보기 전에는 알 수도 없다.
+          * 버튼 아래에 문장으로 함께 보여 준다.
+          */}
+        <div className={styles.headingAction}>
+          <button
+            type="button"
+            className={styles.primaryButton}
+            disabled={Boolean(connectBlockedReason)}
+            onClick={() => setDialog({ type: "create-course" })}
+          >
+            <PlusIcon />
+            새 강의 연결
+          </button>
+          {connectBlockedReason && (
+            <small className={styles.actionHint}>{connectBlockedReason}</small>
+          )}
+        </div>
       </section>
 
       {!databaseReady && (

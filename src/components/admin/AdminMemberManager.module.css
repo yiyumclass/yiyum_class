@@ -24,7 +24,7 @@
 .summaryItem + .summaryItem { border-left: 1px solid var(--admin-line); }
 .summaryItem > span { color: #8c8377; font-size: var(--admin-text-sm); font-weight: 600; }
 .summaryItem strong { color: #37312b; font-size: var(--admin-text-display); font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
-.summaryItem strong small, .activeCount small { margin-left: 3px; color: #989084; font-size: var(--admin-text-xs); font-weight: 600; }
+.summaryItem strong small, .activeCount small, .zeroCount small { margin-left: 3px; color: #989084; font-size: var(--admin-text-xs); font-weight: 600; }
 .summaryItem strong.summaryValue_active { color: #68735a; }
 /* 만료 경고색은 요약 카드와 수강권 편집 오류 문구가 함께 쓴다. */
 .summaryItem strong.summaryValue_warning, .summaryValue_warning { color: #a95b3f; }
@@ -64,7 +64,7 @@
 .memberTable th:nth-child(5) .sortButton, .memberTable th:nth-child(5) .sortButtonActive { width: 100%; justify-content: flex-end; }
 .numericCell { text-align: right; font-variant-numeric: tabular-nums; }
 
-.sortButton, .sortButtonActive { padding: 0; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 4px; font: inherit; cursor: pointer; }
+.sortButton, .sortButtonActive { min-height: var(--admin-control-sm); padding: 0; border: 0; background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 4px; font: inherit; cursor: pointer; }
 .sortButtonActive { color: #7e402b; }
 .sortButton svg, .sortButtonActive svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .sortButton svg { opacity: .45; }
@@ -77,7 +77,10 @@
 .memberIdentity strong { color: #39332d; font-size: var(--admin-text-sm); font-weight: 700; }
 .memberIdentity small { max-width: 190px; overflow: hidden; color: #948b80; font-size: var(--admin-text-eyebrow); text-overflow: ellipsis; white-space: nowrap; }
 
-.memberIdField { display: inline-flex; align-items: center; gap: var(--admin-gap-xs); }
+.memberIdField { display: inline-flex; align-items: center; gap: var(--admin-gap-xs); min-width: 0; }
+/* UUID 는 끊어 읽을 수 없는 값이라 중간에서 접으면 오히려 읽기 어렵다.
+   한 줄로 두고 넘치면 말줄임한다. 전체 값은 title 과 복사 버튼으로 얻는다. */
+.memberIdField code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .memberIdField code { color: var(--admin-ink-muted); font-size: var(--admin-text-eyebrow); letter-spacing: .01em; }
 .memberIdFull { display: none; }
 .memberIdShort { display: inline; }

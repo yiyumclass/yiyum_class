@@ -47,7 +47,8 @@
 .table { width: 100%; min-width: 980px; table-layout: fixed; border-collapse: collapse; font-size: var(--admin-text-sm); }
 .table th:nth-child(1) { width: 172px; }
 .table th:nth-child(2) { width: 104px; }
-.table th:nth-child(3) { width: 148px; }
+/* 변경 내용은 문장이라 좁으면 서너 줄로 쪼개진다. 식별자 열에서 폭을 넘겨받는다. */
+.table th:nth-child(3) { width: 232px; }
 .table th:nth-child(5) { width: 152px; }
 .table th:nth-child(6) { width: 116px; }
 .table th { padding: var(--admin-gap-sm) var(--admin-gap-md); border-bottom: 1px solid #e7dfd3; color: var(--admin-ink-muted); font-size: var(--admin-text-xs); font-weight: 700; letter-spacing: 0.06em; text-align: left; white-space: nowrap; }

@@ -196,7 +196,8 @@
   border-radius: var(--admin-radius-lg);
   background: #fbf8f3;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* 항목이 6개다. 6열이면 한 줄로 딱 떨어지고 마지막 줄에 빈 칸이 남지 않는다. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   overflow: hidden;
 }
 

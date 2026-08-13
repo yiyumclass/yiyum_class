@@ -494,7 +494,8 @@ function MemberRow({
           </span>
           <span>
             <strong>{member.name}</strong>
-            <small>{member.email}</small>
+            {/* 말줄임으로 잘리므로 전체 주소를 덧붙인다. */}
+            <small title={member.email}>{member.email}</small>
             <MemberIdField member={member} onCopy={onCopyId} />
           </span>
         </span>
