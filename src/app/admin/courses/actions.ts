@@ -15,8 +15,7 @@ type CourseField =
   | "instructor"
   | "posterPath"
   | "status"
-  | "sectionKey"
-  | "lessonKey"
+  | "insertAfterLessonId"
   | "durationSeconds";
 
 export type CourseFormState = {
@@ -162,7 +161,7 @@ export async function createCourseSectionAction(
 
   const { error } = await supabase.from("course_sections").insert({
     course_id: courseId,
-    section_key: values.key,
+    section_key: createInternalKey("chapter"),
     title: values.title,
     description: values.description,
     status: values.status,
@@ -173,13 +172,6 @@ export async function createCourseSectionAction(
 
   if (error) {
     console.error("Failed to create course section:", error.message);
-    if (error.code === "23505") {
-      return {
-        status: "error",
-        message: "이미 사용 중인 챕터 키입니다.",
-        fieldErrors: { sectionKey: "다른 챕터 키를 입력해 주세요." },
-      };
-    }
     return mutationError(error.code, "챕터를 추가하지 못했습니다.");
   }
 
@@ -195,8 +187,8 @@ export async function updateCourseSectionAction(
   await requireAdmin();
   if (!isUuid(sectionId)) return invalidTarget("수정할 챕터를 확인해 주세요.");
 
-  const values = readSectionForm(formData, false);
-  const fieldErrors = validateSectionForm(values, false);
+  const values = readSectionForm(formData);
+  const fieldErrors = validateSectionForm(values);
   if (hasErrors(fieldErrors)) return formError(fieldErrors);
 
   const supabase = await createClient();
@@ -225,45 +217,31 @@ export async function createLessonAction(
   _previousState: CourseFormState,
   formData: FormData
 ): Promise<CourseFormState> {
-  const admin = await requireAdmin();
+  await requireAdmin();
   if (!isUuid(sectionId)) return invalidTarget("차시를 추가할 챕터를 확인해 주세요.");
 
   const values = readLessonForm(formData);
   const fieldErrors = validateLessonForm(values);
+  const insertAfterLessonId = readString(formData, "insertAfterLessonId");
+  if (insertAfterLessonId && !isUuid(insertAfterLessonId)) {
+    fieldErrors.insertAfterLessonId = "차시를 추가할 위치를 다시 선택해 주세요.";
+  }
   if (values.status === "published") {
     fieldErrors.status = "차시를 먼저 만든 뒤 영상을 업로드해야 공개할 수 있습니다.";
   }
   if (hasErrors(fieldErrors)) return formError(fieldErrors);
 
   const supabase = await createClient();
-  const { data: lastLesson, error: orderError } = await supabase
-    .from("lessons")
-    .select("sort_order")
-    .eq("section_id", sectionId)
-    .order("sort_order", { ascending: false })
-    .limit(1)
-    .maybeSingle<{ sort_order: number }>();
-
-  if (orderError) return mutationError(orderError.code, "차시 순서를 확인하지 못했습니다.");
-
-  const { data: createdLesson, error } = await supabase
-    .from("lessons")
-    .insert({
-      section_id: sectionId,
-      lesson_key: values.key,
-      title: values.title,
-      duration_seconds: values.durationSeconds,
-      video_path: null,
-      status: values.status,
-      is_preview: values.isPreview,
-      sort_order: (lastLesson?.sort_order ?? 0) + 1,
-      created_by: admin.userId,
-      updated_by: admin.userId,
-    })
-    .select(
-      "id, lesson_key, title, duration_seconds, status, is_preview, sort_order, updated_at"
-    )
-    .single<{
+  const { data, error } = await supabase.rpc("admin_create_lesson_at_position", {
+    target_section_id: sectionId,
+    target_after_lesson_id: insertAfterLessonId || null,
+    target_lesson_key: createInternalKey("lesson"),
+    target_title: values.title,
+    target_duration_seconds: values.durationSeconds,
+    target_status: values.status,
+    target_is_preview: values.isPreview,
+  });
+  const createdLesson = ((data ?? []) as Array<{
       id: string;
       lesson_key: string;
       title: string;
@@ -272,22 +250,15 @@ export async function createLessonAction(
       is_preview: boolean;
       sort_order: number;
       updated_at: string;
-    }>();
+    }>)[0];
 
   if (error || !createdLesson) {
     if (error) console.error("Failed to create lesson:", error.message);
-    if (error?.code === "23505") {
-      return {
-        status: "error",
-        message: "이미 사용 중인 차시 키입니다.",
-        fieldErrors: { lessonKey: "다른 차시 키를 입력해 주세요." },
-      };
-    }
     return mutationError(error?.code, "차시를 추가하지 못했습니다.");
   }
 
   revalidateCourses();
-  return success("새 차시를 챕터 마지막에 추가했습니다.", {
+  return success("선택한 위치에 새 차시를 추가했습니다.", {
     id: createdLesson.id,
     key: createdLesson.lesson_key,
     title: createdLesson.title,
@@ -309,10 +280,9 @@ export async function updateLessonAction(
   await requireAdmin();
   if (!isUuid(lessonId)) return invalidTarget("수정할 차시를 확인해 주세요.");
 
-  // withKey=false: lesson_key는 lesson_progress가 텍스트 키로 참조하므로 생성 후 불변 계약이다.
-  // 수정 경로에서는 차시 키를 읽지도 바꾸지도 않는다. lesson_key 수정 필드를 추가하지 말 것.
-  const values = readLessonForm(formData, false);
-  const fieldErrors = validateLessonForm(values, false);
+  // lesson_key는 lesson_progress가 참조하는 불변 계약이다. 수정 폼에는 노출하지 않는다.
+  const values = readLessonForm(formData);
+  const fieldErrors = validateLessonForm(values);
   if (hasErrors(fieldErrors)) return formError(fieldErrors);
 
   const supabase = await createClient();
@@ -466,14 +436,12 @@ type CourseValues = {
 };
 
 type SectionValues = {
-  key: string;
   title: string;
   description: string;
   status: AdminCourseStatus;
 };
 
 type LessonValues = {
-  key: string;
   title: string;
   durationSeconds: number;
   status: AdminCourseStatus;
@@ -491,18 +459,16 @@ function readCourseForm(formData: FormData): CourseValues {
   };
 }
 
-function readSectionForm(formData: FormData, withKey = true): SectionValues {
+function readSectionForm(formData: FormData): SectionValues {
   return {
-    key: withKey ? readString(formData, "sectionKey").toLowerCase() : "existing",
     title: readString(formData, "title"),
     description: readString(formData, "description"),
     status: readStatus(formData),
   };
 }
 
-function readLessonForm(formData: FormData, withKey = true): LessonValues {
+function readLessonForm(formData: FormData): LessonValues {
   return {
-    key: withKey ? readString(formData, "lessonKey").toLowerCase() : "existing",
     title: readString(formData, "title"),
     durationSeconds: readNumber(formData, "durationSeconds"),
     status: readStatus(formData),
@@ -530,11 +496,8 @@ function validateCourseForm(values: CourseValues) {
   return errors;
 }
 
-function validateSectionForm(values: SectionValues, withKey = true) {
+function validateSectionForm(values: SectionValues) {
   const errors: CourseFormState["fieldErrors"] = {};
-  if (withKey && !isKey(values.key)) {
-    errors.sectionKey = "영문 소문자, 숫자와 하이픈만 사용할 수 있습니다.";
-  }
   if (!values.title || values.title.length > 120) {
     errors.title = "챕터명은 1자 이상 120자 이하로 입력해 주세요.";
   }
@@ -544,11 +507,8 @@ function validateSectionForm(values: SectionValues, withKey = true) {
   return errors;
 }
 
-function validateLessonForm(values: LessonValues, withKey = true) {
+function validateLessonForm(values: LessonValues) {
   const errors: CourseFormState["fieldErrors"] = {};
-  if (withKey && !isKey(values.key)) {
-    errors.lessonKey = "영문 소문자, 숫자와 하이픈만 사용할 수 있습니다.";
-  }
   if (!values.title || values.title.length > 180) {
     errors.title = "차시명은 1자 이상 180자 이하로 입력해 주세요.";
   }
@@ -556,6 +516,14 @@ function validateLessonForm(values: LessonValues, withKey = true) {
     errors.durationSeconds = "영상 길이는 0초 이상의 숫자로 입력해 주세요.";
   }
   return errors;
+}
+
+/**
+ * 관리자에게 노출되는 순번과 영구 식별자를 분리한다. UUID 기반 키는 차시가
+ * 중간에 추가되거나 재정렬돼도 바뀌지 않아 기존 진도 기록을 안전하게 유지한다.
+ */
+function createInternalKey(kind: "chapter" | "lesson") {
+  return `${kind}-${crypto.randomUUID()}`;
 }
 
 async function validateCoursePublishReadiness(
@@ -600,10 +568,6 @@ function readString(formData: FormData, key: string) {
 function readNumber(formData: FormData, key: string) {
   const value = Number(readString(formData, key));
   return Number.isFinite(value) ? value : Number.NaN;
-}
-
-function isKey(value: string) {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 }
 
 function hasErrors(errors: CourseFormState["fieldErrors"]) {

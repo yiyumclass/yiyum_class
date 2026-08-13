@@ -42,6 +42,20 @@ export type AdminProduct = {
   previewPageCount: number;
   updatedAt: string | null;
   source: "database" | "catalog";
+  courseScope: AdminProductCourseScope | null;
+};
+
+export type AdminProductCourseScope = {
+  courseId: string;
+  accessMode: "full" | "selected";
+  sectionIds: string[];
+};
+
+export type AdminCourseScopeOption = {
+  id: string;
+  slug: string;
+  title: string;
+  sections: Array<{ id: string; title: string; lessonCount: number }>;
 };
 
 export type AdminProductFile = {
@@ -61,6 +75,8 @@ export type AdminProductDetailItem = {
 
 export type AdminProductsResult = {
   products: AdminProduct[];
+  courseOptions: AdminCourseScopeOption[];
+  courseScopesReady: boolean;
   databaseReady: boolean;
   message: string | null;
 };
@@ -114,6 +130,8 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
 
     return {
       products,
+      courseOptions: [],
+      courseScopesReady: false,
       databaseReady: false,
       message: tableMissing
         ? "현재 상품 관리 기능을 준비하고 있습니다. 잠시 후 다시 확인해 주세요."
@@ -121,10 +139,18 @@ export async function loadAdminProducts(): Promise<AdminProductsResult> {
     };
   }
 
-  const pageCounts = await loadPageCounts(supabase);
+  const [pageCounts, courseScopeData] = await Promise.all([
+    loadPageCounts(supabase),
+    loadAdminCourseScopeData(supabase),
+  ]);
 
   return {
-    products: (data ?? []).map((row) => mapProductRow(row, pageCounts)),
+    products: (data ?? []).map((row) => ({
+      ...mapProductRow(row, pageCounts),
+      courseScope: courseScopeData.scopeByProduct.get(row.id) ?? null,
+    })),
+    courseOptions: courseScopeData.courseOptions,
+    courseScopesReady: courseScopeData.ready,
     databaseReady: true,
     message: null,
   };
@@ -160,6 +186,7 @@ function mapProductRow(
     previewPageCount: row.preview_page_count ?? 0,
     updatedAt: row.updated_at,
     source: "database",
+    courseScope: null,
   };
 }
 
@@ -185,6 +212,7 @@ function buildCatalogFallback(): AdminProduct[] {
       previewPageCount: 0,
       updatedAt: null,
       source: "catalog",
+      courseScope: null,
     };
   });
 }
@@ -192,6 +220,98 @@ function buildCatalogFallback(): AdminProduct[] {
 function readAccessPeriod(label: string) {
   const matchedDays = label.match(/(\d+)일/);
   return matchedDays ? Number(matchedDays[1]) : null;
+}
+
+async function loadAdminCourseScopeData(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<{
+  ready: boolean;
+  courseOptions: AdminCourseScopeOption[];
+  scopeByProduct: Map<string, AdminProductCourseScope>;
+}> {
+  const [courseResult, sectionResult, lessonResult, scopeResult, chosenResult] =
+    await Promise.all([
+      supabase
+        .from("courses")
+        .select("id, slug, title")
+        .order("title")
+        .returns<Array<{ id: string; slug: string; title: string }>>(),
+      supabase
+        .from("course_sections")
+        .select("id, course_id, title, sort_order")
+        .order("sort_order")
+        .returns<Array<{ id: string; course_id: string; title: string; sort_order: number }>>(),
+      supabase
+        .from("lessons")
+        .select("id, section_id, status")
+        .returns<Array<{ id: string; section_id: string; status: string }>>(),
+      supabase
+        .from("product_course_scopes")
+        .select("product_id, course_id, access_mode")
+        .returns<Array<{
+          product_id: string;
+          course_id: string;
+          access_mode: "full" | "selected";
+        }>>(),
+      supabase
+        .from("product_course_scope_sections")
+        .select("product_id, section_id")
+        .returns<Array<{ product_id: string; section_id: string }>>(),
+    ]);
+
+  if (courseResult.error || sectionResult.error || lessonResult.error) {
+    return { ready: false, courseOptions: [], scopeByProduct: new Map() };
+  }
+  if (scopeResult.error || chosenResult.error) {
+    // 새 범위 마이그레이션 적용 전에도 기존 상품 편집은 계속 가능해야 한다.
+    return { ready: false, courseOptions: [], scopeByProduct: new Map() };
+  }
+
+  const lessonCountBySection = new Map<string, number>();
+  for (const lesson of lessonResult.data ?? []) {
+    if (lesson.status !== "published") continue;
+    lessonCountBySection.set(
+      lesson.section_id,
+      (lessonCountBySection.get(lesson.section_id) ?? 0) + 1
+    );
+  }
+  const sectionsByCourse = new Map<
+    string,
+    AdminCourseScopeOption["sections"]
+  >();
+  for (const section of sectionResult.data ?? []) {
+    const sections = sectionsByCourse.get(section.course_id) ?? [];
+    sections.push({
+      id: section.id,
+      title: section.title,
+      lessonCount: lessonCountBySection.get(section.id) ?? 0,
+    });
+    sectionsByCourse.set(section.course_id, sections);
+  }
+
+  const chosenByProduct = new Map<string, string[]>();
+  for (const row of chosenResult.data ?? []) {
+    const ids = chosenByProduct.get(row.product_id) ?? [];
+    ids.push(row.section_id);
+    chosenByProduct.set(row.product_id, ids);
+  }
+  const scopeByProduct = new Map<string, AdminProductCourseScope>();
+  for (const row of scopeResult.data ?? []) {
+    scopeByProduct.set(row.product_id, {
+      courseId: row.course_id,
+      accessMode: row.access_mode,
+      sectionIds: chosenByProduct.get(row.product_id) ?? [],
+    });
+  }
+
+  return {
+    ready: true,
+    courseOptions: (courseResult.data ?? []).map((course) => ({
+      ...course,
+      sections: sectionsByCourse.get(course.id) ?? [],
+    })),
+    scopeByProduct,
+  };
 }
 
 /** 상품 상세에 붙는 반복 항목. 관리자 편집 화면이 쓴다. */

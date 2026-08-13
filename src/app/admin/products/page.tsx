@@ -25,6 +25,8 @@ export default async function AdminProductsPage() {
     <Suspense>
       <AdminProductManager
         products={result.products}
+        courseOptions={result.courseOptions}
+        courseScopesReady={result.courseScopesReady}
         detailItems={detailItems}
         databaseReady={result.databaseReady}
         sourceMessage={result.message}

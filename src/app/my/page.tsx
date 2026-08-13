@@ -60,6 +60,7 @@ export default async function MyPage() {
         : createEmptyCourseProgress(course);
 
       return buildCourseLibraryItem(course, progress, {
+        productSlug: catalogItem.slug,
         description: catalogItem.summary,
         accessLabel: catalogItem.accessLabel,
         contentReady: catalogItem.contentReady,

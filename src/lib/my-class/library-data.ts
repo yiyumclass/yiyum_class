@@ -11,6 +11,8 @@ import type {
 } from "@/lib/my-class/types";
 
 type CourseLibraryDetails = {
+  /** 판매 상품 주소. 같은 원본 강의를 여러 챕터 상품이 공유할 때 라우팅에 쓴다. */
+  productSlug?: string;
   description?: string;
   accessLabel?: string;
   contentReady?: boolean;
@@ -67,9 +69,9 @@ export function buildCourseLibraryItem(
   );
 
   return {
-    id: `${course.slug}-course`,
+    id: `${details.productSlug ?? course.slug}-course`,
     kind: "course",
-    href: `/learn/${course.slug}`,
+    href: `/learn/${details.productSlug ?? course.slug}`,
     title: course.title,
     description: details.description || course.description,
     status,

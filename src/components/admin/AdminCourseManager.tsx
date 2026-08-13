@@ -776,7 +776,7 @@ function CourseSectionCard({
               canMoveDown={sectionIndex < sectionCount - 1}
               onUp={() => onMove("section", section.id, -1)}
               onDown={() => onMove("section", section.id, 1)}
-              label="챕터"
+              label={`${sectionIndex + 1}번째 챕터 ${section.title}`}
             />
             <button
               type="button"
@@ -823,7 +823,7 @@ function CourseSectionCard({
               <span className={styles.lessonIndex}>{lessonIndex + 1}</span>
               <span className={styles.lessonMain}>
                 <strong>{lesson.title}</strong>
-                <small>{lesson.key} · {formatDuration(lesson.durationSeconds)}</small>
+                <small>{lessonIndex + 1}강 · {formatDuration(lesson.durationSeconds)}</small>
               </span>
               <span className={lesson.hasVideo ? styles.videoReady : styles.videoMissing}>
                 {lesson.hasVideo ? <VideoIcon /> : <AlertIcon />}
@@ -840,7 +840,7 @@ function CourseSectionCard({
                     canMoveDown={lessonIndex < section.lessons.length - 1}
                     onUp={() => onMove("lesson", lesson.id, -1)}
                     onDown={() => onMove("lesson", lesson.id, 1)}
-                    label="차시"
+                    label={`${lessonIndex + 1}강 ${lesson.title}`}
                     compact
                   />
                   <button
@@ -1128,27 +1128,15 @@ function SectionDialog(props:
     <CourseDialogShell
       eyebrow={isCreate ? "NEW CHAPTER" : "EDIT CHAPTER"}
       title={isCreate ? "챕터 추가" : "챕터 정보 수정"}
-      description="차시를 주제별로 묶는 단위입니다. 식별 키는 생성 후 변경할 수 없습니다."
+      description={isCreate
+        ? "새 챕터는 마지막에 추가됩니다. 저장 후 순서를 옮기면 번호가 자동으로 정리됩니다."
+        : "챕터 이름과 상태를 수정합니다. 번호는 현재 순서에 맞춰 자동으로 정리됩니다."}
       pending={pending}
       state={state}
       onClose={props.onClose}
     >
       <form action={formAction} className={styles.dialogForm}>
         <FormMessage state={state} />
-        {isCreate ? (
-          <TextField
-            label="챕터 키"
-            name="sectionKey"
-            placeholder="예: account-setup"
-            description="영문 소문자, 숫자와 하이픈만 사용"
-            error={state.fieldErrors.sectionKey}
-            required
-          />
-        ) : (
-          <div className={styles.lockedMeta}>
-            <span>챕터 키</span><strong>{section?.key}</strong><small>생성 후 변경 불가</small>
-          </div>
-        )}
         <TextField
           label="챕터명"
           name="title"
@@ -1250,26 +1238,41 @@ function LessonDialog(props:
     <CourseDialogShell
       eyebrow={isCreate ? "NEW LESSON" : "EDIT LESSON"}
       title={isCreate ? "차시 추가" : "차시 정보 수정"}
-      description={`${props.section.title} 챕터의 차시 정보와 공개 상태를 관리합니다.`}
+      description={isCreate
+        ? `${props.section.title} 챕터에서 새 차시가 들어갈 위치를 선택할 수 있습니다.`
+        : `${props.section.title} 챕터의 차시 정보와 공개 상태를 관리합니다.`}
       pending={pending}
       state={state}
       onClose={props.onClose}
     >
       <form action={formAction} className={styles.dialogForm}>
         <FormMessage state={state} />
-        {isCreate ? (
-          <TextField
-            label="차시 키"
-            name="lessonKey"
-            placeholder="예: sns-33"
-            description="진도 기록에 사용하므로 생성 후 변경할 수 없습니다."
-            error={state.fieldErrors.lessonKey}
-            required
-          />
-        ) : (
-          <div className={styles.lockedMeta}>
-            <span>차시 키</span><strong>{lesson?.key}</strong><small>진도 기록 보호를 위해 변경 불가</small>
-          </div>
+        {isCreate && (
+          <label className={styles.formField}>
+            <span>추가 위치</span>
+            <span className={styles.selectControl}>
+              <select
+                name="insertAfterLessonId"
+                defaultValue={props.section.lessons.at(-1)?.id ?? ""}
+                aria-describedby="lesson-position-hint"
+              >
+                <option value="">맨 처음 · 새 1강으로 추가</option>
+                {props.section.lessons.map((currentLesson, index) => (
+                  <option key={currentLesson.id} value={currentLesson.id}>
+                    {index + 1}강 다음 · {currentLesson.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronIcon />
+            </span>
+            {state.fieldErrors.insertAfterLessonId ? (
+              <FieldError message={state.fieldErrors.insertAfterLessonId} />
+            ) : (
+              <small id="lesson-position-hint">
+                기존 차시의 진도 기록은 유지되고 번호만 새 순서에 맞게 바뀝니다.
+              </small>
+            )}
+          </label>
         )}
         <TextField
           label="차시명"
@@ -1652,4 +1655,3 @@ function formatDuration(seconds: number) {
   const rest = seconds % 60;
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
-

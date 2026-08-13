@@ -19,6 +19,7 @@ import {
 import type { CreateProductState } from "@/app/admin/products/actions";
 import type {
   AdminProduct,
+  AdminCourseScopeOption,
   AdminProductDetailItem,
   AdminProductStatus,
   AdminProductType,
@@ -46,6 +47,8 @@ import { formatProductType } from "@/lib/store/product-type";
 
 type AdminProductManagerProps = {
   products: AdminProduct[];
+  courseOptions: AdminCourseScopeOption[];
+  courseScopesReady: boolean;
   /** 상품 id로 묶은 상세 항목. 편집 창을 열 때 곧바로 그린다. */
   detailItems: Record<string, AdminProductDetailItem[]>;
   databaseReady: boolean;
@@ -103,6 +106,8 @@ const productTableDefaults = {
 
 export default function AdminProductManager({
   products,
+  courseOptions,
+  courseScopesReady,
   detailItems,
   databaseReady,
   sourceMessage,
@@ -460,12 +465,18 @@ export default function AdminProductManager({
       </section>
 
       {dialogOpen && (
-        <ProductCreateDialog onClose={() => setDialogOpen(false)} />
+        <ProductCreateDialog
+          courseOptions={courseOptions}
+          courseScopesReady={courseScopesReady}
+          onClose={() => setDialogOpen(false)}
+        />
       )}
       {editingProduct && (
         <ProductEditDialog
           key={editingProduct.id}
           product={editingProduct}
+          courseOptions={courseOptions}
+          courseScopesReady={courseScopesReady}
           onClose={() => setEditingProduct(null)}
         />
       )}
@@ -576,6 +587,15 @@ function ProductRow({
           <span className={styles.productCopy}>
             <strong>{product.title}</strong>
             <span>/{product.slug}</span>
+            {product.productType === "course" && (
+              <span className={styles.scopeSummary}>
+                {product.courseScope
+                  ? product.courseScope.accessMode === "full"
+                    ? "전체 강의 판매"
+                    : `${product.courseScope.sectionIds.length}개 챕터 판매`
+                  : "강의 연결 대기"}
+              </span>
+            )}
           </span>
         </div>
       </td>
@@ -669,9 +689,13 @@ function ProductRow({
 
 function ProductEditDialog({
   product,
+  courseOptions,
+  courseScopesReady,
   onClose,
 }: {
   product: AdminProduct;
+  courseOptions: AdminCourseScopeOption[];
+  courseScopesReady: boolean;
   onClose: () => void;
 }) {
   const { confirm } = useAdminFeedback();
@@ -686,6 +710,14 @@ function ProductEditDialog({
   const [accessMode, setAccessMode] = useState<"period" | "lifetime">(
     product.accessPeriodDays ? "period" : "lifetime"
   );
+  const [courseId, setCourseId] = useState(product.courseScope?.courseId ?? "");
+  const [courseAccessMode, setCourseAccessMode] = useState<"full" | "selected">(
+    product.courseScope?.accessMode ?? "full"
+  );
+  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>(
+    product.courseScope?.sectionIds ?? []
+  );
+  const selectedCourse = courseOptions.find((course) => course.id === courseId);
 
   /**
    * 확인창이 비동기라 기본 제출을 항상 막고, 확인을 통과한 뒤 액션을 직접 호출한다.
@@ -776,6 +808,106 @@ function ProductEditDialog({
               description="비워두면 세일 표시가 붙지 않습니다. 넣으면 판매 화면에 취소선으로 함께 보입니다."
             />
           </div>
+
+          {product.productType === "course" && (
+            <fieldset className={styles.courseScopeFieldset}>
+              <legend>판매 범위</legend>
+              {!courseScopesReady ? (
+                <p className={styles.scopeNotice}>
+                  판매 범위 기능을 준비하고 있습니다. 기존 상품 정보는 그대로 수정할 수 있습니다.
+                </p>
+              ) : courseOptions.length === 0 ? (
+                <p className={styles.scopeNotice}>
+                  연결할 강의가 없습니다. 강의 관리에서 원본 강의를 먼저 만들어 주세요.
+                </p>
+              ) : (
+                <>
+                  <input type="hidden" name="courseScopeEnabled" value="true" />
+                  <label className={styles.formField}>
+                    <span>연결할 원본 강의</span>
+                    <span className={styles.selectControl}>
+                      <select
+                        name="courseId"
+                        value={courseId}
+                        onChange={(event) => {
+                          setCourseId(event.target.value);
+                          setSelectedSectionIds([]);
+                        }}
+                        required
+                      >
+                        <option value="">강의를 선택해 주세요</option>
+                        {courseOptions.map((course) => (
+                          <option key={course.id} value={course.id}>{course.title}</option>
+                        ))}
+                      </select>
+                      <ChevronIcon />
+                    </span>
+                    {state.fieldErrors.courseId && (
+                      <small className={styles.fieldError}>{state.fieldErrors.courseId}</small>
+                    )}
+                  </label>
+                  <div className={styles.scopeModeChoices}>
+                    <label>
+                      <input
+                        type="radio"
+                        name="courseAccessMode"
+                        value="full"
+                        checked={courseAccessMode === "full"}
+                        onChange={() => setCourseAccessMode("full")}
+                      />
+                      <span><strong>전체 강의</strong><small>앞으로 추가되는 챕터도 자동 포함</small></span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="courseAccessMode"
+                        value="selected"
+                        checked={courseAccessMode === "selected"}
+                        onChange={() => setCourseAccessMode("selected")}
+                      />
+                      <span><strong>선택 챕터</strong><small>체크한 챕터만 구매자에게 공개</small></span>
+                    </label>
+                  </div>
+                  {state.fieldErrors.courseAccessMode && (
+                    <small className={styles.fieldError}>
+                      {state.fieldErrors.courseAccessMode}
+                    </small>
+                  )}
+                  {courseAccessMode === "selected" && selectedCourse && (
+                    <div className={styles.chapterPicker}>
+                      <div className={styles.chapterPickerHeading}>
+                        <strong>판매할 챕터 선택</strong>
+                        <span>{selectedSectionIds.length}/{selectedCourse.sections.length}개 선택</span>
+                      </div>
+                      {selectedCourse.sections.length === 0 ? (
+                        <p className={styles.scopeNotice}>이 강의에는 아직 챕터가 없습니다.</p>
+                      ) : selectedCourse.sections.map((section, index) => (
+                        <label key={section.id}>
+                          <input
+                            type="checkbox"
+                            name="courseSectionIds"
+                            value={section.id}
+                            checked={selectedSectionIds.includes(section.id)}
+                            onChange={(event) => setSelectedSectionIds((current) =>
+                              event.target.checked
+                                ? [...current, section.id]
+                                : current.filter((id) => id !== section.id)
+                            )}
+                          />
+                          <span><strong>{index + 1}. {section.title}</strong><small>공개 {section.lessonCount}개 차시</small></span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {state.fieldErrors.courseSectionIds && (
+                    <small className={styles.fieldError}>
+                      {state.fieldErrors.courseSectionIds}
+                    </small>
+                  )}
+                </>
+              )}
+            </fieldset>
+          )}
 
           <label className={styles.formField}>
             <span>상품 설명</span>
@@ -918,18 +1050,33 @@ function ProductEditDialog({
   );
 }
 
-function ProductCreateDialog({ onClose }: { onClose: () => void }) {
+function ProductCreateDialog({
+  courseOptions,
+  courseScopesReady,
+  onClose,
+}: {
+  courseOptions: AdminCourseScopeOption[];
+  courseScopesReady: boolean;
+  onClose: () => void;
+}) {
   const [state, formAction, pending] = useActionState(
     createProductAction,
     initialCreateProductState
   );
   const [accessMode, setAccessMode] = useState<"period" | "lifetime">("period");
+  const [productType, setProductType] = useState<AdminProductType>("course");
+  const [courseSetupMode, setCourseSetupMode] = useState<
+    "new" | "existing_selected"
+  >("new");
+  const [courseId, setCourseId] = useState("");
+  const [selectedSectionIds, setSelectedSectionIds] = useState<string[]>([]);
+  const selectedCourse = courseOptions.find((course) => course.id === courseId);
 
   return (
     <AdminDialog
       eyebrow="NEW PRODUCT"
       title="새 상품 등록"
-      description="판매 단위를 먼저 만들고, 다음 단계에서 강의 또는 전자책 콘텐츠를 연결합니다."
+      description="판매 정보와 제공할 콘텐츠 범위를 함께 설정합니다. 작성 중으로 저장한 뒤에도 수정할 수 있습니다."
       busy={pending}
       size="large"
       onClose={onClose}
@@ -938,7 +1085,7 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
         <div className={styles.successState} role="status">
           <span><CheckIcon /></span>
           <strong>{state.message}</strong>
-          <p>상품 목록에 반영되었습니다. 콘텐츠 연결은 강의 관리 단계에서 진행합니다.</p>
+          <p>상품과 선택한 콘텐츠 범위가 함께 반영되었습니다.</p>
           <button type="button" onClick={onClose}>목록으로 돌아가기</button>
         </div>
       ) : (
@@ -952,18 +1099,148 @@ function ProductCreateDialog({ onClose }: { onClose: () => void }) {
           <fieldset className={styles.typeChoice}>
             <legend>상품 유형</legend>
             <label>
-              <input type="radio" name="productType" value="course" defaultChecked />
+              <input
+                type="radio"
+                name="productType"
+                value="course"
+                checked={productType === "course"}
+                onChange={() => setProductType("course")}
+              />
               <span><PlayIcon /><strong>VOD 강의</strong><small>영상 커리큘럼 연결</small></span>
             </label>
             <label>
-              <input type="radio" name="productType" value="ebook" />
+              <input
+                type="radio"
+                name="productType"
+                value="ebook"
+                checked={productType === "ebook"}
+                onChange={() => setProductType("ebook")}
+              />
               <span><BookIcon /><strong>전자책</strong><small>파일 또는 리더 연결</small></span>
             </label>
             <label>
-              <input type="radio" name="productType" value="consulting" />
+              <input
+                type="radio"
+                name="productType"
+                value="consulting"
+                checked={productType === "consulting"}
+                onChange={() => setProductType("consulting")}
+              />
               <span><ChatIcon /><strong>1:1 컨설팅</strong><small>줌 라이브 세션</small></span>
             </label>
           </fieldset>
+
+          {productType === "course" && (
+            <fieldset className={styles.courseScopeFieldset}>
+              <legend>판매 콘텐츠</legend>
+              <div className={styles.courseSetupChoices}>
+                <label>
+                  <input
+                    type="radio"
+                    name="courseSetupMode"
+                    value="new"
+                    checked={courseSetupMode === "new"}
+                    onChange={() => setCourseSetupMode("new")}
+                  />
+                  <span>
+                    <strong>새 강의 만들기</strong>
+                    <small>빈 강의를 함께 만들고 이후 커리큘럼 구성</small>
+                  </span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="courseSetupMode"
+                    value="existing_selected"
+                    checked={courseSetupMode === "existing_selected"}
+                    disabled={!courseScopesReady || courseOptions.length === 0}
+                    onChange={() => setCourseSetupMode("existing_selected")}
+                  />
+                  <span>
+                    <strong>기존 강의에서 챕터 선택</strong>
+                    <small>판매할 챕터를 직접 선택</small>
+                  </span>
+                </label>
+              </div>
+
+              {courseSetupMode !== "new" && (
+                <label className={styles.formField}>
+                  <span>원본 강의</span>
+                  <span className={styles.selectControl}>
+                    <select
+                      name="courseId"
+                      value={courseId}
+                      onChange={(event) => {
+                        setCourseId(event.target.value);
+                        setSelectedSectionIds([]);
+                      }}
+                      required
+                    >
+                      <option value="">강의를 선택해 주세요</option>
+                      {courseOptions.map((course) => (
+                        <option key={course.id} value={course.id}>{course.title}</option>
+                      ))}
+                    </select>
+                    <ChevronIcon />
+                  </span>
+                  {state.fieldErrors.courseId && (
+                    <small className={styles.fieldError}>{state.fieldErrors.courseId}</small>
+                  )}
+                </label>
+              )}
+
+              {courseSetupMode === "existing_selected" && selectedCourse && (
+                <div className={styles.chapterPicker}>
+                  <div className={styles.chapterPickerHeading}>
+                    <strong>판매할 챕터 선택</strong>
+                    <span>
+                      {selectedSectionIds.length}/{selectedCourse.sections.length}개 선택
+                      <button
+                        type="button"
+                        className={styles.selectAllChapters}
+                        onClick={() => setSelectedSectionIds(
+                          selectedSectionIds.length === selectedCourse.sections.length
+                            ? []
+                            : selectedCourse.sections.map((section) => section.id)
+                        )}
+                      >
+                        {selectedSectionIds.length === selectedCourse.sections.length
+                          ? "전체 해제"
+                          : "전체 선택"}
+                      </button>
+                    </span>
+                  </div>
+                  {selectedCourse.sections.map((section, index) => (
+                    <label key={section.id}>
+                      <input
+                        type="checkbox"
+                        name="courseSectionIds"
+                        value={section.id}
+                        checked={selectedSectionIds.includes(section.id)}
+                        onChange={(event) => setSelectedSectionIds((current) =>
+                          event.target.checked
+                            ? [...current, section.id]
+                            : current.filter((id) => id !== section.id)
+                        )}
+                      />
+                      <span>
+                        <strong>{index + 1}. {section.title}</strong>
+                        <small>공개 {section.lessonCount}개 차시</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {state.fieldErrors.courseSectionIds && (
+                <small className={styles.fieldError}>{state.fieldErrors.courseSectionIds}</small>
+              )}
+              {!courseScopesReady && (
+                <p className={styles.scopeNotice}>
+                  기존 강의 연결은 판매 범위 DB 적용 후 사용할 수 있습니다. 새 강의 만들기는 가능합니다.
+                </p>
+              )}
+            </fieldset>
+          )}
 
           <div className={styles.formGrid}>
             <FormField

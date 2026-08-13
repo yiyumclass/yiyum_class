@@ -310,7 +310,8 @@ function buildCourseCatalogFromEntitledRows(rows: EntitledCourseOutlineRow[]) {
   >();
 
   for (const row of rows) {
-    let builder = builders.get(row.course_id);
+    // 같은 원본 강의를 여러 챕터 상품이 공유할 수 있으므로 판매 단위로 묶는다.
+    let builder = builders.get(row.product_id);
     if (!builder) {
       builder = {
         product: {
@@ -338,7 +339,7 @@ function buildCourseCatalogFromEntitledRows(rows: EntitledCourseOutlineRow[]) {
         },
         sectionById: new Map(),
       };
-      builders.set(row.course_id, builder);
+      builders.set(row.product_id, builder);
     }
 
     if (!row.section_id || !row.section_key || !row.section_title) continue;
@@ -402,7 +403,8 @@ async function loadCourseOutlines(
   >();
 
   for (const row of (data ?? []) as unknown as CourseOutlineRow[]) {
-    let builder = builders.get(row.course_id);
+    // 전체 강의 상품과 챕터 상품은 같은 course_id여도 별도 카드여야 한다.
+    let builder = builders.get(row.product_id);
     if (!builder) {
       builder = {
         productId: row.product_id,
@@ -418,7 +420,7 @@ async function loadCourseOutlines(
         },
         sectionById: new Map(),
       };
-      builders.set(row.course_id, builder);
+      builders.set(row.product_id, builder);
     }
 
     if (!row.section_id || !row.section_key || !row.section_title) continue;

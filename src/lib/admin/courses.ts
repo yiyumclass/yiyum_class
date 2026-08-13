@@ -256,6 +256,11 @@ export async function loadAdminCourses(): Promise<AdminCoursesResult> {
     };
   });
   const linkedProductIds = new Set(courses.map((course) => course.product_id));
+  const { data: scopedProducts } = await supabase
+    .from("product_course_scopes")
+    .select("product_id")
+    .returns<Array<{ product_id: string }>>();
+  for (const scope of scopedProducts ?? []) linkedProductIds.add(scope.product_id);
 
   return {
     courses: mappedCourses,
