@@ -21,7 +21,11 @@ export default function SiteFooter({
               이윰 SNS 수익화 클래스
             </Link>
             <address className={styles.businessInfo}>
-              <span>히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562</span>
+              <span>
+                히너스랩 · 대표 지예솔 · 사업자등록번호 866-03-03562
+                <span aria-hidden="true"> · </span>
+                통신판매업 신고번호 2026-화성병점-1325
+              </span>
               <span>
                 경기도 화성시 효행로 1068, 603-J65호(병점동, 리더스프라자)
                 <span aria-hidden="true"> · </span>
