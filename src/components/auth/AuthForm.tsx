@@ -16,10 +16,12 @@ export default function AuthForm({
   mode,
   nextPath,
   authError,
+  nonce,
 }: {
   mode: Mode;
   nextPath: string;
   authError: string | null;
+  nonce?: string;
 }) {
   const router = useRouter();
   const isSignup = mode === "signup";
@@ -123,7 +125,7 @@ export default function AuthForm({
         color: "#201C17",
       }}
     >
-      <style>{`
+      <style nonce={nonce}>{`
         .auth-input {
           width: 100%; height: 48px; padding: 0 14px; box-sizing: border-box;
           border: 1px solid #DDD5C8; border-radius: 10px; background: #FBF8F2;

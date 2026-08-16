@@ -77,6 +77,21 @@ try {
   const product = products[0];
   if (!product) throw new Error("테스트에 사용할 상품이 없습니다.");
 
+  const internalStatsDenied = await rpcExpectError(
+    "admin_order_learning_stats",
+    {
+      p_user_id: memberUser.id,
+      p_product_id: product.id,
+    },
+    memberSession.access_token
+  );
+  assert(
+    [401, 403].includes(internalStatsDenied.status) &&
+      internalStatsDenied.body.code === "42501",
+    "일반 회원의 관리자 내부 통계 RPC 직접 실행이 차단되지 않았습니다."
+  );
+  pass("일반 회원의 관리자 내부 통계 RPC 직접 실행 차단");
+
   const initialMembers = await rpc(
     "get_admin_member_entitlements",
     {},

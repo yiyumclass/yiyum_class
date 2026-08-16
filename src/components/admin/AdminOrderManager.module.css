@@ -358,7 +358,7 @@
   gap: var(--admin-gap-md);
 }
 
-.sourceFilters,
+.productTypeFilters,
 .toolbarControls {
   display: flex;
   align-items: center;
@@ -438,7 +438,7 @@
 }
 
 .selectField {
-  width: 120px;
+  width: 144px;
 }
 
 .selectField select {
@@ -1316,7 +1316,7 @@
     justify-content: space-between;
   }
 
-  .sourceFilters {
+  .productTypeFilters {
     width: 100%;
     overflow-x: auto;
   }

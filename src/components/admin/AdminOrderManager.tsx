@@ -43,7 +43,7 @@ import {
 } from "./icons";
 import tableStyles from "./AdminTable.module.css";
 import styles from "./AdminOrderManager.module.css";
-import { formatProductType } from "@/lib/store/product-type";
+import { formatProductType, type ProductType } from "@/lib/store/product-type";
 
 type AdminOrderManagerProps = {
   /** 서버가 이미 거르고 정렬하고 잘라 준 한 페이지. 화면은 더 거르지 않는다. */
@@ -59,6 +59,7 @@ type AdminOrderManagerProps = {
 };
 
 type SourceFilter = "all" | AdminOrderSource;
+type ProductTypeFilter = "all" | ProductType;
 type StatusFilter = "all" | AdminOrderStatus;
 type PeriodFilter = "all" | "today" | "7days" | "30days";
 // 진도율 정렬은 서버에 없다. 자르기 전 전체 행에 학습 집계를 돌려야 해서
@@ -83,10 +84,17 @@ function fulfillmentIssueOf(order: AdminOrder) {
   });
 }
 
-const sourceFilters: Array<{ value: SourceFilter; label: string }> = [
+const productTypeFilters: Array<{ value: ProductTypeFilter; label: string }> = [
   { value: "all", label: "전체" },
+  { value: "course", label: "VOD 강의" },
+  { value: "consulting", label: "1:1 컨설팅" },
+  { value: "ebook", label: "전자책" },
+];
+
+const sourceOptions: Array<{ value: SourceFilter; label: string }> = [
+  { value: "all", label: "모든 신청 경로" },
   { value: "free_checkout", label: "무료 신청" },
-  { value: "payment", label: "결제" },
+  { value: "payment", label: "유료 결제" },
   { value: "admin_grant", label: "관리자 지급" },
 ];
 
@@ -106,6 +114,7 @@ const periodOptions: Array<{ value: PeriodFilter; label: string }> = [
 // useTableParams는 이 객체를 메모 의존성으로 쓰므로 렌더마다 새로 만들면 안 된다.
 const orderTableDefaults = {
   q: "",
+  type: "all",
   source: "all",
   status: "all",
   period: "all",
@@ -133,6 +142,7 @@ export default function AdminOrderManager({
   const [isExporting, startExport] = useTransition();
 
   const sourceFilter = values.source as SourceFilter;
+  const productTypeFilter = values.type as ProductTypeFilter;
   const statusFilter = values.status as StatusFilter;
   const periodFilter = values.period as PeriodFilter;
   const onlyNeedsAttention = values.attention === "1";
@@ -164,6 +174,7 @@ export default function AdminOrderManager({
 
   const filterApplied =
     searchQuery.trim().length > 0 ||
+    productTypeFilter !== "all" ||
     sourceFilter !== "all" ||
     statusFilter !== "all" ||
     periodFilter !== "all" ||
@@ -188,6 +199,7 @@ export default function AdminOrderManager({
       try {
         const { rows, truncated } = await exportAdminOrdersAction({
           q: searchQuery,
+          type: productTypeFilter,
           source: sourceFilter,
           status: statusFilter,
           period: periodFilter,
@@ -214,6 +226,7 @@ export default function AdminOrderManager({
   }, [
     onlyNeedsAttention,
     periodFilter,
+    productTypeFilter,
     searchQuery,
     sort,
     sourceFilter,
@@ -337,14 +350,14 @@ export default function AdminOrderManager({
         </div>
 
         <div className={styles.toolbar}>
-          <div className={styles.sourceFilters} aria-label="신청 경로 필터">
-            {sourceFilters.map((filter) => (
+          <div className={styles.productTypeFilters} aria-label="상품 유형 필터">
+            {productTypeFilters.map((filter) => (
               <button
                 type="button"
                 key={filter.value}
-                className={sourceFilter === filter.value ? styles.filterActive : styles.filter}
-                onClick={() => setValues({ source: filter.value })}
-                aria-pressed={sourceFilter === filter.value}
+                className={productTypeFilter === filter.value ? styles.filterActive : styles.filter}
+                onClick={() => setValues({ type: filter.value })}
+                aria-pressed={productTypeFilter === filter.value}
               >
                 {filter.label}
               </button>
@@ -362,6 +375,12 @@ export default function AdminOrderManager({
                 placeholder="회원, 상품 또는 주문번호"
               />
             </label>
+            <FilterSelect
+              label="신청 경로"
+              value={sourceFilter}
+              options={sourceOptions}
+              onChange={(value) => setValues({ source: value })}
+            />
             <FilterSelect
               label="조회 기간"
               value={periodFilter}

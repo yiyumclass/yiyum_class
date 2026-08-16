@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { FixedWindowRateLimiter } from "@/lib/http/fixed-window-rate-limiter";
 import { readLimitedJson } from "@/lib/http/request-body";
 import { getTossPayment, type TossPayment } from "@/lib/payments/toss";
 import {
@@ -17,8 +18,12 @@ const WEBHOOK_BODY_LIMIT_BYTES = 64 * 1024;
 const WEBHOOK_LOOKUP_WINDOW_MS = 60 * 1000;
 const WEBHOOK_LOOKUP_MAX_PER_IP = 60;
 const WEBHOOK_LOOKUP_MAX_PER_PAYMENT = 10;
+const WEBHOOK_LOOKUP_MAX_BUCKETS = 2_048;
 
-const webhookLookupBuckets = new Map<string, { count: number; resetAt: number }>();
+const webhookLookupLimiter = new FixedWindowRateLimiter(
+  WEBHOOK_LOOKUP_WINDOW_MS,
+  WEBHOOK_LOOKUP_MAX_BUCKETS
+);
 
 type WebhookOrderRow = {
   id: string;
@@ -54,6 +59,11 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, ignored: "unsupported_status" }, { status: 200 });
   }
 
+  // 공개 웹훅이므로 외부 입력으로 DB와 Toss 조회를 시작하기 전에 제한한다.
+  if (!isWebhookLookupAllowed(request, event.paymentKey)) {
+    return Response.json({ ok: false, code: "RATE_LIMITED" }, { status: 429 });
+  }
+
   const admin = getAdminClient();
   const { data: order, error: orderError } = await admin
     .from("orders")
@@ -72,10 +82,6 @@ export async function POST(request: Request) {
   }
   if (order.payment_key !== null && order.payment_key !== event.paymentKey) {
     return Response.json({ ok: false }, { status: 409 });
-  }
-
-  if (!isWebhookLookupAllowed(request, event.paymentKey)) {
-    return Response.json({ ok: false, code: "RATE_LIMITED" }, { status: 429 });
   }
 
   // 웹훅 본문만으로 금전·이용권 상태를 바꾸지 않고 Toss 조회 결과를 다시 검증한다.
@@ -218,32 +224,11 @@ function revalidatePaymentPaths() {
 }
 
 function isWebhookLookupAllowed(request: Request, paymentKey: string) {
-  const now = Date.now();
   const clientIp = getClientIp(request);
-  pruneExpiredBuckets(now);
-
-  return (
-    consumeWebhookBucket(`ip:${clientIp}`, WEBHOOK_LOOKUP_MAX_PER_IP, now) &&
-    consumeWebhookBucket(`payment:${paymentKey}`, WEBHOOK_LOOKUP_MAX_PER_PAYMENT, now)
-  );
-}
-
-function consumeWebhookBucket(key: string, limit: number, now: number) {
-  const bucket = webhookLookupBuckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    webhookLookupBuckets.set(key, { count: 1, resetAt: now + WEBHOOK_LOOKUP_WINDOW_MS });
-    return true;
-  }
-  if (bucket.count >= limit) return false;
-  bucket.count += 1;
-  return true;
-}
-
-function pruneExpiredBuckets(now: number) {
-  if (webhookLookupBuckets.size < 500) return;
-  for (const [key, bucket] of webhookLookupBuckets) {
-    if (bucket.resetAt <= now) webhookLookupBuckets.delete(key);
-  }
+  return webhookLookupLimiter.allows([
+    { key: `ip:${clientIp}`, limit: WEBHOOK_LOOKUP_MAX_PER_IP },
+    { key: `payment:${paymentKey}`, limit: WEBHOOK_LOOKUP_MAX_PER_PAYMENT },
+  ]);
 }
 
 function getClientIp(request: Request) {
@@ -253,4 +238,3 @@ function getClientIp(request: Request) {
     "unknown"
   );
 }
-

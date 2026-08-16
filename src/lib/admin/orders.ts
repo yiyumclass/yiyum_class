@@ -26,11 +26,18 @@ export const ADMIN_ORDER_SOURCE_FILTERS = [
   "payment",
   "admin_grant",
 ] as const;
+export const ADMIN_ORDER_PRODUCT_TYPE_FILTERS = [
+  "all",
+  "course",
+  "consulting",
+  "ebook",
+] as const;
 export const ADMIN_ORDER_STATUS_FILTERS = ["all", "active", "revoked"] as const;
 export const ADMIN_ORDER_PERIODS = ["all", "today", "7days", "30days"] as const;
 
 export type AdminOrderQuery = {
   search: string | null;
+  productType: (typeof ADMIN_ORDER_PRODUCT_TYPE_FILTERS)[number];
   source: (typeof ADMIN_ORDER_SOURCE_FILTERS)[number];
   status: (typeof ADMIN_ORDER_STATUS_FILTERS)[number];
   /** resolvePeriodStart가 만든 시작 시각. null이면 전체 기간. */
@@ -140,6 +147,7 @@ const emptySummary: AdminOrderSummary = {
 function toRpcArgs(query: Omit<AdminOrderQuery, "limit" | "offset" | "sort">) {
   return {
     p_search: query.search,
+    p_product_type: query.productType,
     p_source: query.source,
     p_status: query.status,
     p_since: query.since ? query.since.toISOString() : null,
@@ -224,6 +232,7 @@ export async function loadAdminOrderSummary(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_admin_order_ledger_summary", {
     p_search: null,
+    p_product_type: "all",
     p_source: "all",
     p_status: "all",
     p_since: null,

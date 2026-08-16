@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin/list-params";
 import {
   ADMIN_ORDER_PERIODS,
+  ADMIN_ORDER_PRODUCT_TYPE_FILTERS,
   ADMIN_ORDER_SORTS,
   ADMIN_ORDER_SOURCE_FILTERS,
   ADMIN_ORDER_STATUS_FILTERS,
@@ -32,6 +33,7 @@ export type RefundPaymentOrderResult = {
 /** 화면이 URL에 걸어 둔 조회 조건. 클라이언트가 보낸 값이라 그대로 믿지 않는다. */
 export type ExportAdminOrdersInput = {
   q?: string;
+  type?: string;
   source?: string;
   status?: string;
   period?: string;
@@ -53,6 +55,7 @@ export async function exportAdminOrdersAction(
   const period = readOption(input.period, ADMIN_ORDER_PERIODS, "all");
   const { orders, truncated } = await loadAdminOrdersForExport({
     search: readParam(input.q),
+    productType: readOption(input.type, ADMIN_ORDER_PRODUCT_TYPE_FILTERS, "all"),
     source: readOption(input.source, ADMIN_ORDER_SOURCE_FILTERS, "all"),
     status: readOption(input.status, ADMIN_ORDER_STATUS_FILTERS, "all"),
     since: resolvePeriodStart(period),

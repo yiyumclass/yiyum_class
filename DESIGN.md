@@ -2,7 +2,7 @@
 
 ## Source of truth
 - Status: Active
-- Last refreshed: 2026-08-13
+- Last refreshed: 2026-08-16
 - Primary product surfaces: 공개 랜딩, 인증, 마이 클래스, VOD 강의실, 전자책 열람, 주문/계정 관리, 관리자 운영 도구
 - Evidence reviewed:
   - `src/app/page.tsx`
@@ -18,6 +18,7 @@
   - `src/app/admin/layout.tsx`, `src/app/admin/page.tsx`, `src/app/admin/admin.module.css`
   - `src/app/admin/products/page.tsx`, `src/components/admin/AdminProductManager.tsx`
   - `src/app/admin/courses/page.tsx`, `src/components/admin/AdminCourseManager.tsx`
+  - `src/app/admin/orders/page.tsx`, `src/components/admin/AdminOrderManager.tsx`
   - `src/lib/admin/auth.ts`
   - `docs/payment-membership-design.md`
   - `docs/auth-kakao-setup.md`
@@ -96,6 +97,7 @@
   - 아직 구현하지 않은 메뉴는 잘못된 빈 페이지로 연결하지 않고 `준비 중` 상태로 명확히 비활성화한다.
   - 대시보드는 허위 매출 수치 대신 실제 연결된 데이터와 처리 가능한 운영 상태만 표시한다.
   - 활성 관리자 계정은 이메일·카카오 로그인 완료 후 일반 `next` 경로보다 `/admin` 이동을 우선한다.
+  - 주문·결제 내역의 1차 탭은 `전체 · VOD 강의 · 1:1 컨설팅 · 전자책`처럼 상품 유형으로 나눈다. `유료 결제 · 무료 신청 · 관리자 지급`은 상품 유형과 섞지 않고 `신청 경로` 보조 필터로 제공한다.
 - Global footer:
   - 홈, 강의 목록, SNS·문의, 개인정보처리방침·이용약관 등 공개/판매 페이지에는 사업자 정보 전체형을 공통 사용한다.
   - 로그인·회원가입·결제·마이 클래스에는 법정 링크와 판매자 식별 정보만 남긴 간결형을 사용한다.

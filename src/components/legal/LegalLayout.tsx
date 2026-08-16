@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
 
 // 법정문서(개인정보처리방침·이용약관) 공용 레이아웃. 읽기 좋은 본문 타이포 + 시행일 + 검토 배너.
-export default function LegalLayout({
+export default async function LegalLayout({
   title,
   effectiveDate,
   currentPath,
@@ -14,6 +15,8 @@ export default function LegalLayout({
   currentPath: string;
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <>
       <SiteHeader currentPath={currentPath} />
@@ -25,7 +28,7 @@ export default function LegalLayout({
         padding: "56px 24px 100px",
       }}
     >
-      <style>{`
+      <style nonce={nonce}>{`
         .legal { max-width: 760px; margin: 0 auto; }
         .legal h2 {
           font-size: 18px; font-weight: 700; margin: 40px 0 14px;

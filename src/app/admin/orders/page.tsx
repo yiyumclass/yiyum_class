@@ -12,6 +12,7 @@ import {
 } from "@/lib/admin/list-params";
 import {
   ADMIN_ORDER_PERIODS,
+  ADMIN_ORDER_PRODUCT_TYPE_FILTERS,
   ADMIN_ORDER_SORTS,
   ADMIN_ORDER_SOURCE_FILTERS,
   ADMIN_ORDER_STATUS_FILTERS,
@@ -41,6 +42,7 @@ export default async function AdminOrdersPage({
   const requestedPage = readPage(params.page);
   const filters = {
     search: readParam(params.q),
+    productType: readOption(params.type, ADMIN_ORDER_PRODUCT_TYPE_FILTERS, "all"),
     source: readOption(params.source, ADMIN_ORDER_SOURCE_FILTERS, "all"),
     status: readOption(params.status, ADMIN_ORDER_STATUS_FILTERS, "all"),
     since: resolvePeriodStart(period),

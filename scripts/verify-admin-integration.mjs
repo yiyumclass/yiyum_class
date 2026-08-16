@@ -35,6 +35,16 @@ const products = await readJson(productsResponse);
 assert(productsResponse.ok && Array.isArray(products), "판매 상품 조회에 실패했습니다.");
 assert(products.length > 0, "판매 중인 테스트 상품이 없습니다.");
 
+await assertFunctionDenied("get_admin_order_ledger_summary", {
+  p_search: null,
+  p_product_type: "all",
+  p_source: "all",
+  p_status: "all",
+  p_since: null,
+  p_attention: false,
+});
+console.log("✓ 익명 사용자의 관리자 RPC 실행 차단");
+
 if (paymentMode === "free") {
   assert(
     products.every((product) => product.price_krw === 0),
@@ -76,6 +86,19 @@ async function assertFunctionExists(name, body) {
   });
   const payload = await readJson(response);
   assert(payload?.code !== "PGRST202", `${name} RPC가 배포되지 않았습니다.`);
+}
+
+async function assertFunctionDenied(name, body) {
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  const payload = await readJson(response);
+  assert(
+    [401, 403].includes(response.status) && payload?.code === "42501",
+    `${name} RPC의 익명 실행이 차단되지 않았습니다. (HTTP ${response.status})`
+  );
 }
 
 async function loadEnv(path) {
