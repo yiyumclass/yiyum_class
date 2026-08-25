@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import {
@@ -9,7 +9,10 @@ import {
   readOAuthConsentCookieValue,
 } from "@/lib/auth/oauth-consent";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
+import { sendSignupWelcomeMessage } from "@/lib/messaging/solapi";
 import { createClient } from "@/lib/supabase/server";
+
+export const runtime = "nodejs";
 
 // 카카오(및 모든 OAuth) 로그인 후 Supabase가 이 주소로 code를 붙여 리다이렉트한다.
 // code를 세션으로 교환하고 로그인 완료 페이지로 보낸다.
@@ -52,6 +55,10 @@ export async function GET(request: Request) {
           new Date(AUTH_CONSENT_ENFORCED_AT).getTime() &&
         !existingConsent &&
         !consentIntent;
+      const isNewSignup =
+        Boolean(consentIntent) &&
+        !existingConsent &&
+        isRecentlyCreated(user.created_at);
       if (requiresSignupConsent) {
         await supabase.auth.signOut();
         const signupUrl = new URL("/signup", origin);
@@ -85,12 +92,49 @@ export async function GET(request: Request) {
       }
 
       cookieStore.delete(OAUTH_CONSENT_COOKIE);
+      if (isNewSignup) {
+        after(async () => {
+          try {
+            const result = await sendSignupWelcomeMessage(user);
+            if (result.status === "skipped") {
+              console.warn(
+                "Skipped SOLAPI signup welcome message:",
+                result.reason
+              );
+            }
+          } catch (error) {
+            console.error(
+              "Failed to send SOLAPI signup welcome message:",
+              readErrorCode(error)
+            );
+          }
+        });
+      }
       return NextResponse.redirect(new URL(isAdmin ? "/admin" : next, origin));
     }
   }
 
   // 실패 시 로그인 페이지로 (에러 표시)
   return redirectToLogin(origin, next);
+}
+
+function isRecentlyCreated(createdAt: string) {
+  const createdAtMs = new Date(createdAt).getTime();
+  const ageMs = Date.now() - createdAtMs;
+  return Number.isFinite(createdAtMs) && ageMs >= 0 && ageMs <= 15 * 60 * 1000;
+}
+
+function readErrorCode(error: unknown) {
+  if (!error || typeof error !== "object") return "unknown_error";
+  const candidate = error as {
+    code?: unknown;
+    statusCode?: unknown;
+    name?: unknown;
+  };
+  for (const value of [candidate.code, candidate.statusCode, candidate.name]) {
+    if (typeof value === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(value)) return value;
+  }
+  return "unknown_error";
 }
 
 function redirectToLogin(origin: string, next: string) {

@@ -14,6 +14,7 @@
 | [admin-orders-setup.md](./admin-orders-setup.md) | 관리자 무료 신청 원장과 주문·결제 조회 확장 기준 | 🧱 주문 조회 |
 | [admin-members-setup.md](./admin-members-setup.md) | 관리자 회원 조회와 수강권 지급·회수·기간 관리 | 🧱 수강권 운영 |
 | [admin-progress-setup.md](./admin-progress-setup.md) | 관리자 강의별·회원별 학습 진도와 장기 미학습 조회 | 🧱 학습 현황 |
+| [solapi-welcome-message.md](./solapi-welcome-message.md) | 카카오 신규 가입자 SOLAPI 환영 알림톡 설정과 검증 | 💬 메시지 연동 |
 
 ## 전체 진행 상황
 
