@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hasActiveAccount } from "@/lib/supabase/account-status";
 
 export type VerifiedIdentity = {
   userId: string;
@@ -18,6 +19,7 @@ export async function getVerifiedIdentity(
   const claims = data?.claims;
 
   if (error || !claims || typeof claims.sub !== "string") return null;
+  if (!(await hasActiveAccount(supabase))) return null;
 
   return {
     userId: claims.sub,

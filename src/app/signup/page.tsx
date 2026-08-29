@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { normalizeInternalNext, readFirstParam } from "@/lib/auth/redirects";
+import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -34,12 +35,20 @@ export default async function SignupPage({
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect(nextPath);
+    redirect(
+      (await hasActiveAccount(supabase)) ? nextPath : "/account/settings"
+    );
   }
 
   return (
     <>
-      <AuthForm mode="signup" nextPath={nextPath} authError={authError} nonce={nonce} />
+      <AuthForm
+        mode="signup"
+        nextPath={nextPath}
+        authError={authError}
+        authNotice={null}
+        nonce={nonce}
+      />
       <SiteFooter variant="compact" />
     </>
   );

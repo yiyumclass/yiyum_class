@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { normalizeInternalNext, readFirstParam } from "@/lib/auth/redirects";
+import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 type AuthSearchParams = Promise<{
   next?: string | string[];
   error?: string | string[];
+  withdrawn?: string | string[];
 }>;
 
 export default async function LoginPage({
@@ -28,18 +30,29 @@ export default async function LoginPage({
   const authError = readFirstParam(query.error) === "auth"
     ? "카카오 로그인 연결을 완료하지 못했습니다. 다시 시도해 주세요."
     : null;
+  const authNotice = readFirstParam(query.withdrawn) === "1"
+    ? "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
+    : null;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect(nextPath);
+    redirect(
+      (await hasActiveAccount(supabase)) ? nextPath : "/account/settings"
+    );
   }
 
   return (
     <>
-      <AuthForm mode="login" nextPath={nextPath} authError={authError} nonce={nonce} />
+      <AuthForm
+        mode="login"
+        nextPath={nextPath}
+        authError={authError}
+        authNotice={authNotice}
+        nonce={nonce}
+      />
       <SiteFooter variant="compact" />
     </>
   );

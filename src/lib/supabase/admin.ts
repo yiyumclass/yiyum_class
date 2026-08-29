@@ -4,7 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let adminClient: SupabaseClient | null = null;
 
-/** 서버 결제 승인/웹훅에서만 사용하는 service_role 클라이언트. */
+/** 서버 결제 승인·웹훅·회원 탈퇴에서만 사용하는 service_role 클라이언트. */
 export function getAdminClient() {
   if (adminClient) return adminClient;
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
+import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/client";
 import ConsentBlock from "./ConsentBlock";
 
@@ -16,11 +17,13 @@ export default function AuthForm({
   mode,
   nextPath,
   authError,
+  authNotice,
   nonce,
 }: {
   mode: Mode;
   nextPath: string;
   authError: string | null;
+  authNotice: string | null;
   nonce?: string;
 }) {
   const router = useRouter();
@@ -71,6 +74,16 @@ export default function AuthForm({
     if (error) {
       setError(translate(error.message));
       setLoading(false);
+      return;
+    }
+    if (!data.user) {
+      setError("로그인 계정을 확인하지 못했습니다. 다시 시도해 주세요.");
+      setLoading(false);
+      return;
+    }
+    if (!(await hasActiveAccount(supabase))) {
+      router.push("/account/settings");
+      router.refresh();
       return;
     }
     const isAdmin = data.user
@@ -209,6 +222,11 @@ export default function AuthForm({
         {error && (
           <p role="alert" style={{ color: "#C0392B", fontSize: 13, margin: "16px 0 0" }}>
             {error}
+          </p>
+        )}
+        {authNotice && !error && (
+          <p role="status" style={{ color: "#66725A", fontSize: 13, margin: "16px 0 0" }}>
+            {authNotice}
           </p>
         )}
         {!isSignup && (

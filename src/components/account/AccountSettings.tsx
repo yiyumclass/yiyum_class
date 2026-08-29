@@ -6,7 +6,9 @@ import {
   signOutOtherDevicesAction,
   updateAccountProfileAction,
   updateNotificationPreferencesAction,
+  withdrawAccountAction,
 } from "@/app/account/settings/actions";
+import { ACCOUNT_WITHDRAWAL_CONFIRMATION } from "@/lib/auth/account-withdrawal";
 import styles from "./AccountSettings.module.css";
 
 type AccountProfile = {
@@ -40,14 +42,17 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
     profile.contentUpdatesEnabled
   );
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
+  const [withdrawalConfirmation, setWithdrawalConfirmation] = useState("");
+  const [withdrawalError, setWithdrawalError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isWithdrawalPending, startWithdrawalTransition] = useTransition();
 
   useEffect(() => {
     if (!withdrawalOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !isWithdrawalPending) {
         setWithdrawalOpen(false);
       }
     };
@@ -59,10 +64,35 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [withdrawalOpen]);
+  }, [isWithdrawalPending, withdrawalOpen]);
 
   const showNotice = (message: string) => {
     setNotice(message);
+  };
+
+  const openWithdrawalDialog = () => {
+    setWithdrawalConfirmation("");
+    setWithdrawalError(null);
+    setWithdrawalOpen(true);
+  };
+
+  const closeWithdrawalDialog = () => {
+    if (isWithdrawalPending) return;
+    setWithdrawalOpen(false);
+    setWithdrawalConfirmation("");
+    setWithdrawalError(null);
+  };
+
+  const handleWithdrawal = () => {
+    setWithdrawalError(null);
+    startWithdrawalTransition(async () => {
+      const result = await withdrawAccountAction(withdrawalConfirmation);
+      if (!result.ok) {
+        setWithdrawalError(result.message);
+        return;
+      }
+      window.location.replace("/login?withdrawn=1");
+    });
   };
 
   const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -316,7 +346,7 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             <button
               type="button"
               className={styles.withdrawalButton}
-              onClick={() => setWithdrawalOpen(true)}
+              onClick={openWithdrawalDialog}
             >
               회원 탈퇴
             </button>
@@ -328,8 +358,8 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
         <div
           className={styles.dialogBackdrop}
           onMouseDown={(event) => {
-            if (event.currentTarget === event.target) {
-              setWithdrawalOpen(false);
+            if (event.currentTarget === event.target && !isWithdrawalPending) {
+              closeWithdrawalDialog();
             }
           }}
         >
@@ -344,9 +374,8 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               autoFocus
               type="button"
               className={styles.dialogClose}
-              onClick={() => {
-                setWithdrawalOpen(false);
-              }}
+              onClick={closeWithdrawalDialog}
+              disabled={isWithdrawalPending}
               aria-label="회원 탈퇴 창 닫기"
             >
               <CloseIcon />
@@ -356,9 +385,9 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             </span>
             <h2 id="withdrawal-title">회원 탈퇴 전 확인해 주세요</h2>
             <p id="withdrawal-description" className={styles.dialogLead}>
-              자동 탈퇴는 현재 제공하지 않으며 고객지원에서 본인 확인 후 처리합니다.
+              탈퇴를 실행하면 카카오 연결과 모든 로그인 세션이 해제됩니다.
               <br />
-              요청하기 전에 아래 보관 정책을 확인해 주세요.
+              아래 삭제·보관 항목을 확인한 후 직접 탈퇴할 수 있습니다.
             </p>
 
             <div className={styles.withdrawalEffects}>
@@ -405,10 +434,10 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
             <div className={styles.pendingNotice}>
               <InfoIcon />
               <p>
-                <strong>진행 중인 환불이나 문의가 있다면 먼저 완료해 주세요.</strong>
+                <strong>진행 중인 결제나 환불이 있다면 먼저 완료해 주세요.</strong>
                 <span>
-                  회원 탈퇴만으로 관련 법령상 소비자 권리가 사라지는 것은 아니지만,
-                  처리 상태 확인을 위해 완료 후 탈퇴를 권장합니다.
+                  진행 중인 결제 또는 환불이 있으면 처리가 끝날 때까지 탈퇴할 수
+                  없습니다.
                 </span>
               </p>
             </div>
@@ -423,19 +452,51 @@ export default function AccountSettings({ profile }: AccountSettingsProps) {
               <span aria-hidden="true">↗</span>
             </Link>
 
+            <label className={styles.confirmLabel}>
+              <span className={styles.confirmInstruction}>
+                계속하려면 아래에 <strong>{ACCOUNT_WITHDRAWAL_CONFIRMATION}</strong>를
+                입력해 주세요.
+              </span>
+              <input
+                type="text"
+                value={withdrawalConfirmation}
+                onChange={(event) => {
+                  setWithdrawalConfirmation(event.target.value);
+                  setWithdrawalError(null);
+                }}
+                placeholder={ACCOUNT_WITHDRAWAL_CONFIRMATION}
+                autoComplete="off"
+                disabled={isWithdrawalPending}
+              />
+            </label>
+
+            {withdrawalError && (
+              <p className={styles.dialogError} role="alert">
+                {withdrawalError}
+              </p>
+            )}
+
             <div className={styles.dialogActions}>
               <button
                 type="button"
                 className={styles.dialogCancel}
-                onClick={() => {
-                  setWithdrawalOpen(false);
-                }}
+                onClick={closeWithdrawalDialog}
+                disabled={isWithdrawalPending}
               >
                 취소
               </button>
-              <Link href="/contact" className={styles.dialogConfirm}>
-                탈퇴 요청 문의하기
-              </Link>
+              <button
+                type="button"
+                className={styles.dialogConfirm}
+                onClick={handleWithdrawal}
+                disabled={
+                  isWithdrawalPending ||
+                  withdrawalConfirmation.trim() !==
+                    ACCOUNT_WITHDRAWAL_CONFIRMATION
+                }
+              >
+                {isWithdrawalPending ? "탈퇴 처리 중…" : "회원 탈퇴하기"}
+              </button>
             </div>
           </section>
         </div>
