@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
 
-// 법정문서(개인정보처리방침·이용약관) 공용 레이아웃. 읽기 좋은 본문 타이포 + 시행일 + 검토 배너.
+// 법정문서(개인정보처리방침·이용약관) 공용 레이아웃. 읽기 좋은 본문 타이포 + 시행일.
 export default async function LegalLayout({
   title,
   effectiveDate,
@@ -65,22 +65,6 @@ export default async function LegalLayout({
         <p style={{ fontSize: 13, color: "#938B7F", margin: "0 0 20px" }}>
           시행일: {effectiveDate}
         </p>
-
-        <div
-          style={{
-            background: "#FBF3EC",
-            border: "1px solid #E7C7B4",
-            borderRadius: 10,
-            padding: "12px 16px",
-            fontSize: 12.5,
-            lineHeight: 1.7,
-            color: "#8A5A3C",
-            marginBottom: 8,
-          }}
-        >
-          ⚠️ 이 문서는 서비스 오픈을 위한 <strong>초안</strong>입니다. 실제 공개·심사 제출 전
-          사업자 정보와 조항을 검토해 주세요. (환불·청약철회 조항은 특히 확인 권장)
-        </div>
 
         {children}
 

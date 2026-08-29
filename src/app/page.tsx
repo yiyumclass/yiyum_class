@@ -7,6 +7,9 @@ import SiteHeader from "@/components/layout/SiteHeader";
 import { formatKrw, resolveSalePrice } from "@/lib/store/pricing";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 
+// 상품 가격과 판매 상태는 어드민에서 바뀌므로 홈을 요청할 때 최신 DB 값을 읽는다.
+export const dynamic = "force-dynamic";
+
 const featuredCourseSlug = "sns-monetization";
 
 export default async function Home() {
