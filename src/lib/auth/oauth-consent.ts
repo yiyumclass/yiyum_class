@@ -3,6 +3,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const OAUTH_CONSENT_COOKIE = "yiy_oauth_consent";
+export const OAUTH_CONSENT_QUERY_PARAM = "signup_intent";
 export const AUTH_TERMS_VERSION = "2026-07-24";
 export const AUTH_PRIVACY_VERSION = "2026-07-24";
 export const AUTH_CONSENT_ENFORCED_AT = "2026-07-24T00:00:00.000Z";

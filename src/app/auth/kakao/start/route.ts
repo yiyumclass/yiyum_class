@@ -3,6 +3,7 @@ import {
   createOAuthConsentCookieValue,
   oauthConsentCookieOptions,
   OAUTH_CONSENT_COOKIE,
+  OAUTH_CONSENT_QUERY_PARAM,
 } from "@/lib/auth/oauth-consent";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
 import { isSameOriginRequest } from "@/lib/http/origin";
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
   );
   const redirectTo = new URL("/auth/callback", request.url);
   redirectTo.searchParams.set("next", next);
+  let consentIntentValue: string | null = null;
 
   if (mode === "signup") {
     const hasRequiredConsent =
@@ -50,6 +52,13 @@ export async function POST(request: Request) {
     if (!hasRequiredConsent) {
       return json({ ok: false, message: "필수 항목에 동의해 주세요." }, 400);
     }
+
+    // 외부 OAuth 왕복 중 브라우저가 보조 쿠키를 누락하더라도 가입을 복구할 수
+    // 있도록 동일한 서명·만료 검증을 거치는 값을 callback URL에도 전달한다.
+    consentIntentValue = createOAuthConsentCookieValue(
+      payload.marketing === true
+    );
+    redirectTo.searchParams.set(OAUTH_CONSENT_QUERY_PARAM, consentIntentValue);
   }
 
   const oauthUrl = await createOAuthUrl(redirectTo.toString());
@@ -58,10 +67,10 @@ export async function POST(request: Request) {
   }
 
   const response = json({ ok: true, url: oauthUrl }, 200);
-  if (mode === "signup") {
+  if (mode === "signup" && consentIntentValue) {
     response.cookies.set(
       OAUTH_CONSENT_COOKIE,
-      createOAuthConsentCookieValue(payload.marketing === true),
+      consentIntentValue,
       oauthConsentCookieOptions()
     );
   } else {

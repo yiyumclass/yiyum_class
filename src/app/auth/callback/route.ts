@@ -6,6 +6,7 @@ import {
   AUTH_PRIVACY_VERSION,
   AUTH_TERMS_VERSION,
   OAUTH_CONSENT_COOKIE,
+  OAUTH_CONSENT_QUERY_PARAM,
   readOAuthConsentCookieValue,
 } from "@/lib/auth/oauth-consent";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
@@ -31,9 +32,15 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
       if (!user) return redirectToLogin(origin, next);
 
-      const consentIntent = readOAuthConsentCookieValue(
+      const cookieConsentIntent = readOAuthConsentCookieValue(
         cookieStore.get(OAUTH_CONSENT_COOKIE)?.value
       );
+      const queryConsentIntent = readOAuthConsentCookieValue(
+        searchParams.get(OAUTH_CONSENT_QUERY_PARAM) ?? undefined
+      );
+      // 쿠키를 우선 사용하되, OAuth 제공자 왕복 중 쿠키가 유실된 경우 서명된
+      // callback 파라미터로 복구한다. 둘 다 동일한 HMAC·10분 만료 검증을 거친다.
+      const consentIntent = cookieConsentIntent ?? queryConsentIntent;
       const isAdmin = await hasActiveAdminAccess(supabase, user.id);
       const { data: existingConsent, error: consentLookupError } = await supabase
         .from("user_auth_consents")

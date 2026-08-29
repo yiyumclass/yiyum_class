@@ -14,6 +14,10 @@ const solapiSender = readFileSync(
   new URL("../src/lib/messaging/solapi.ts", import.meta.url),
   "utf8"
 );
+const kakaoStartRoute = readFileSync(
+  new URL("../src/app/auth/kakao/start/route.ts", import.meta.url),
+  "utf8"
+);
 
 test("Kakao and domestic mobile numbers normalize to SOLAPI format", () => {
   assert.equal(normalizeKoreanMobileNumber("+82 10-1234-5678"), "01012345678");
@@ -49,4 +53,18 @@ test("welcome Alimtalk is server-only, has no SMS fallback, and cannot block sig
   assert.match(callbackRoute, /isRecentlyCreated\(user\.created_at\)/);
   assert.match(callbackRoute, /after\(async \(\) =>/);
   assert.match(callbackRoute, /catch \(error\)/);
+});
+
+test("signup consent survives the Kakao OAuth round trip without relying on one cookie", () => {
+  assert.match(kakaoStartRoute, /OAUTH_CONSENT_QUERY_PARAM/);
+  assert.match(
+    kakaoStartRoute,
+    /redirectTo\.searchParams\.set\(OAUTH_CONSENT_QUERY_PARAM, consentIntentValue\)/
+  );
+  assert.match(callbackRoute, /const cookieConsentIntent/);
+  assert.match(callbackRoute, /const queryConsentIntent/);
+  assert.match(
+    callbackRoute,
+    /const consentIntent = cookieConsentIntent \?\? queryConsentIntent/
+  );
 });
