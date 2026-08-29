@@ -12,6 +12,10 @@ test("landing presents income-related examples as personal history without guara
   assert.match(landing, /강사 개인 운영 사례/);
   assert.match(landing, /강사의 개인적인 과거 경험/);
   assert.match(landing, /특정 경제적 성과를 보장하지 않으며/);
+  assert.match(landing, /첫 무가 협찬/);
+  assert.match(landing, /가구 협찬 제안을 하루 3~5건 받은 시기도 있었어요/);
+  assert.match(landing, /원고료를 단계적으로 높여 협상한 경험/);
+  assert.match(landing, /가전 협찬까지 확장/);
   assert.doesNotMatch(landing, /작은 계정으로도 수익화 가능/);
   assert.doesNotMatch(landing, /수강생들의 실제 수익화 인증/);
   assert.doesNotMatch(landing, /협찬과 원고료를 받았어요/);
