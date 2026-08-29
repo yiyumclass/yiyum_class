@@ -142,23 +142,23 @@ export default async function Home() {
           <div style={{borderTop: '1px solid #201C17'}}>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>300<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>디퓨저 · 주방세제 · 수건 등 <span style={{color: '#B85C38'}}>소형 생활용품 협업을 처음 경험</span></span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>디퓨저 · 주방세제 · 얼룩제거제 · 수건 등 <span style={{color: '#B85C38'}}>첫 무가 협찬</span></span>
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>1,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>소파 · 식탁 · 거울 · 러그 · 선반 등 <span style={{color: '#B85C38'}}>가구 브랜드로 협업 범위를 확장</span></span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>소파 · 식탁 · 거울 · 러그 · 선반 등 <span style={{color: '#B85C38'}}>가구 협찬 제안을 하루 3~5건 받은 시기도 있었어요</span></span>
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>2,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}><span style={{color: '#B85C38'}}>원고료가 포함된 유가 광고를 경험</span>하고 제안 검토 기준을 정리</span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>릴스 제작에 <span style={{color: '#B85C38'}}>원고료가 포함된 유가 광고 협업을 시작</span></span>
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>3,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}><span style={{color: '#B85C38'}}>브랜드별 협업 조건과 콘텐츠 제작 범위를 비교</span>하며 응대 기준을 고도화</span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>브랜드 광고의 <span style={{color: '#B85C38'}}>원고료를 단계적으로 높여 협상한 경험</span></span>
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #201C17', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>4,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}><span style={{color: '#B85C38'}}>역제안 문구와 협업 포트폴리오를 활용</span>해 조건 협상 경험을 축적</span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}><span style={{color: '#B85C38'}}>역제안으로 최초 제안보다 높은 조건을 협상</span>하고 식세기 · 냉장고 등 가전 협찬까지 확장</span>
             </div>
           </div>
           <p data-reveal="" style={{fontSize: '13px', lineHeight: '1.7', color: '#938B7F', margin: '18px 4px 0'}}>※ 위 내용은 강사의 개인 계정 운영 과정에서 발생한 과거 사례이며, 팔로워 수에 따른 협찬·광고·원고료를 보장하는 기준이 아닙니다.</p>
