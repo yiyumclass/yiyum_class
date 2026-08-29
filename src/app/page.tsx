@@ -146,7 +146,7 @@ export default async function Home() {
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>1,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
-              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>소파 · 식탁 · 거울 · 러그 · 선반 등 <span style={{color: '#B85C38'}}>가구 협찬 제안을 하루 3~5건 받은 시기도 있었어요</span></span>
+              <span style={{fontSize: '16px', lineHeight: '1.6', color: '#4E483F'}}>소파 · 식탁 · 거울 · 러그 · 선반 등 <span style={{color: '#B85C38'}}>가구 협찬 제안을 하루 3~5건 받은 경험</span></span>
             </div>
             <div data-reveal="" style={{display: 'grid', gridTemplateColumns: '150px 1fr', gap: '24px', padding: '26px 4px', borderBottom: '1px solid #DDD5C8', alignItems: 'baseline'}}>
               <span className="serif" style={{fontSize: '26px', color: '#201C17'}}>2,000<span style={{fontSize: '16px', color: '#938B7F'}}> 명대</span></span>
