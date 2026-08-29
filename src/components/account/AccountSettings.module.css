@@ -869,6 +869,13 @@
   margin-top: 2px;
 }
 
+.dialogError {
+  margin: 10px 0 0;
+  color: #a33f32;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .dialogActions {
   margin-top: 20px;
   display: grid;

@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/oauth-consent";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
 import { sendSignupWelcomeMessage } from "@/lib/messaging/solapi";
+import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -30,6 +31,9 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return redirectToLogin(origin, next);
+      if (!(await hasActiveAccount(supabase))) {
+        return NextResponse.redirect(new URL("/account/settings", origin));
+      }
 
       const consentIntent = readOAuthConsentCookieValue(
         cookieStore.get(OAUTH_CONSENT_COOKIE)?.value
