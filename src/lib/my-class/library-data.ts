@@ -171,6 +171,7 @@ export function buildConsultingLibraryItem(
   return {
     id: `${details.slug}-consulting`,
     kind: "consulting",
+    slug: details.slug,
     title: details.title,
     description: details.description,
     status: "available",

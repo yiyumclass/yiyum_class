@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatKrw, resolveSalePrice } from "../src/lib/store/pricing.ts";
+import {
+  calculateMonthlyInstallmentKrw,
+  formatKrw,
+  resolveSalePrice,
+} from "../src/lib/store/pricing.ts";
 
 test("정가가 없으면 세일이 아니다", () => {
   const sale = resolveSalePrice(300000, null);
@@ -44,4 +48,16 @@ test("무료 상품도 정가가 있으면 세일로 본다", () => {
 test("원화는 천 단위로 끊어 적는다", () => {
   assert.equal(formatKrw(187000), "187,000");
   assert.equal(formatKrw(0), "0");
+});
+
+test("총 결제금액을 지정한 할부 개월의 월 예상액으로 환산한다", () => {
+  assert.equal(calculateMonthlyInstallmentKrw(930000, 12), 77500);
+  assert.equal(calculateMonthlyInstallmentKrw(1200000, 12), 100000);
+  assert.equal(calculateMonthlyInstallmentKrw(2990000, 12), 249167);
+});
+
+test("월 환산은 잘못된 총액이나 개월 수를 거절한다", () => {
+  assert.throws(() => calculateMonthlyInstallmentKrw(-1, 12), RangeError);
+  assert.throws(() => calculateMonthlyInstallmentKrw(930000, 0), RangeError);
+  assert.throws(() => calculateMonthlyInstallmentKrw(930000, 12.5), RangeError);
 });

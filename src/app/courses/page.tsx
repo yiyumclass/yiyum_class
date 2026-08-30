@@ -131,18 +131,24 @@ function CourseCard({
         </div>
 
         <div className={styles.cardFooter}>
-          <div className={styles.price}>
-            <span>부가세 포함</span>
-            {sale.listPriceKrw !== null && (
-              <div className={styles.saleRow}>
-                <span className={styles.discount}>{sale.discountPercent}% 할인</span>
-                <s className={styles.listPrice}>{formatPrice(sale.listPriceKrw)}원</s>
-              </div>
-            )}
-            <strong className="serif">
-              {formatPrice(item.priceKrw)}<small>원</small>
-            </strong>
-          </div>
+          {item.productType === "course" ? (
+            <p className={styles.enrollmentHint}>
+              상세에서 수강 방식을 선택할 수 있어요.
+            </p>
+          ) : (
+            <div className={styles.price}>
+              <span>부가세 포함</span>
+              {sale.listPriceKrw !== null && (
+                <div className={styles.saleRow}>
+                  <span className={styles.discount}>{sale.discountPercent}% 할인</span>
+                  <s className={styles.listPrice}>{formatPrice(sale.listPriceKrw)}원</s>
+                </div>
+              )}
+              <strong className="serif">
+                {formatPrice(item.priceKrw)}<small>원</small>
+              </strong>
+            </div>
+          )}
           <Link href={item.detailHref} className={styles.detailAction}>
             {item.productType === "consulting" ? "자세히 보기" : "강의 보기"} <ArrowIcon />
           </Link>

@@ -20,21 +20,13 @@ export default function LandingInteractions() {
       const items = Array.from(
         document.querySelectorAll<HTMLElement>("[data-reveal]")
       );
-      items.forEach((el) => {
-        el.style.opacity = "0";
-        el.style.transform = "translateY(22px)";
-        el.style.transition =
-          "opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1)";
-        const d = el.getAttribute("data-reveal-delay");
-        if (d) el.style.transitionDelay = d + "ms";
-      });
+      document.documentElement.classList.add("reveal-ready");
       io = new IntersectionObserver(
         (ents) => {
           ents.forEach((e) => {
             if (e.isIntersecting) {
               const t = e.target as HTMLElement;
-              t.style.opacity = "1";
-              t.style.transform = "none";
+              t.classList.add("is-revealed");
               io?.unobserve(t);
             }
           });
@@ -57,24 +49,14 @@ export default function LandingInteractions() {
       // buyBar: 히어로를 거의 다 지난 뒤에만 노출(기존 타이밍 유지)
       const past = hero ? y > hero.offsetHeight - 72 : y > 400;
       if (nav) {
-        if (navSolid) {
-          nav.style.background = "rgba(243,239,232,0.85)";
-          nav.style.backdropFilter = "blur(12px)";
-          nav.style.setProperty("-webkit-backdrop-filter", "blur(12px)");
-          nav.style.borderBottomColor = "#DDD5C8";
-        } else {
-          nav.style.background = "transparent";
-          nav.style.backdropFilter = "none";
-          nav.style.setProperty("-webkit-backdrop-filter", "none");
-          nav.style.borderBottomColor = "transparent";
-        }
+        nav.classList.toggle("nav-solid", navSolid);
       }
       if (bar) {
         const applyTop = applyEl
           ? applyEl.getBoundingClientRect().top
           : 99999;
         const show = past && applyTop > window.innerHeight * 0.6;
-        bar.style.transform = show ? "translateY(0)" : "translateY(130%)";
+        bar.classList.toggle("buy-bar-visible", show);
       }
     };
 
@@ -84,6 +66,7 @@ export default function LandingInteractions() {
     return () => {
       io?.disconnect();
       window.removeEventListener("scroll", onScroll);
+      document.documentElement.classList.remove("reveal-ready");
     };
   }, []);
 

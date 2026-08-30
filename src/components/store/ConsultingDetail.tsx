@@ -23,7 +23,7 @@ export default function ConsultingDetail({ slug }: ConsultingDetailProps) {
       <section className={styles.intro} aria-labelledby="consulting-headline">
         <div className={styles.introGrid}>
           <div data-reveal>
-            <span className={styles.eyebrow}>LIVE 1:1 CONSULTING</span>
+            <span className={styles.eyebrow}>1:1 CONSULTING</span>
             <h2 id="consulting-headline" className={`serif ${styles.headline}`}>
               {copy.headlineLines.map((line) => (
                 <span key={line}>{line}</span>

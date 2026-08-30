@@ -2,6 +2,7 @@ import Link from "next/link";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
+import CourseEnrollmentPicker from "@/components/store/CourseEnrollmentPicker";
 import MobileMenu from "./MobileMenu";
 import styles from "./SiteHeader.module.css";
 
@@ -17,6 +18,7 @@ type SiteHeaderProps = {
   active?: NavigationKey;
   currentPath?: string;
   variant?: "solid" | "overlay";
+  useEnrollmentPicker?: boolean;
 };
 
 const navigationItems: Array<{
@@ -38,6 +40,7 @@ export default async function SiteHeader({
   active,
   currentPath = "/",
   variant = "solid",
+  useEnrollmentPicker = false,
 }: SiteHeaderProps) {
   const supabase = await createClient();
   const identity = await getVerifiedIdentity(supabase);
@@ -88,6 +91,8 @@ export default async function SiteHeader({
             <Link href="/admin" className={styles.adminLink}>
               관리자
             </Link>
+          ) : useEnrollmentPicker ? (
+            <CourseEnrollmentPicker triggerClassName={styles.enrollLink} />
           ) : (
             <Link href={enrollHref} className={styles.enrollLink}>
               수강 신청
@@ -99,6 +104,7 @@ export default async function SiteHeader({
             activeKey={active}
             isAdmin={isAdmin}
             enrollHref={enrollHref}
+            useEnrollmentPicker={useEnrollmentPicker}
           />
         </div>
       </div>

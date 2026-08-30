@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -25,7 +24,6 @@ export default async function LoginPage({
   searchParams: AuthSearchParams;
 }) {
   const query = await searchParams;
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const nextPath = normalizeInternalNext(readFirstParam(query.next));
   const authError = readFirstParam(query.error) === "auth"
     ? "카카오 로그인 연결을 완료하지 못했습니다. 다시 시도해 주세요."
@@ -51,7 +49,6 @@ export default async function LoginPage({
         nextPath={nextPath}
         authError={authError}
         authNotice={authNotice}
-        nonce={nonce}
       />
       <SiteFooter variant="compact" />
     </>

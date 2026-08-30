@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
+import { getMembershipAccessLabel } from "@/lib/store/membership-plans";
 import type { ProductType } from "@/lib/store/product-type";
 
 export type PublicProduct = {
@@ -94,9 +95,10 @@ function mapProductRow(row: ProductRow): PublicProduct {
     hasFile: Boolean(row.has_file),
     accessPeriodDays: row.access_period_days,
     accessLabel:
-      row.access_period_days === null
+      getMembershipAccessLabel(row.slug) ??
+      (row.access_period_days === null
         ? "기간 제한 없이 이용"
-        : `${row.access_period_days}일 이용`,
+        : `${row.access_period_days}일 이용`),
     thumbnailSrc: row.thumbnail_path?.startsWith("/") ? row.thumbnail_path : null,
     detailHref: resolveDetailHref(row),
   };

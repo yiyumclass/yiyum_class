@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import styles from "@/app/my/my.module.css";
 import type { CourseLibraryItem, LibraryItem } from "@/lib/my-class/types";
+import { phonePassDefinition } from "@/lib/store/membership-plans";
 
 type Filter = "all" | "course" | "ebook" | "consulting" | "completed";
 
@@ -230,18 +231,32 @@ function SummaryItem({ label, value, suffix }: { label: string; value: number; s
 function ContentCard({ item }: { item: LibraryItem }) {
   const isCourse = item.kind === "course";
   const isConsulting = item.kind === "consulting";
+  const isPhonePass =
+    isConsulting && item.slug === phonePassDefinition.slug;
 
   return (
     <article className={styles.contentCard}>
       <div className={isCourse ? styles.courseVisual : styles.ebookVisual}>
         {isConsulting ? (
-          <div className={styles.bookCover} aria-label="1:1 컨설팅">
-            <span>YIYUM LIVE · 1:1</span>
+          <div
+            className={styles.bookCover}
+            aria-label={isPhonePass ? "1:1 전화 코칭" : "1:1 Zoom 컨설팅"}
+          >
+            <span>{isPhonePass ? "YIYUM PHONE · 1:1" : "YIYUM LIVE · 1:1"}</span>
             <strong className="serif">
-              계정을 함께
-              <br />열어보는 30분
+              {isPhonePass ? (
+                <>
+                  10분씩 나누는
+                  <br />6번의 집중 코칭
+                </>
+              ) : (
+                <>
+                  계정을 함께
+                  <br />열어보는 30분
+                </>
+              )}
             </strong>
-            <i>Zoom consulting</i>
+            <i>{isPhonePass ? "Phone coaching" : "Zoom consulting"}</i>
           </div>
         ) : isCourse ? (
           <>
@@ -301,7 +316,10 @@ function ContentCard({ item }: { item: LibraryItem }) {
           </div>
         ) : isConsulting ? (
           <div className={styles.ebookMeta}>
-            <ChatIcon /> 설문 폼 작성 후 48시간 이내 연락
+            <ChatIcon />{" "}
+            {isPhonePass
+              ? "결제 후 일정·이용 방법 개별 안내"
+              : "설문 폼 작성 후 48시간 이내 연락"}
           </div>
         ) : (
           <div className={styles.ebookMeta}>

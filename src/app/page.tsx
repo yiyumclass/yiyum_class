@@ -1,11 +1,16 @@
 import Image from "next/image";
-import Link from "next/link";
 import LandingInteractions from "@/components/LandingInteractions";
 import ReviewMarquee from "@/components/ReviewMarquee";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
-import { formatKrw, resolveSalePrice } from "@/lib/store/pricing";
-import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
+import CourseEnrollmentPicker, {
+  CourseEnrollmentProvider,
+} from "@/components/store/CourseEnrollmentPicker";
+import {
+  membershipEconomicOutcomeNotice,
+  membershipPlanDefinitions,
+} from "@/lib/store/membership-plans";
+import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
 
 // 상품 가격과 판매 상태는 어드민에서 바뀌므로 홈을 요청할 때 최신 DB 값을 읽는다.
 export const dynamic = "force-dynamic";
@@ -23,25 +28,32 @@ const landingLessonTitleOverrides: Record<string, string> = {
 };
 
 export default async function Home() {
-  const featuredItem = await loadPublicCourseBySlug(featuredCourseSlug);
+  const courseCatalog = await loadPublicCourseCatalog();
+  const featuredItem = courseCatalog.find((item) => item.slug === featuredCourseSlug) ?? null;
+  const pricingSlugs = new Set<string>(membershipPlanDefinitions.map((plan) => plan.slug));
+  const classProducts = courseCatalog
+    .filter((item) => item.source === "database" && pricingSlugs.has(item.slug))
+    .map((item) => ({
+      slug: item.slug,
+      priceKrw: item.priceKrw,
+      soldOut: item.soldOut,
+      checkoutHref: item.checkoutHref,
+    }));
   const sections = featuredItem?.course.sections ?? [];
   const lessonCount = sections.reduce(
     (total, section) => total + section.lessons.length,
     0
   );
   const courseTitle = featuredItem?.title ?? "이윰 SNS 수익화 클래스";
-  const checkoutHref = featuredItem?.checkoutHref ?? "/courses";
-  const sale = featuredItem
-    ? resolveSalePrice(featuredItem.priceKrw, featuredItem.listPriceKrw)
-    : null;
-  const priceLabel = featuredItem ? formatKrw(featuredItem.priceKrw) : null;
-  const soldOut = featuredItem?.soldOut ?? false;
 
   return (
-    <>
+    <CourseEnrollmentProvider
+      products={classProducts}
+      complianceNotice={membershipEconomicOutcomeNotice}
+    >
       <span id="top" />
 
-      <SiteHeader variant="overlay" currentPath="/" />
+      <SiteHeader variant="overlay" currentPath="/" useEnrollmentPicker />
 
       {/* ===== HERO ===== */}
       <header id="hero" style={{position: 'relative', background: '#F3EFE8', color: '#201C17', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '140px 40px 90px', overflow: 'hidden'}}>
@@ -294,52 +306,36 @@ export default async function Home() {
       </section>
 
       {/* ===== 06 APPLY ===== */}
-      <section id="apply" style={{background: '#1B1815', color: '#EDE7DC', marginTop: '150px', padding: '130px 40px', scrollMarginTop: '0'}}>
-        <div data-reveal="" style={{maxWidth: '820px', margin: '0 auto', textAlign: 'center'}}>
-          <div style={{fontSize: '13px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#B7A995', marginBottom: '28px'}}>Enroll</div>
-          <h2 className="serif" style={{fontSize: 'clamp(32px,4.6vw,56px)', lineHeight: '1.2', letterSpacing: '-0.01em', margin: '0 0 20px'}}>{courseTitle}</h2>
-          <p style={{fontSize: '16px', color: '#9A9082', margin: '0 0 56px'}}>
-            {featuredItem
-              ? `${sections.length}개 챕터 · 총 ${lessonCount}강 · ${featuredItem.accessLabel}`
-              : "현재 수강 신청을 준비하고 있습니다."}
-          </p>
-          {featuredItem && priceLabel ? (
-            <>
-              {sale?.listPriceKrw != null && (
-                <div style={{display: 'inline-flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px'}}>
-                  <span style={{fontSize: '15px', fontWeight: '700', color: '#D9825E'}}>{sale.discountPercent}% 할인</span>
-                  <s style={{fontSize: '17px', color: '#7C7367'}}>{formatKrw(sale.listPriceKrw)}원</s>
-                </div>
-              )}
-              <div style={{display: 'inline-flex', alignItems: 'baseline', gap: '10px', paddingBottom: '30px'}}>
-                <span className="serif" style={{fontSize: 'clamp(56px,9vw,96px)', lineHeight: '1', color: '#EDE7DC'}}>{priceLabel}</span>
-                <span className="serif" style={{fontSize: '32px', color: '#D9825E'}}>원</span>
-              </div>
-              <div style={{fontSize: '13px', color: '#7C7367', letterSpacing: '0.04em', marginBottom: '44px'}}>부가세 포함</div>
-            </>
-          ) : null}
-          <Link href={soldOut ? (featuredItem?.detailHref ?? "/courses") : checkoutHref} style={{display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '18px 46px', background: soldOut ? 'transparent' : '#D9825E', border: soldOut ? '1px solid #4A443D' : 'none', color: soldOut ? '#B7A995' : '#1B1815', borderRadius: '100px', fontSize: '17px', fontWeight: '600', transition: 'transform 0.3s ease'}} className={soldOut ? undefined : "cta-lift"}>{soldOut ? "품절 · 다음 모집 안내받기" : featuredItem ? "지금 수강 신청하기" : "강의 둘러보기"}<span style={{fontSize: '18px'}}>→</span></Link>
-          <p style={{fontSize: '13.5px', color: '#B7A995', lineHeight: '1.75', margin: '34px auto 0', maxWidth: '620px'}}>본 과정은 SNS 계정 운영과 브랜드 협업 준비 방법을 다루는 교육 콘텐츠입니다. 수강만으로 협찬·광고·원고료 등 특정 경제적 성과를 보장하지 않으며, 결과는 계정 상태·활동 내용·시장 상황에 따라 달라질 수 있습니다.</p>
-          <p style={{fontSize: '13px', color: '#7C7367', lineHeight: '1.7', margin: '18px auto 0', maxWidth: '400px'}}>추후 1:1 밀착 피드백 등 프리미엄 옵션이 별도 상품으로 추가될 예정입니다.</p>
+      <section id="apply" style={{marginTop: '150px', padding: '120px 40px', background: '#1B1815', color: '#EDE7DC', textAlign: 'center'}} aria-labelledby="apply-title">
+        <div data-reveal="" style={{maxWidth: '700px', margin: '0 auto'}}>
+          <span style={{display: 'block', marginBottom: '18px', color: '#D9825E', fontSize: '11px', fontWeight: '700', letterSpacing: '0.2em'}}>READY TO START?</span>
+          <h2 id="apply-title" className="serif" style={{fontSize: 'clamp(34px,5vw,56px)', lineHeight: '1.2', margin: '0'}}>이 강의가 필요하다고 느껴졌다면</h2>
+          <p style={{maxWidth: '560px', margin: '20px auto 32px', color: '#BDB3A7', fontSize: '16px', lineHeight: '1.8'}}>먼저 강의를 충분히 살펴본 뒤 신청해 주세요. 버튼을 누르면 VOD, 피드백, 초밀착 중 나에게 맞는 수강 방식을 비교할 수 있어요.</p>
+          <CourseEnrollmentPicker
+            triggerLabel="수강 방식 선택"
+          />
         </div>
       </section>
 
       <SiteFooter />
 
       {/* sticky buy bar */}
-      {featuredItem && priceLabel && (
+      {featuredItem && (
         <div id="buyBar" style={{position: 'fixed', bottom: '0', left: '0', right: '0', zIndex: '70', background: 'rgba(27,24,21,0.94)', backdropFilter: 'blur(12px)', color: '#EDE7DC', transform: 'translateY(130%)', transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1)'}}>
           <div style={{maxWidth: '1200px', margin: '0 auto', padding: '16px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px'}}>
             <div style={{display: 'flex', alignItems: 'baseline', gap: '14px', minWidth: '0'}}>
-              <span style={{fontSize: '14px', color: '#9A9082', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{courseTitle} · {lessonCount}강</span>
-              <span className="serif" style={{fontSize: '24px', color: '#EDE7DC', whiteSpace: 'nowrap'}}>{priceLabel}<span style={{fontSize: '15px', color: '#D9825E'}}> 원</span></span>
+              <span style={{fontSize: '14px', color: '#EDE7DC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{courseTitle}</span>
+              <span style={{fontSize: '12px', color: '#9A9082', whiteSpace: 'nowrap'}}>신청 단계에서 수강 방식 선택</span>
             </div>
-            <Link href={soldOut ? (featuredItem?.detailHref ?? "/courses") : checkoutHref} style={{padding: '12px 30px', background: soldOut ? 'transparent' : '#D9825E', border: soldOut ? '1px solid #4A443D' : 'none', color: soldOut ? '#B7A995' : '#1B1815', borderRadius: '100px', fontSize: '15px', fontWeight: '600', whiteSpace: 'nowrap'}}>{soldOut ? "품절" : "수강 신청"}</Link>
+            <CourseEnrollmentPicker
+              triggerLabel="수강 신청"
+              triggerVariant="compact"
+            />
           </div>
         </div>
       )}
 
       <LandingInteractions />
-    </>
+    </CourseEnrollmentProvider>
   );
 }

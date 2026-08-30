@@ -4,8 +4,15 @@ import { notFound, redirect } from "next/navigation";
 import FreeEnrollmentForm from "@/components/checkout/FreeEnrollmentForm";
 import TossPaymentForm from "@/components/checkout/TossPaymentForm";
 import SiteFooter from "@/components/layout/SiteFooter";
-import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
+import {
+  hasActiveMembershipPlanEntitlement,
+  hasActiveProductEntitlement,
+} from "@/lib/store/entitlements";
 import { getPaymentMode, isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import {
+  getMembershipBenefits,
+  isMembershipPlanSlug,
+} from "@/lib/store/membership-plans";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -43,7 +50,9 @@ export default async function CheckoutPage({
     product.productType === "course"
       ? loadPublicCourseBySlug(productSlug)
       : Promise.resolve(null),
-    hasActiveProductEntitlement(supabase, productSlug),
+    isMembershipPlanSlug(productSlug)
+      ? hasActiveMembershipPlanEntitlement(supabase)
+      : hasActiveProductEntitlement(supabase, productSlug),
   ]);
 
   const meta = identity.metadata;
@@ -56,6 +65,7 @@ export default async function CheckoutPage({
   const productDescription = courseItem
     ? `${courseItem.course.sections.length}개 챕터 · 총 ${lessons.length}강 · ${courseItem.accessLabel}`
     : `${product.summary} · ${product.accessLabel}`;
+  const membershipBenefits = getMembershipBenefits(product.slug);
   const paymentMode = getPaymentMode();
   const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const isFreeProduct = product.priceKrw === 0;
@@ -118,6 +128,34 @@ export default async function CheckoutPage({
               : "Toss Payments 안전 결제"}
         </div>
 
+        {membershipBenefits.length > 0 && (
+          <div
+            aria-label="선택한 상품의 포함 혜택"
+            style={{
+              display: "grid",
+              gap: 9,
+              marginBottom: 28,
+              padding: "18px 20px",
+              border: "1px solid rgba(255,255,255,0.09)",
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.04)",
+              textAlign: "left",
+            }}
+          >
+            {membershipBenefits.map((benefit) => (
+              <div
+                key={benefit}
+                style={{ display: "flex", gap: 9, color: "#D8CEC0", fontSize: 13 }}
+              >
+                <span aria-hidden="true" style={{ color: "#D9825E", fontWeight: 800 }}>
+                  ✓
+                </span>
+                <span>{benefit}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div
           style={{
             fontSize: 13,
@@ -133,23 +171,31 @@ export default async function CheckoutPage({
         </div>
 
         {alreadyEnrolled ? (
-          <Link
-            href="/my"
-            style={{
-              width: "100%",
-              height: 54,
-              borderRadius: 100,
-              background: "#D9825E",
-              color: "#1B1815",
-              fontSize: 16,
-              fontWeight: 700,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            마이 클래스에서 확인하기
-          </Link>
+          <div>
+            {isMembershipPlanSlug(productSlug) && (
+              <p style={{ color: "#B7A995", fontSize: 13, lineHeight: 1.7 }}>
+                이미 멤버십 클래스를 이용 중이에요.
+                <br />등급 변경은 문의해 주세요.
+              </p>
+            )}
+            <Link
+              href="/my"
+              style={{
+                width: "100%",
+                height: 54,
+                borderRadius: 100,
+                background: "#D9825E",
+                color: "#1B1815",
+                fontSize: 16,
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              마이 클래스에서 확인하기
+            </Link>
+          </div>
         ) : product.soldOut ? (
           <p role="status" style={{ color: "#B7A995", fontSize: 14, lineHeight: 1.7 }}>
             지금은 신청을 받지 않습니다.
@@ -166,6 +212,7 @@ export default async function CheckoutPage({
             customerName={displayName.slice(0, 100)}
             customerEmail={identity.email?.slice(0, 100) ?? null}
             paymentMode={paymentMode === "toss_live" ? "toss_live" : "toss_test"}
+            productType={product.productType}
           />
         ) : (
           <p role="alert" style={{ color: "#F0A98C", fontSize: 13, lineHeight: 1.6 }}>

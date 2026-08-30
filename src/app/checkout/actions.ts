@@ -68,7 +68,7 @@ export async function createPaymentOrderAction(
       message: setupRequired
         ? "결제 데이터베이스 설정이 아직 적용되지 않았습니다."
         : alreadyEnrolled
-          ? "이미 이용 중인 상품입니다. 마이 클래스에서 확인해 주세요."
+          ? "이미 이용 중이거나 결제가 진행 중인 상품입니다. 마이 클래스에서 확인해 주세요."
           : "결제 주문을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
