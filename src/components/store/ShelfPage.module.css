@@ -30,11 +30,13 @@
 }
 
 .heroInner p {
+  justify-self: end;
   margin: 0;
   max-width: 44ch;
   color: #6b6459;
   font-size: 15px;
   line-height: 1.85;
+  text-align: right;
   text-wrap: pretty;
 }
 
@@ -282,6 +284,11 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
     align-items: start;
+  }
+
+  .heroInner p {
+    justify-self: start;
+    text-align: left;
   }
 }
 

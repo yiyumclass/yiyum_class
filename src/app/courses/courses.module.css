@@ -36,11 +36,13 @@
 }
 
 .heroInner > p {
+  justify-self: end;
   max-width: 470px;
   margin: 0 0 4px;
   color: #5f584f;
   font-size: 16px;
   line-height: 1.8;
+  text-align: right;
 }
 
 .catalog {
@@ -432,7 +434,9 @@
   }
 
   .heroInner > p {
+    justify-self: start;
     max-width: 560px;
+    text-align: left;
   }
 
   .catalog {
