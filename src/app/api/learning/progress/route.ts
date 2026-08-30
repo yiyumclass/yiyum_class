@@ -1,9 +1,9 @@
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { isSameOriginRequest } from "@/lib/http/origin";
 import { readLimitedJson } from "@/lib/http/request-body";
-import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
+import { hasActiveCourseAccess } from "@/lib/store/entitlements";
 import {
-  loadMyCourseBySlug,
+  loadMyCourseByContentSlug,
   loadPublicCourseBySlug,
 } from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -51,17 +51,21 @@ export async function POST(request: Request) {
     return json({ error: "진도 정보가 올바르지 않습니다." }, 400);
   }
 
-  const [isAdmin, hasEntitlement] = await Promise.all([
+  const [isAdmin, hasCourseAccess] = await Promise.all([
     hasActiveAdminAccess(supabase, identity.userId),
-    hasActiveProductEntitlement(supabase, payload.courseSlug),
+    hasActiveCourseAccess(supabase, payload.courseSlug),
   ]);
-  if (!isAdmin && !hasEntitlement) {
+  if (!isAdmin && !hasCourseAccess) {
     return json({ error: "수강 신청이 필요한 강의입니다." }, 403);
   }
 
   const catalogItem =
-    !isAdmin && hasEntitlement
-      ? await loadMyCourseBySlug(supabase, payload.courseSlug)
+    !isAdmin && hasCourseAccess
+      ? await loadMyCourseByContentSlug(
+          supabase,
+          payload.courseSlug,
+          payload.lessonId
+        )
       : await loadPublicCourseBySlug(payload.courseSlug);
 
   const course = catalogItem?.contentReady

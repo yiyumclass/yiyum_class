@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/auth/AuthForm";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -24,7 +23,6 @@ export default async function SignupPage({
   searchParams: AuthSearchParams;
 }) {
   const query = await searchParams;
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const nextPath = normalizeInternalNext(readFirstParam(query.next));
   const authError = readFirstParam(query.error) === "consent"
     ? "회원가입을 계속하려면 필수 항목에 동의해 주세요."
@@ -47,7 +45,6 @@ export default async function SignupPage({
         nextPath={nextPath}
         authError={authError}
         authNotice={null}
-        nonce={nonce}
       />
       <SiteFooter variant="compact" />
     </>

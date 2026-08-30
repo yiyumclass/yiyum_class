@@ -14,6 +14,11 @@ import {
 } from "@/lib/my-class/library-data";
 import type { LibraryItem } from "@/lib/my-class/types";
 import { loadMyActiveProductLibrary } from "@/lib/store/entitlements";
+import {
+  getMembershipAccessLabel,
+  getHighestMembershipPlanSlug,
+  membershipPlanDefinitions,
+} from "@/lib/store/membership-plans";
 import { loadMyCourseCatalog } from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
@@ -50,22 +55,37 @@ export default async function MyPage() {
       .filter((entitlement) => entitlement.productType === "course")
       .map((entitlement) => entitlement.productSlug)
   );
+  const membershipSlugs = new Set<string>(
+    membershipPlanDefinitions.map((plan) => plan.slug)
+  );
+  const primaryMembershipSlug = getHighestMembershipPlanSlug(
+    entitledCourseSlugs
+  );
+  const visibleCatalog = catalog.filter(
+    (catalogItem) =>
+      !membershipSlugs.has(catalogItem.slug) ||
+      catalogItem.slug === primaryMembershipSlug
+  );
   const items: LibraryItem[] = await Promise.all(
-    catalog.filter((catalogItem) => entitledCourseSlugs.has(catalogItem.slug)).map(async (catalogItem) => {
-      const course = catalogItem.classroomCourse ?? catalogItem.course;
-      const progress = catalogItem.contentReady
-        ? await loadCourseProgress(supabase, course).then((result) =>
-            result.available ? result.progress : createEmptyCourseProgress(course)
-          )
-        : createEmptyCourseProgress(course);
+    visibleCatalog
+      .filter((catalogItem) => entitledCourseSlugs.has(catalogItem.slug))
+      .map(async (catalogItem) => {
+        const course = catalogItem.classroomCourse ?? catalogItem.course;
+        const progress = catalogItem.contentReady
+          ? await loadCourseProgress(supabase, course).then((result) =>
+              result.available
+                ? result.progress
+                : createEmptyCourseProgress(course)
+            )
+          : createEmptyCourseProgress(course);
 
-      return buildCourseLibraryItem(course, progress, {
-        productSlug: catalogItem.slug,
-        description: catalogItem.summary,
-        accessLabel: catalogItem.accessLabel,
-        contentReady: catalogItem.contentReady,
-      });
-    })
+        return buildCourseLibraryItem(course, progress, {
+          productSlug: catalogItem.slug,
+          description: catalogItem.summary,
+          accessLabel: catalogItem.accessLabel,
+          contentReady: catalogItem.contentReady,
+        });
+      })
   );
 
   items.push(
@@ -77,11 +97,13 @@ export default async function MyPage() {
           title: entitlement.title,
           description:
             entitlement.summary ||
-            "결제해 주셔서 감사합니다. 카카오톡과 이메일로 보내드린 설문 폼을 작성해 주시면 48시간 이내로 연락드릴게요.",
-          accessLabel: formatLibraryAccessLabel(
-            entitlement.expiresAt,
-            entitlement.accessPeriodDays
-          ),
+            "결제해 주셔서 감사합니다. 상담 일정과 이용 방법은 카카오톡과 이메일로 개별 안내해 드려요.",
+          accessLabel:
+            getMembershipAccessLabel(entitlement.productSlug) ??
+            formatLibraryAccessLabel(
+              entitlement.expiresAt,
+              entitlement.accessPeriodDays
+            ),
         })
       )
   );

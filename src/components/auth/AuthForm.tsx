@@ -7,6 +7,7 @@ import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/client";
 import ConsentBlock from "./ConsentBlock";
+import styles from "./AuthForm.module.css";
 
 type Mode = "login" | "signup";
 
@@ -18,13 +19,11 @@ export default function AuthForm({
   nextPath,
   authError,
   authNotice,
-  nonce,
 }: {
   mode: Mode;
   nextPath: string;
   authError: string | null;
   authNotice: string | null;
-  nonce?: string;
 }) {
   const router = useRouter();
   const isSignup = mode === "signup";
@@ -138,23 +137,6 @@ export default function AuthForm({
         color: "#201C17",
       }}
     >
-      <style nonce={nonce}>{`
-        .auth-input {
-          width: 100%; height: 48px; padding: 0 14px; box-sizing: border-box;
-          border: 1px solid #DDD5C8; border-radius: 10px; background: #FBF8F2;
-          font-size: 15px; color: #201C17; outline: none;
-          transition: border-color 0.2s ease;
-        }
-        .auth-input::placeholder { color: #A79F92; }
-        .auth-input:focus { border-color: #B85C38; }
-
-        @media (max-width: 430px) {
-          /* iOS Safari는 입력창 font-size가 16px 미만이면 포커스 시 자동 확대(줌)한다.
-             기능/레이아웃은 그대로 두고 모바일에서만 폰트를 16px로 올려 줌을 막는다. */
-          .auth-input { font-size: 16px; }
-        }
-      `}</style>
-
       <div style={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
         <Link
           href="/"
@@ -172,23 +154,31 @@ export default function AuthForm({
 
         {/* 가입은 카카오 전용 → 이메일 폼은 로그인 모드에서만 렌더한다. */}
         {!isSignup && (
-          <form onSubmit={submitEmail} style={{ display: "grid", gap: 12 }}>
-            <input
-              className="auth-input"
-              type="email"
-              placeholder="이메일"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-            <input
-              className="auth-input"
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
+          <form onSubmit={submitEmail} className={styles.emailForm}>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>이메일</span>
+              <input
+                className={styles.input}
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>비밀번호</span>
+              <input
+                className={styles.input}
+                type="password"
+                placeholder="비밀번호를 입력해 주세요"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
 
             <button
               type="submit"

@@ -40,3 +40,19 @@ export function resolveSalePrice(
 export function formatKrw(value: number) {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
+
+export function calculateMonthlyInstallmentKrw(
+  totalPriceKrw: number,
+  months: number
+) {
+  if (
+    !Number.isFinite(totalPriceKrw) ||
+    totalPriceKrw < 0 ||
+    !Number.isInteger(months) ||
+    months <= 0
+  ) {
+    throw new RangeError("A non-negative total and positive whole month count are required.");
+  }
+
+  return Math.round(totalPriceKrw / months);
+}

@@ -5,13 +5,21 @@ import test from "node:test";
 const landingPath = new URL("../src/app/page.tsx", import.meta.url);
 const metadataPath = new URL("../src/app/layout.tsx", import.meta.url);
 const fallbackCatalogPath = new URL("../src/lib/learning/catalog.ts", import.meta.url);
+const membershipCopyPath = new URL(
+  "../src/lib/store/membership-plans.ts",
+  import.meta.url
+);
 
 test("landing presents income-related examples as personal history without guarantees", async () => {
-  const landing = await readFile(landingPath, "utf8");
+  const [landing, membershipCopy] = await Promise.all([
+    readFile(landingPath, "utf8"),
+    readFile(membershipCopyPath, "utf8"),
+  ]);
+  const enrollmentCopy = `${landing}\n${membershipCopy}`;
 
   assert.match(landing, /강사 개인 운영 사례/);
   assert.match(landing, /강사의 개인적인 과거 경험/);
-  assert.match(landing, /특정 경제적 성과를 보장하지 않으며/);
+  assert.match(enrollmentCopy, /특정 경제적 성과를 보장하지 않으며/);
   assert.match(landing, /첫 무가 협찬/);
   assert.match(landing, /가구 협찬 제안을 하루 3~5건 받은 경험/);
   assert.match(landing, /원고료를 단계적으로 높여 협상한 경험/);

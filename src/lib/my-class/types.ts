@@ -31,6 +31,8 @@ export type EbookLibraryItem = BaseLibraryItem & {
 /** 컨설팅은 재생할 것도 내려받을 것도 없다. 예약이 어디까지 갔는지만 보여준다. */
 export type ConsultingLibraryItem = BaseLibraryItem & {
   kind: "consulting";
+  /** 상담 상품별 이용 안내를 구분할 때 쓴다. */
+  slug: string;
   status: "preparing" | "available" | "completed";
 };
 

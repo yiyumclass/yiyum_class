@@ -209,6 +209,25 @@ export async function loadMyCourseBySlug(
   return catalog.find((item) => item.slug === slug) ?? null;
 }
 
+export async function loadMyCourseByContentSlug(
+  supabase: SupabaseClient,
+  courseSlug: string,
+  lessonId?: string
+): Promise<PublicCourseCatalogItem | null> {
+  const catalog = await loadMyCourseCatalog(supabase);
+  return (
+    catalog.find((item) => {
+      if (item.course.slug !== courseSlug) return false;
+      if (!lessonId) return true;
+
+      const course = item.classroomCourse ?? item.course;
+      return course.sections.some((section) =>
+        section.lessons.some((lesson) => lesson.id === lessonId)
+      );
+    }) ?? null
+  );
+}
+
 async function loadPublishedCourses(
   supabase: ReturnType<typeof createPublicClient>,
   productIds: string[]

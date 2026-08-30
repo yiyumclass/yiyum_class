@@ -10,6 +10,10 @@ import {
   loadPublicDetailItems,
   type PublicDetailItem,
 } from "@/lib/store/public-detail-items";
+import {
+  isMembershipPlanSlug,
+  membershipPlanDefinitions,
+} from "@/lib/store/membership-plans";
 import type { ProductType } from "@/lib/store/product-type";
 import {
   loadPublicCourseBySlug,
@@ -85,8 +89,32 @@ export const loadPublicSaleCatalog = cache(async function loadPublicSaleCatalog(
     loadPublicProductsByType("consulting"),
   ]);
 
-  return [...courses.map(mapCourseCard), ...consultings.map(mapConsultingCard)];
+  return [
+    ...collapseMembershipCourseOptions(courses).map(mapCourseCard),
+    ...consultings.map(mapConsultingCard),
+  ];
 });
+
+/**
+ * 멤버십 상품 세 개는 결제 단위일 뿐 공개 카탈로그에서 서로 다른 강의가 아니다.
+ * 같은 원본 강의는 대표 강의 카드 하나로 보여주고 등급 비교는 신청 단계로 미룬다.
+ */
+function collapseMembershipCourseOptions(
+  courses: PublicCourseCatalogItem[]
+): PublicCourseCatalogItem[] {
+  const representative = membershipPlanDefinitions
+    .map((plan) => courses.find((course) => course.slug === plan.slug))
+    .find((course): course is PublicCourseCatalogItem => Boolean(course));
+  let membershipCourseAdded = false;
+
+  return courses.flatMap((course) => {
+    if (!isMembershipPlanSlug(course.slug)) return [course];
+    if (membershipCourseAdded || !representative) return [];
+
+    membershipCourseAdded = true;
+    return [representative];
+  });
+}
 
 /** 무료자료실 목록. 유료 클래스와 섞지 않는다. */
 export const loadPublicResourceCatalog = cache(async function loadPublicResourceCatalog(): Promise<
@@ -216,10 +244,10 @@ function mapConsultingCard(product: PublicProduct): SaleCard {
     soldOut: product.soldOut,
     thumbnailSrc: product.thumbnailSrc,
     detailHref: `/courses/${product.slug}`,
-    visualLabel: "LIVE 1:1",
+    visualLabel: "1:1",
     visualCaption: "이윰",
-    eyebrow: "LIVE · CONSULTING",
-    metaItems: copy?.cardMeta ?? ["줌 라이브 1:1", "정원 1명"],
+    eyebrow: "1:1 · CONSULTING",
+    metaItems: copy?.cardMeta ?? ["1:1 개별 상담", "본인 1명"],
   };
 }
 
@@ -232,20 +260,20 @@ function mapConsultingDetail(
 
   return {
     ...card,
-    visualLabel: "YIYUM LIVE 1:1",
+    visualLabel: "YIYUM 1:1",
     checkoutHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
     accessLabel: product.accessLabel,
     facts: copy?.facts ?? [
-      { label: "진행 방식", value: "줌(Zoom) 라이브 1:1" },
-      { label: "정원", value: "1명" },
-      { label: "예약", value: "결제 후 설문 폼 발송" },
+      { label: "진행 방식", value: "1:1 개별 상담" },
+      { label: "대상", value: "본인 1명" },
+      { label: "일정", value: "결제 후 개별 조율" },
       { label: "이용 기간", value: product.accessLabel },
     ],
     course: null,
-    ctaLabel: "예약하기",
+    ctaLabel: "신청하기",
     ctaHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
     unlockHref: `/checkout?product=${encodeURIComponent(product.slug)}`,
-    unlockLabel: "예약하기",
+    unlockLabel: "신청하기",
     detailParagraphs: splitParagraphs(product.detailBody),
     detailItems,
     hasFile: product.hasFile,

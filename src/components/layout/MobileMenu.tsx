@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import CourseEnrollmentPicker from "@/components/store/CourseEnrollmentPicker";
 import styles from "./MobileMenu.module.css";
 
 type NavItem = { key: string; label: string; href: string };
@@ -12,6 +13,7 @@ type MobileMenuProps = {
   activeKey?: string;
   isAdmin: boolean;
   enrollHref: string;
+  useEnrollmentPicker: boolean;
 };
 
 // 모바일 전용 햄버거 메뉴. 데스크탑에서는 CSS로 숨겨지고, 서버 헤더가 넘겨준
@@ -26,6 +28,7 @@ export default function MobileMenu({
   activeKey,
   isAdmin,
   enrollHref,
+  useEnrollmentPicker,
 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
 
@@ -94,6 +97,8 @@ export default function MobileMenu({
             <Link href="/admin" className={styles.cta} onClick={close}>
               관리자
             </Link>
+          ) : useEnrollmentPicker ? (
+            <CourseEnrollmentPicker triggerClassName={styles.cta} />
           ) : (
             <Link href={enrollHref} className={styles.cta} onClick={close}>
               수강 신청

@@ -202,6 +202,24 @@
   font-size: 14px;
 }
 
+.enrollmentPrompt {
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.enrollmentPrompt span {
+  color: #9a9186;
+  font-size: 10px;
+}
+
+.enrollmentPrompt strong {
+  color: #4b443d;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 /* 정가는 실제로 낼 돈보다 작고 흐리게 둔다. 색을 구분하지 못해도 읽히도록
    할인율에는 '할인'을 붙인다. */
 .saleRow {
@@ -442,7 +460,8 @@
   font-size: 27px;
 }
 
-.bottomCta a {
+.bottomCta a,
+.bottomEnrollmentAction {
   min-height: 48px;
   padding: 0 20px;
   border-radius: 999px;
@@ -458,6 +477,7 @@
 }
 
 .primaryAction:focus-visible,
+.bottomEnrollmentAction:focus-visible,
 .sectionList summary:focus-visible,
 .bottomCta a:focus-visible,
 .breadcrumb a:focus-visible {
@@ -580,7 +600,8 @@
     gap: 18px;
   }
 
-  .bottomCta a {
+  .bottomCta a,
+  .bottomEnrollmentAction {
     width: 100%;
   }
 }

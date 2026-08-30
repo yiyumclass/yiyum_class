@@ -5,18 +5,38 @@ import SiteHeader from "@/components/layout/SiteHeader";
 import { resolveSalePrice } from "@/lib/store/pricing";
 import type { SaleDetail } from "@/lib/store/public-sale";
 import ConsultingDetail from "./ConsultingDetail";
+import CourseEnrollmentPicker, {
+  CourseEnrollmentProvider,
+  type MembershipProductOption,
+} from "./CourseEnrollmentPicker";
 import ResourceDetail from "./ResourceDetail";
 import ResourceViewer from "./ResourceViewer";
 import styles from "./SaleDetailPage.module.css";
 
-export default function SaleDetailPage({ item }: { item: SaleDetail }) {
+type SaleDetailPageProps = {
+  item: SaleDetail;
+  membershipProducts?: MembershipProductOption[];
+  complianceNotice?: string;
+};
+
+export default function SaleDetailPage({
+  item,
+  membershipProducts,
+  complianceNotice,
+}: SaleDetailPageProps) {
   const course = item.course;
   const lessons = course?.course.sections.flatMap((section) => section.lessons) ?? [];
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
+  const isCourse = item.productType === "course";
+  const hasMembershipOptions = membershipProducts !== undefined;
 
-  return (
+  const content = (
     <div className={styles.page}>
-      <SiteHeader active={item.headerActive} currentPath={item.detailHref} />
+      <SiteHeader
+        active={item.headerActive}
+        currentPath={item.detailHref}
+        useEnrollmentPicker={hasMembershipOptions}
+      />
 
       <main>
         <div className={styles.breadcrumb}>
@@ -63,35 +83,46 @@ export default function SaleDetailPage({ item }: { item: SaleDetail }) {
             </dl>
 
             <div className={styles.purchaseArea}>
-              <div className={styles.price}>
-                <span>
-                  {item.priceKrw === 0
-                    ? "신청만 하면 바로 받아요"
-                    : `${priceLabel(item)} · 부가세 포함`}
-                </span>
-                {sale.listPriceKrw !== null && (
-                  <div className={styles.saleRow}>
-                    <span className={styles.discount}>
-                      {sale.discountPercent}% 할인
-                    </span>
-                    <s className={styles.listPrice}>
-                      {formatPrice(sale.listPriceKrw)}원
-                    </s>
-                  </div>
-                )}
-                <strong className="serif">
-                  {item.priceKrw === 0 ? (
-                    "무료"
-                  ) : (
-                    <>
-                      {formatPrice(item.priceKrw)}
-                      <small>원</small>
-                    </>
+              {isCourse ? (
+                <div className={styles.enrollmentPrompt}>
+                  <span>수강 안내</span>
+                  <strong>신청할 때 필요한 도움의 범위를 선택할 수 있어요.</strong>
+                </div>
+              ) : (
+                <div className={styles.price}>
+                  <span>
+                    {item.priceKrw === 0
+                      ? "신청만 하면 바로 받아요"
+                      : `${priceLabel(item)} · 부가세 포함`}
+                  </span>
+                  {sale.listPriceKrw !== null && (
+                    <div className={styles.saleRow}>
+                      <span className={styles.discount}>
+                        {sale.discountPercent}% 할인
+                      </span>
+                      <s className={styles.listPrice}>
+                        {formatPrice(sale.listPriceKrw)}원
+                      </s>
+                    </div>
                   )}
-                </strong>
-              </div>
+                  <strong className="serif">
+                    {item.priceKrw === 0 ? (
+                      "무료"
+                    ) : (
+                      <>
+                        {formatPrice(item.priceKrw)}
+                        <small>원</small>
+                      </>
+                    )}
+                  </strong>
+                </div>
+              )}
               <div className={styles.actions}>
-                {item.soldOut ? (
+                {hasMembershipOptions ? (
+                  <CourseEnrollmentPicker
+                    triggerClassName={styles.primaryAction}
+                  />
+                ) : item.soldOut ? (
                   <span className={styles.soldOutAction} aria-disabled="true">
                     품절
                   </span>
@@ -108,7 +139,7 @@ export default function SaleDetailPage({ item }: { item: SaleDetail }) {
                 )}
               </div>
             </div>
-            {item.soldOut && (
+            {item.soldOut && !hasMembershipOptions && (
               <p className={styles.soldOutNotice} role="status">
                 지금은 신청을 받지 않습니다. 다음 모집이 열리면 안내드릴게요.
               </p>
@@ -198,10 +229,16 @@ export default function SaleDetailPage({ item }: { item: SaleDetail }) {
             <h2 className="serif">{closingHeadline(item)}</h2>
           </div>
           <div>
-            <strong className="serif">
-              {item.priceKrw === 0 ? "무료" : `${formatPrice(item.priceKrw)}원`}
-            </strong>
-            {item.soldOut ? (
+            {!isCourse && (
+              <strong className="serif">
+                {item.priceKrw === 0 ? "무료" : `${formatPrice(item.priceKrw)}원`}
+              </strong>
+            )}
+            {hasMembershipOptions ? (
+              <CourseEnrollmentPicker
+                triggerClassName={styles.bottomEnrollmentAction}
+              />
+            ) : item.soldOut ? (
               <span className={styles.soldOutAction} aria-disabled="true">품절</span>
             ) : item.ctaHref ? (
               <Link href={item.ctaHref}>{item.ctaLabel} <ArrowIcon /></Link>
@@ -214,6 +251,17 @@ export default function SaleDetailPage({ item }: { item: SaleDetail }) {
 
       <SiteFooter />
     </div>
+  );
+
+  return hasMembershipOptions ? (
+    <CourseEnrollmentProvider
+      products={membershipProducts}
+      complianceNotice={complianceNotice}
+    >
+      {content}
+    </CourseEnrollmentProvider>
+  ) : (
+    content
   );
 }
 

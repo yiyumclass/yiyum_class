@@ -9,7 +9,9 @@ import {
   resolveConfirmationFailure,
   type ConfirmRequest,
 } from "@/lib/payments/toss-verification";
+import { loadMyActiveProductEntitlements } from "@/lib/store/entitlements";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { isMembershipPlanSlug } from "@/lib/store/membership-plans";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
@@ -34,6 +36,10 @@ type OrderRow = {
 type EntitlementRow = {
   status: "active" | "revoked";
   expires_at: string | null;
+};
+
+type ProductSlugRow = {
+  slug: string;
 };
 
 type CompletedPaymentRow = {
@@ -103,16 +109,43 @@ export async function POST(request: Request) {
   }
 
   // 주문 생성 후 관리자 지급 등으로 이용권이 생겼다면 외부 승인을 호출하지 않는다.
-  const { data: entitlement, error: entitlementError } = await supabase
-    .from("product_entitlements")
-    .select("status, expires_at")
-    .eq("product_id", data.product_id)
-    .maybeSingle<EntitlementRow>();
-  if (entitlementError) {
-    console.error("Failed to recheck entitlement before Toss confirmation:", entitlementError.code);
-    return json({ ok: false, message: "이용권 상태를 확인하지 못했습니다." }, 500);
+  // 멤버십은 세 등급이 같은 VOD를 공유하므로 현재 상품만 아니라 그룹 전체를 다시 확인한다.
+  const { data: targetProduct, error: targetProductError } = await admin
+    .from("products")
+    .select("slug")
+    .eq("id", data.product_id)
+    .maybeSingle<ProductSlugRow>();
+  if (targetProductError || !targetProduct) {
+    console.error("Failed to load product before Toss confirmation:", targetProductError?.code);
+    return json({ ok: false, message: "상품 정보를 확인하지 못했습니다." }, 500);
   }
-  if (isActiveEntitlement(entitlement)) {
+
+  let alreadyEntitled = false;
+  if (isMembershipPlanSlug(targetProduct.slug)) {
+    const entitlementResult = await loadMyActiveProductEntitlements(supabase);
+    if (!entitlementResult.available) {
+      return json({ ok: false, message: "이용권 상태를 확인하지 못했습니다." }, 500);
+    }
+    alreadyEntitled = entitlementResult.entitlements.some((entitlement) =>
+      isMembershipPlanSlug(entitlement.productSlug)
+    );
+  } else {
+    const { data: entitlement, error: entitlementError } = await supabase
+      .from("product_entitlements")
+      .select("status, expires_at")
+      .eq("product_id", data.product_id)
+      .maybeSingle<EntitlementRow>();
+    if (entitlementError) {
+      console.error(
+        "Failed to recheck entitlement before Toss confirmation:",
+        entitlementError.code
+      );
+      return json({ ok: false, message: "이용권 상태를 확인하지 못했습니다." }, 500);
+    }
+    alreadyEntitled = isActiveEntitlement(entitlement);
+  }
+
+  if (alreadyEntitled) {
     await supabase.rpc("fail_toss_payment_order", {
       target_order_uid: input.orderId,
     });

@@ -1126,7 +1126,7 @@ function ProductCreateDialog({
                 checked={productType === "consulting"}
                 onChange={() => setProductType("consulting")}
               />
-              <span><ChatIcon /><strong>1:1 컨설팅</strong><small>줌 라이브 세션</small></span>
+              <span><ChatIcon /><strong>1:1 컨설팅</strong><small>전화 코칭·개별 상담</small></span>
             </label>
           </fieldset>
 

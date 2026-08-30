@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMembershipPlanSlug } from "@/lib/store/membership-plans";
 import { formatProductType, type ProductType } from "@/lib/store/product-type";
 
 export type ProductEntitlement = {
@@ -133,6 +134,38 @@ export async function hasActiveProductEntitlement(
       error.code === "42883" || error.code === "PGRST202" || error.code === "PGRST205";
     if (!unavailable) {
       console.error("Failed to verify product entitlement:", error.message);
+    }
+    return false;
+  }
+
+  return data === true;
+}
+
+export async function hasActiveMembershipPlanEntitlement(
+  supabase: SupabaseClient
+) {
+  const result = await loadMyActiveProductEntitlements(supabase);
+  return (
+    result.available &&
+    result.entitlements.some((entitlement) =>
+      isMembershipPlanSlug(entitlement.productSlug)
+    )
+  );
+}
+
+export async function hasActiveCourseAccess(
+  supabase: SupabaseClient,
+  courseSlug: string
+) {
+  const { data, error } = await supabase.rpc("has_active_course_access", {
+    target_course_slug: courseSlug,
+  });
+
+  if (error) {
+    const unavailable =
+      error.code === "42883" || error.code === "PGRST202" || error.code === "PGRST205";
+    if (!unavailable) {
+      console.error("Failed to verify course access:", error.message);
     }
     return false;
   }

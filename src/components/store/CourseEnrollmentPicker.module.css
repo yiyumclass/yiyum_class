@@ -1,0 +1,372 @@
+.triggerButton {
+  min-height: 50px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: #b85c38;
+  color: #fffaf3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.triggerButton:hover {
+  background: #9c4d30;
+  transform: translateY(-1px);
+}
+
+.compactTrigger {
+  min-height: 44px;
+  padding: 0 25px;
+  background: #d9825e;
+  color: #1b1815;
+}
+
+.compactTrigger:hover {
+  background: #e9a27f;
+}
+
+.triggerButton:focus-visible,
+.closeButton:focus-visible,
+.selectAction:focus-visible {
+  outline: 2px solid #e9a27f;
+  outline-offset: 3px;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  padding: 24px;
+  background: rgba(17, 14, 12, 0.78);
+  backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  animation: backdropIn 180ms ease-out both;
+}
+
+.dialog {
+  width: min(1160px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(237, 231, 220, 0.18);
+  border-radius: 24px;
+  background: #211d18;
+  color: #ede7dc;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.42);
+  animation: dialogIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dialogHeader {
+  padding: 34px 38px 28px;
+  border-bottom: 1px solid rgba(237, 231, 220, 0.14);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow,
+.planEyebrow {
+  color: #d9825e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.dialogHeader h2 {
+  margin: 10px 0 0;
+  font-size: clamp(28px, 3.5vw, 42px);
+  line-height: 1.2;
+}
+
+.dialogHeader p {
+  margin: 10px 0 0;
+  color: #bdb3a7;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.closeButton {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(237, 231, 220, 0.2);
+  border-radius: 50%;
+  background: transparent;
+  color: #ede7dc;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.planGrid {
+  padding: 30px 38px 34px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.planCard {
+  position: relative;
+  min-width: 0;
+  padding: 27px 24px 24px;
+  border: 1px solid rgba(237, 231, 220, 0.15);
+  border-radius: 17px;
+  background: #2a2520;
+  display: flex;
+  flex-direction: column;
+}
+
+.recommendedCard {
+  border-color: #d9825e;
+  box-shadow: inset 0 0 0 1px rgba(217, 130, 94, 0.35);
+}
+
+.recommendation {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  padding: 7px 12px;
+  border-radius: 0 0 10px 10px;
+  background: #d9825e;
+  color: #211d18;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.planCard h3 {
+  margin: 13px 0 0;
+  font-size: 27px;
+}
+
+.planDescription {
+  min-height: 48px;
+  margin: 10px 0 0;
+  color: #b9afa3;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.priceBlock {
+  margin-top: 24px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(237, 231, 220, 0.13);
+  border-bottom: 1px solid rgba(237, 231, 220, 0.13);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.monthlyPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.monthlyPrice > span {
+  color: #d9825e;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.monthlyPrice strong {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.monthlyPrice em {
+  margin-right: 5px;
+  color: #b9afa3;
+  font-family: inherit;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.monthlyPrice small {
+  margin-left: 4px;
+  color: #d9825e;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.installmentGuide {
+  margin: 0;
+  color: #a99e92;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.totalPrice {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.totalPrice span {
+  color: #92887d;
+  font-size: 10px;
+}
+
+.totalPrice strong {
+  color: #b9afa3;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.planCard ul {
+  margin: 20px 0 26px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.planCard li {
+  color: #d7cec2;
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  gap: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.planCard li > span {
+  color: #d9825e;
+  font-weight: 800;
+}
+
+.selectAction,
+.disabledAction {
+  min-height: 46px;
+  margin-top: auto;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.selectAction {
+  background: #d9825e;
+  color: #211d18;
+}
+
+.selectAction:hover {
+  background: #e9a27f;
+}
+
+.disabledAction {
+  border: 1px solid rgba(237, 231, 220, 0.18);
+  color: #92887d;
+}
+
+.dialogFooter {
+  padding: 0 38px 32px;
+}
+
+.dialogFooter p {
+  margin: 0;
+  color: #a99e92;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.dialogFooter .compliance {
+  margin-top: 8px;
+  color: #867c72;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 920px) {
+  .dialog {
+    width: min(680px, 100%);
+  }
+
+  .planGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .planDescription {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .backdrop {
+    padding: 0;
+    place-items: end stretch;
+  }
+
+  .dialog {
+    width: 100%;
+    max-height: 92dvh;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .dialogHeader {
+    padding: 25px 22px 21px;
+  }
+
+  .dialogHeader h2 {
+    padding-right: 8px;
+    font-size: 28px;
+  }
+
+  .dialogHeader p {
+    font-size: 13px;
+  }
+
+  .closeButton {
+    width: 38px;
+    height: 38px;
+  }
+
+  .planGrid {
+    padding: 20px 18px 24px;
+  }
+
+  .planCard {
+    padding: 24px 20px 20px;
+  }
+
+  .dialogFooter {
+    padding: 0 20px 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .triggerButton,
+  .backdrop,
+  .dialog {
+    animation: none;
+    transition: none;
+  }
+}

@@ -4,6 +4,7 @@ import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import Link from "next/link";
 import { useState } from "react";
 import { createPaymentOrderAction } from "@/app/checkout/actions";
+import type { ProductType } from "@/lib/store/product-type";
 
 type TossPaymentFormProps = {
   productSlug: string;
@@ -12,6 +13,7 @@ type TossPaymentFormProps = {
   customerName: string;
   customerEmail: string | null;
   paymentMode: "toss_test" | "toss_live";
+  productType: ProductType;
 };
 
 export default function TossPaymentForm({
@@ -21,6 +23,7 @@ export default function TossPaymentForm({
   customerName,
   customerEmail,
   paymentMode,
+  productType,
 }: TossPaymentFormProps) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,6 +59,7 @@ export default function TossPaymentForm({
         card: {
           flowMode: "DEFAULT",
           useEscrow: false,
+          maxCardInstallmentPlan: 12,
         },
         metadata: {
           productSlug: result.order.productSlug,
@@ -103,8 +107,7 @@ export default function TossPaymentForm({
           >
             청약철회·환불 기준
           </Link>
-          을 확인했으며, 결제 완료 즉시 패키지 전체 콘텐츠의 이용 권한이 제공되고 유료 강의 최초 재생 또는
-          자료 열람·다운로드 시 패키지 이용이 개시되는 것에 동의합니다.
+          을 확인했으며, {formatFulfillmentConsent(productType)}
         </span>
       </label>
       <button
@@ -140,6 +143,16 @@ export default function TossPaymentForm({
       )}
     </div>
   );
+}
+
+function formatFulfillmentConsent(productType: ProductType) {
+  if (productType === "consulting") {
+    return "결제 완료 후 상담 안내와 일정 조율이 시작되는 것에 동의합니다.";
+  }
+  if (productType === "ebook") {
+    return "결제 완료 즉시 자료 이용 권한이 제공되고 최초 열람·다운로드 시 이용이 개시되는 것에 동의합니다.";
+  }
+  return "결제 완료 즉시 VOD 이용 권한이 제공되고 유료 강의 최초 재생 시 디지털 콘텐츠 이용이 개시되는 것에 동의합니다.";
 }
 
 function resolvePaymentError(error: unknown) {
