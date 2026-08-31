@@ -363,13 +363,6 @@
   font-size: 17px;
 }
 
-.sectionTitle small {
-  color: #9b9287;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .sectionList summary svg {
   width: 19px;
   height: 19px;

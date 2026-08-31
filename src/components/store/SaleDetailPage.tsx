@@ -25,7 +25,6 @@ export default function SaleDetailPage({
   complianceNotice,
 }: SaleDetailPageProps) {
   const course = item.course;
-  const lessons = course?.course.sections.flatMap((section) => section.lessons) ?? [];
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
   const isCourse = item.productType === "course";
   const hasMembershipOptions = membershipProducts !== undefined;
@@ -158,11 +157,7 @@ export default function SaleDetailPage({
               <span>CURRICULUM</span>
               <h2 id="curriculum-title" className="serif">강의 구성</h2>
             </div>
-            <p>
-              {course.outlineReady
-                ? `${course.course.sections.length}개 챕터 · 총 ${lessons.length}강`
-                : "상세 커리큘럼 준비 중"}
-            </p>
+            {!course.outlineReady && <p>상세 커리큘럼 준비 중</p>}
           </div>
 
           {course.course.sections.length > 0 ? (
@@ -175,7 +170,6 @@ export default function SaleDetailPage({
                     </span>
                     <span className={styles.sectionTitle}>
                       <strong>{section.title}</strong>
-                      <small>{section.lessons.length}강</small>
                     </span>
                     <ChevronIcon />
                   </summary>
