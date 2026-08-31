@@ -170,7 +170,20 @@ export function CourseEnrollmentProvider({
                   <span className={styles.recommendation}>가장 많이 선택해요</span>
                 )}
                 <span className={styles.planEyebrow}>{plan.eyebrow}</span>
-                <h3 className="serif">{plan.title}</h3>
+                <h3
+                  className={`${styles.planTitle} serif`}
+                  aria-label={`${plan.order}번 ${plan.icon} ${plan.title}`}
+                >
+                  <span className={styles.planTitleNumber} aria-hidden="true">
+                    {plan.order}
+                  </span>
+                  <span className={styles.planTitleIcon} aria-hidden="true">
+                    {plan.icon}
+                  </span>
+                  <span className={styles.planTitleText} aria-hidden="true">
+                    {plan.title}
+                  </span>
+                </h3>
                 <p className={styles.planDescription}>{plan.description}</p>
 
                 <div className={styles.priceBlock}>
@@ -191,7 +204,7 @@ export function CourseEnrollmentProvider({
                   </div>
                 </div>
 
-                <ul aria-label={`${plan.title} 포함 혜택`}>
+                <ul aria-label={`${plan.icon} ${plan.title} 포함 혜택`}>
                   {plan.benefits.map((benefit) => (
                     <li key={benefit}>
                       <span aria-hidden="true">✓</span>
@@ -206,7 +219,7 @@ export function CourseEnrollmentProvider({
                   </span>
                 ) : (
                   <Link href={product.checkoutHref} className={styles.selectAction}>
-                    {plan.title} 선택 <span aria-hidden="true">→</span>
+                    {plan.icon} {plan.title} 선택 <span aria-hidden="true">→</span>
                   </Link>
                 )}
               </article>

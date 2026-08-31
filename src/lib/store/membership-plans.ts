@@ -1,6 +1,8 @@
 export type MembershipPlanDefinition = {
   slug: string;
   eyebrow: string;
+  order: number;
+  icon: string;
   title: string;
   description: string;
   benefits: readonly string[];
@@ -12,7 +14,9 @@ export const membershipPlanDefinitions = [
   {
     slug: "sns-monetization",
     eyebrow: "VOD",
-    title: "VOD 클래스",
+    order: 1,
+    icon: "🎬",
+    title: "베이직 클래스",
     description: "필요한 순간마다 다시 보며 내 속도로 적용하는 기본 과정",
     benefits: ["전체 VOD 강의"],
     recommended: false,
@@ -21,7 +25,9 @@ export const membershipPlanDefinitions = [
   {
     slug: "sns-monetization-feedback",
     eyebrow: "FEEDBACK",
-    title: "피드백 클래스",
+    order: 2,
+    icon: "🔥",
+    title: "부스터 클래스",
     description: "혼자 멈추지 않도록 과제와 피드백을 함께 받는 과정",
     benefits: ["전체 VOD 강의", "실전 과제", "동기 오픈카톡방", "이윰 1:1 피드백"],
     recommended: true,
@@ -30,7 +36,9 @@ export const membershipPlanDefinitions = [
   {
     slug: "sns-monetization-ultra",
     eyebrow: "ULTRA",
-    title: "초밀착 클래스",
+    order: 3,
+    icon: "👑",
+    title: "프리미엄 클래스",
     description: "피드백에 짧고 밀도 높은 전화 코칭까지 더한 집중 과정",
     benefits: [
       "전체 VOD 강의",
