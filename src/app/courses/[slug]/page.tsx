@@ -5,8 +5,10 @@ import {
   isMembershipPlanSlug,
   membershipEconomicOutcomeNotice,
   membershipPlanDefinitions,
+  phonePassDefinition,
 } from "@/lib/store/membership-plans";
 import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
+import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { loadPublicSaleDetail } from "@/lib/store/public-sale";
 
 type SaleDetailRouteProps = {
@@ -34,24 +36,39 @@ export default async function CourseDetailRoute({ params }: SaleDetailRouteProps
   const { slug } = await params;
   const membershipCourse = isMembershipPlanSlug(slug);
   const canonicalSlug = membershipCourse ? membershipPlanDefinitions[0].slug : slug;
-  const [item, courseCatalog] = await Promise.all([
+  const [item, courseCatalog, phonePassProduct] = await Promise.all([
     loadPublicSaleDetail(canonicalSlug),
     membershipCourse ? loadPublicCourseCatalog() : Promise.resolve([]),
+    membershipCourse
+      ? loadPublicProductBySlug(phonePassDefinition.slug)
+      : Promise.resolve(null),
   ]);
   if (!item || item.productType === "ebook") notFound();
 
   const membershipProducts = membershipCourse
-    ? courseCatalog
-        .filter(
-          (course) =>
-            course.source === "database" && isMembershipPlanSlug(course.slug)
-        )
-        .map((course) => ({
-          slug: course.slug,
-          priceKrw: course.priceKrw,
-          soldOut: course.soldOut,
-          checkoutHref: course.checkoutHref,
-        }))
+    ? [
+        ...courseCatalog
+          .filter(
+            (course) =>
+              course.source === "database" && isMembershipPlanSlug(course.slug)
+          )
+          .map((course) => ({
+            slug: course.slug,
+            priceKrw: course.priceKrw,
+            soldOut: course.soldOut,
+            checkoutHref: course.checkoutHref,
+          })),
+        ...(phonePassProduct
+          ? [
+              {
+                slug: phonePassProduct.slug,
+                priceKrw: phonePassProduct.priceKrw,
+                soldOut: phonePassProduct.soldOut,
+                checkoutHref: `/checkout?product=${encodeURIComponent(phonePassProduct.slug)}`,
+              },
+            ]
+          : []),
+      ]
     : undefined;
 
   return (

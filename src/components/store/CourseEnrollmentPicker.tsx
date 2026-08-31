@@ -14,7 +14,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { membershipPlanDefinitions } from "@/lib/store/membership-plans";
+import { enrollmentOptionDefinitions } from "@/lib/store/membership-plans";
 import {
   calculateMonthlyInstallmentKrw,
   formatKrw,
@@ -129,12 +129,12 @@ export function CourseEnrollmentProvider({
       >
         <header className={styles.dialogHeader}>
           <div>
-            <span className={styles.eyebrow}>ENROLLMENT OPTIONS</span>
+            <span className={styles.eyebrow}>YIYUM SNS CLASS</span>
             <h2 id={titleId} className="serif">
-              수강 방식을 선택해 주세요
+              이윰 SNS 수익화 클래스 둘러보기
             </h2>
             <p id={descriptionId}>
-              강의 내용은 같고, 함께 제공되는 피드백과 코칭 범위가 달라요.
+              클래스별 학습 방식과 제공 혜택을 비교해 보세요.
             </p>
           </div>
           <button
@@ -149,7 +149,7 @@ export function CourseEnrollmentProvider({
         </header>
 
         <div className={styles.planGrid}>
-          {membershipPlanDefinitions.map((plan) => {
+          {enrollmentOptionDefinitions.map((plan) => {
             const product = productBySlug.get(plan.slug);
             const priceKrw = product?.priceKrw ?? plan.fallbackPriceKrw;
             const monthlyKrw = calculateMonthlyInstallmentKrw(

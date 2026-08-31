@@ -53,7 +53,7 @@
 }
 
 .dialog {
-  width: min(1160px, 100%);
+  width: min(1320px, 100%);
   max-height: calc(100dvh - 48px);
   overflow: auto;
   overscroll-behavior: contain;
@@ -114,7 +114,7 @@
 .planGrid {
   padding: 30px 38px 34px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -335,11 +335,21 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1180px) {
   .dialog {
-    width: min(680px, 100%);
+    width: min(860px, 100%);
   }
 
+  .planGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planDescription {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 700px) {
   .planGrid {
     grid-template-columns: 1fr;
   }
