@@ -244,7 +244,6 @@ export default async function Home() {
                     <span className="serif" style={{display: 'block', fontSize: '30px', color: '#B85C38', lineHeight: '1'}}>{String(sectionIndex + 1).padStart(2, "0")}</span>
                   </span>
                   <span style={{flex: '1'}}>
-                    <span style={{fontSize: '12.5px', color: '#938B7F', display: 'block', marginBottom: '4px', fontWeight: '500'}}>{section.lessons.length}강</span>
                     <span style={{fontSize: '22px', fontWeight: '600'}}>{section.title}</span>
                   </span>
                   <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>

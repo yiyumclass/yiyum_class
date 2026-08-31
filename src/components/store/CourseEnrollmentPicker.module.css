@@ -151,6 +151,39 @@
   font-size: 27px;
 }
 
+.planTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.28em;
+  line-height: 1.2;
+}
+
+.planTitleNumber,
+.planTitleIcon,
+.planTitleText {
+  display: inline-flex;
+  min-height: 1.2em;
+  align-items: center;
+  line-height: 1;
+}
+
+.planTitleNumber {
+  width: 1.35em;
+  min-height: 1.35em;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  box-sizing: border-box;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  font-size: 0.66em;
+  font-weight: 700;
+}
+
+.planTitleIcon {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-size: 0.88em;
+}
+
 .planDescription {
   min-height: 48px;
   margin: 10px 0 0;
