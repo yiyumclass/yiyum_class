@@ -24,9 +24,13 @@ export default async function SignupPage({
 }) {
   const query = await searchParams;
   const nextPath = normalizeInternalNext(readFirstParam(query.next));
-  const authError = readFirstParam(query.error) === "consent"
-    ? "회원가입을 계속하려면 필수 항목에 동의해 주세요."
-    : null;
+  const authErrorCode = readFirstParam(query.error);
+  const authError =
+    authErrorCode === "consent"
+      ? "회원가입을 계속하려면 필수 항목에 동의해 주세요."
+      : authErrorCode === "auth_unavailable"
+        ? "가입 정보를 확인하는 중 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        : null;
   const supabase = await createClient();
   const {
     data: { user },

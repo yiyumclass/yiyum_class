@@ -54,7 +54,7 @@ type AdminOrderManagerProps = {
   pageSize: number;
   databaseReady: boolean;
   sourceMessage: string | null;
-  paymentMode: "free" | "toss_test" | "toss_live";
+  paymentMode: "free" | "toss_test" | "toss_live" | "invalid";
   canRefund: boolean;
 };
 
@@ -280,6 +280,8 @@ export default function AdminOrderManager({
               ? "Toss Payments 테스트 결제가 연결되어 있습니다."
               : paymentMode === "toss_live"
                 ? "Toss Payments 실결제가 연결되어 있습니다."
+                : paymentMode === "invalid"
+                  ? "결제 모드 설정 오류입니다."
                 : "무료 신청 내역을 주문 원장으로 표시합니다."}
           </strong>
           <p>
@@ -287,6 +289,8 @@ export default function AdminOrderManager({
               ? "테스트 승인 주문도 실제 주문과 동일하게 금액과 이용권 발급 결과가 기록됩니다. 카드에는 청구되지 않습니다."
               : paymentMode === "toss_live"
                 ? "승인된 결제 금액과 이용권 발급 결과를 주문 원장에서 확인합니다."
+                : paymentMode === "invalid"
+                  ? "PAYMENT_MODE가 없거나 허용되지 않은 값이라 유료 결제가 비활성화되었습니다."
                 : "0원 상품 신청과 관리자 지급 내역을 이용권 발급 기준으로 확인합니다."}
           </p>
         </div>

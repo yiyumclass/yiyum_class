@@ -3,10 +3,15 @@ import { readFile } from "node:fs/promises";
 const env = await loadEnv(".env.local");
 const baseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const paymentMode = env.PAYMENT_MODE || "free";
+const paymentMode = env.PAYMENT_MODE;
 
 if (!baseUrl || !anonKey) {
   throw new Error(".env.local의 Supabase URL과 anon key가 필요합니다.");
+}
+if (!["free", "toss_test", "toss_live"].includes(paymentMode)) {
+  throw new Error(
+    `PAYMENT_MODE가 없거나 잘못되었습니다: ${paymentMode ?? "missing"}. free, toss_test, toss_live 중 하나를 명시하세요.`
+  );
 }
 
 const headers = {

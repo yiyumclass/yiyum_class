@@ -105,6 +105,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       initialProgress={progress}
       displayName={displayName}
       progressPersistenceEnabled={progressResult.available}
+      productSlug={catalogItem.slug}
     />
   );
 }

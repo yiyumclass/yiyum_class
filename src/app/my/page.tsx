@@ -19,7 +19,7 @@ import {
   getHighestMembershipPlanSlug,
   membershipPlanDefinitions,
 } from "@/lib/store/membership-plans";
-import { loadMyCourseCatalog } from "@/lib/store/public-course-catalog";
+import { loadMyCourseCatalogResult } from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 import styles from "./my.module.css";
@@ -43,13 +43,21 @@ export default async function MyPage() {
     typeof rawDisplayName === "string" && rawDisplayName.trim()
       ? rawDisplayName.trim()
       : "회원";
-  const [entitlementResult, catalog] = await Promise.all([
+  const [entitlementResult, catalogResult] = await Promise.all([
     loadMyActiveProductLibrary(supabase),
-    loadMyCourseCatalog(supabase),
+    loadMyCourseCatalogResult(supabase),
   ]);
   const entitlements = entitlementResult.available
     ? entitlementResult.entitlements
     : [];
+  const catalog = catalogResult.available ? catalogResult.catalog : [];
+  const hasEntitledCourse =
+    entitlementResult.available &&
+    entitlements.some((entitlement) => entitlement.productType === "course");
+  const courseCatalogLoadError =
+    entitlementResult.available && hasEntitledCourse && !catalogResult.available
+      ? catalogResult.errorMessage
+      : null;
   const entitledCourseSlugs = new Set(
     entitlements
       .filter((entitlement) => entitlement.productType === "course")
@@ -138,6 +146,7 @@ export default async function MyPage() {
               ? null
               : entitlementResult.errorMessage
           }
+          courseCatalogLoadError={courseCatalogLoadError}
         />
       </main>
 

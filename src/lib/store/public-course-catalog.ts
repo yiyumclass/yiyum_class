@@ -183,9 +183,17 @@ export const loadPublicCourseBySlug = cache(async function loadPublicCourseBySlu
   return catalog.find((item) => item.slug === slug) ?? null;
 });
 
-export async function loadMyCourseCatalog(
+export type MyCourseCatalogLoadResult =
+  | { available: true; catalog: PublicCourseCatalogItem[] }
+  | { available: false; errorMessage: string };
+
+export type MyCourseLookupResult =
+  | { available: true; course: PublicCourseCatalogItem | null }
+  | { available: false; errorMessage: string };
+
+export async function loadMyCourseCatalogResult(
   supabase: SupabaseClient
-): Promise<PublicCourseCatalogItem[]> {
+): Promise<MyCourseCatalogLoadResult> {
   const { data, error } = await supabase.rpc("get_my_active_course_catalog_outline");
 
   if (error) {
@@ -194,19 +202,55 @@ export async function loadMyCourseCatalog(
     if (!unavailable) {
       console.error("Failed to load owned course catalog:", error.message);
     }
-    return canUseLocalCatalogFallback() ? loadPublicCourseCatalog() : [];
+
+    if (canUseLocalCatalogFallback()) {
+      return {
+        available: true,
+        catalog: await loadPublicCourseCatalog(),
+      };
+    }
+
+    return {
+      available: false,
+      errorMessage: unavailable
+        ? "강의 목록을 불러올 준비가 아직 완료되지 않았습니다."
+        : "강의 목록을 불러오지 못했습니다.",
+    };
   }
 
   const rows = (data ?? []) as unknown as EntitledCourseOutlineRow[];
-  return buildCourseCatalogFromEntitledRows(rows);
+  return {
+    available: true,
+    catalog: buildCourseCatalogFromEntitledRows(rows),
+  };
+}
+
+export async function loadMyCourseCatalog(
+  supabase: SupabaseClient
+): Promise<PublicCourseCatalogItem[]> {
+  const result = await loadMyCourseCatalogResult(supabase);
+  return result.available ? result.catalog : [];
+}
+
+export async function loadMyCourseBySlugResult(
+  supabase: SupabaseClient,
+  slug: string
+): Promise<MyCourseLookupResult> {
+  const result = await loadMyCourseCatalogResult(supabase);
+  if (!result.available) return result;
+
+  return {
+    available: true,
+    course: result.catalog.find((item) => item.slug === slug) ?? null,
+  };
 }
 
 export async function loadMyCourseBySlug(
   supabase: SupabaseClient,
   slug: string
 ): Promise<PublicCourseCatalogItem | null> {
-  const catalog = await loadMyCourseCatalog(supabase);
-  return catalog.find((item) => item.slug === slug) ?? null;
+  const result = await loadMyCourseBySlugResult(supabase, slug);
+  return result.available ? result.course : null;
 }
 
 export async function loadMyCourseByContentSlug(
@@ -214,9 +258,26 @@ export async function loadMyCourseByContentSlug(
   courseSlug: string,
   lessonId?: string
 ): Promise<PublicCourseCatalogItem | null> {
-  const catalog = await loadMyCourseCatalog(supabase);
-  return (
-    catalog.find((item) => {
+  const result = await loadMyCourseByContentSlugResult(
+    supabase,
+    courseSlug,
+    lessonId
+  );
+  return result.available ? result.course : null;
+}
+
+export async function loadMyCourseByContentSlugResult(
+  supabase: SupabaseClient,
+  courseSlug: string,
+  lessonId?: string
+): Promise<MyCourseLookupResult> {
+  const result = await loadMyCourseCatalogResult(supabase);
+  if (!result.available) return result;
+
+  return {
+    available: true,
+    course:
+      result.catalog.find((item) => {
       if (item.course.slug !== courseSlug) return false;
       if (!lessonId) return true;
 
@@ -224,8 +285,8 @@ export async function loadMyCourseByContentSlug(
       return course.sections.some((section) =>
         section.lessons.some((lesson) => lesson.id === lessonId)
       );
-    }) ?? null
-  );
+      }) ?? null,
+  };
 }
 
 async function loadPublishedCourses(

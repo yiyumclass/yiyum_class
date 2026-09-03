@@ -22,10 +22,12 @@ export default function MyClassLibrary({
   displayName,
   items,
   entitlementLoadError,
+  courseCatalogLoadError,
 }: {
   displayName: string;
   items: LibraryItem[];
   entitlementLoadError: string | null;
+  courseCatalogLoadError: string | null;
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
@@ -142,11 +144,13 @@ export default function MyClassLibrary({
         </section>
       )}
 
-      <section className={styles.summary} aria-label="내 콘텐츠 요약">
-        <SummaryItem label="보유 콘텐츠" value={items.length} suffix="개" />
-        <SummaryItem label="수강 중" value={inProgressCount} suffix="개" />
-        <SummaryItem label="완료" value={completedCount} suffix="개" />
-      </section>
+      {!entitlementLoadError && !courseCatalogLoadError && (
+        <section className={styles.summary} aria-label="내 콘텐츠 요약">
+          <SummaryItem label="보유 콘텐츠" value={items.length} suffix="개" />
+          <SummaryItem label="수강 중" value={inProgressCount} suffix="개" />
+          <SummaryItem label="완료" value={completedCount} suffix="개" />
+        </section>
+      )}
 
       <section className={styles.librarySection} aria-labelledby="library-title">
         <div className={styles.libraryHeader}>
@@ -183,33 +187,45 @@ export default function MyClassLibrary({
               다시 불러오기
             </button>
           </div>
-        ) : visibleItems.length > 0 ? (
-          <div className={styles.contentGrid}>
-            {visibleItems.map((item) => (
-              <ContentCard
-                key={item.id}
-                item={item}
-              />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyMark}>+</span>
-            <h3 className="serif">아직 보유한 콘텐츠가 없어요</h3>
-            <p>관심 있는 클래스를 둘러보고 나에게 맞는 강의를 시작해 보세요.</p>
-            <button type="button" onClick={() => router.push("/courses")}>
-              강의 둘러보기
-            </button>
-          </div>
         ) : (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyMark}>✓</span>
-            <h3 className="serif">아직 완료한 콘텐츠가 없어요</h3>
-            <p>조금씩 이어가다 보면 이곳에 완주한 클래스가 차곡차곡 모여요.</p>
-            <button type="button" onClick={() => setFilter("all")}>
-              전체 콘텐츠 보기
-            </button>
-          </div>
+          <>
+            {courseCatalogLoadError && (
+              <div className={styles.emptyState} role="alert">
+                <span className={styles.emptyMark}>!</span>
+                <h3 className="serif">강의 정보를 불러오지 못했어요</h3>
+                <p>{courseCatalogLoadError} 잠시 후 다시 시도해 주세요.</p>
+                <button type="button" onClick={() => router.refresh()}>
+                  다시 불러오기
+                </button>
+              </div>
+            )}
+
+            {visibleItems.length > 0 ? (
+              <div className={styles.contentGrid}>
+                {visibleItems.map((item) => (
+                  <ContentCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : courseCatalogLoadError ? null : items.length === 0 ? (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyMark}>+</span>
+                <h3 className="serif">아직 보유한 콘텐츠가 없어요</h3>
+                <p>관심 있는 클래스를 둘러보고 나에게 맞는 강의를 시작해 보세요.</p>
+                <button type="button" onClick={() => router.push("/courses")}>
+                  강의 둘러보기
+                </button>
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyMark}>✓</span>
+                <h3 className="serif">아직 완료한 콘텐츠가 없어요</h3>
+                <p>조금씩 이어가다 보면 이곳에 완주한 클래스가 차곡차곡 모여요.</p>
+                <button type="button" onClick={() => setFilter("all")}>
+                  전체 콘텐츠 보기
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </>

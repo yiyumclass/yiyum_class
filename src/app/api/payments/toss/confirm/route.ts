@@ -29,6 +29,7 @@ type OrderRow = {
   source: "free_checkout" | "payment" | "admin_grant";
   status: "pending" | "paid" | "canceled" | "refunded" | "failed";
   payment_key: string | null;
+  approved_at: string | null;
   refund_policy_version: string | null;
   refund_policy_agreed_at: string | null;
 };
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
   const { data, error } = await admin
     .from("orders")
     .select(
-      "id, order_uid, product_id, amount, source, status, payment_key, refund_policy_version, refund_policy_agreed_at"
+      "id, order_uid, product_id, amount, source, status, payment_key, approved_at, refund_policy_version, refund_policy_agreed_at"
     )
     .eq("order_uid", input.orderId)
     .eq("user_id", identity.userId)
@@ -96,7 +97,40 @@ export async function POST(request: Request) {
     if (data.payment_key !== input.paymentKey) {
       return json({ ok: false, message: "이미 다른 결제로 완료된 주문입니다." }, 409);
     }
-    return json({ ok: true, alreadyProcessed: true }, 200);
+
+    const { data: completed, error: completionError } = await completePaymentOrder(
+      admin,
+      identity.userId,
+      input,
+      data.approved_at
+    );
+    if (completionError) {
+      console.error(
+        "Failed to repair entitlement for an already paid Toss order:",
+        completionError.code
+      );
+      return json(
+        {
+          ok: false,
+          retryable: true,
+          message: "결제는 완료됐지만 이용권을 확인 중입니다. 잠시 후 다시 확인해 주세요.",
+        },
+        500
+      );
+    }
+
+    const completedRow = readCompletedPaymentRow(completed);
+    revalidateCompletedPayment(completedRow);
+    return json(
+      {
+        ok: true,
+        alreadyProcessed: true,
+        productSlug: completedRow?.product_slug ?? null,
+        productType: completedRow?.product_type ?? null,
+        expiresAt: completedRow?.expires_at ?? null,
+      },
+      200
+    );
   }
   if (data.status !== "pending") {
     return json({ ok: false, message: "더 이상 승인할 수 없는 주문입니다." }, 409);
@@ -198,15 +232,11 @@ export async function POST(request: Request) {
     console.error("Failed to persist approved Toss payment for recovery:", recoveryRecordError.code);
   }
 
-  const { data: completed, error: completionError } = await admin.rpc(
-    "complete_toss_payment_server",
-    {
-      target_user_id: identity.userId,
-      target_order_uid: input.orderId,
-      target_payment_key: input.paymentKey,
-      target_amount: input.amount,
-      target_approved_at: tossPayment.approvedAt,
-    }
+  const { data: completed, error: completionError } = await completePaymentOrder(
+    admin,
+    identity.userId,
+    input,
+    tossPayment.approvedAt
   );
 
   if (completionError) {
@@ -221,13 +251,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const completedRow = (Array.isArray(completed) ? completed[0] : null) as
-    | CompletedPaymentRow
-    | null;
-  revalidatePath("/my");
-  if (completedRow?.product_slug) {
-    revalidatePath(`/learn/${completedRow.product_slug}`);
-  }
+  const completedRow = readCompletedPaymentRow(completed);
+  revalidateCompletedPayment(completedRow);
 
   return json(
     {
@@ -237,6 +262,32 @@ export async function POST(request: Request) {
     },
     200
   );
+}
+
+function completePaymentOrder(
+  admin: ReturnType<typeof getAdminClient>,
+  userId: string,
+  input: ConfirmRequest,
+  approvedAt: string | null
+) {
+  return admin.rpc("complete_toss_payment_server", {
+    target_user_id: userId,
+    target_order_uid: input.orderId,
+    target_payment_key: input.paymentKey,
+    target_amount: input.amount,
+    target_approved_at: approvedAt,
+  });
+}
+
+function readCompletedPaymentRow(completed: unknown) {
+  return (Array.isArray(completed) ? completed[0] : null) as CompletedPaymentRow | null;
+}
+
+function revalidateCompletedPayment(completed: CompletedPaymentRow | null) {
+  revalidatePath("/my");
+  if (completed?.product_slug) {
+    revalidatePath(`/learn/${completed.product_slug}`);
+  }
 }
 
 async function readConfirmRequest(request: Request): Promise<ConfirmRequest | null> {

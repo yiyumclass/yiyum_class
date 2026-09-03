@@ -40,7 +40,11 @@ export default async function AdminDashboardPage() {
 
   const paymentMode = getPaymentMode();
   const revenueNote =
-    paymentMode === "toss_test" ? "테스트 승인액입니다" : "결제 완료 기준입니다";
+    paymentMode === "toss_test"
+      ? "테스트 승인액입니다"
+      : paymentMode === "invalid"
+        ? "결제 모드 설정을 확인해야 합니다"
+        : "결제 완료 기준입니다";
   const money = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 
   // 지표별로 출처가 다르므로, 실패한 쪽만 "—"로 두고 나머지는 그대로 보여준다.

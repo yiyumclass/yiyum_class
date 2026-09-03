@@ -17,6 +17,20 @@ const migration = readFileSync(
   ),
   "utf8"
 );
+const retiredConflictingMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260817120000_create_account_withdrawal_flow.sql",
+    import.meta.url
+  ),
+  "utf8"
+);
+const statusReferenceFixMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260902100000_fix_account_withdrawal_status_reference.sql",
+    import.meta.url
+  ),
+  "utf8"
+);
 const actionSource = readFileSync(
   new URL("../src/app/account/settings/actions.ts", import.meta.url),
   "utf8"
@@ -31,6 +45,24 @@ test("회원탈퇴 확인 문구는 공백을 제외하고 정확히 일치해�
   assert.equal(isValidWithdrawalConfirmation("회원탈퇴"), true);
   assert.equal(isValidWithdrawalConfirmation(" 회원탈퇴 "), true);
   assert.equal(isValidWithdrawalConfirmation("탈퇴"), false);
+});
+
+test("충돌하던 과거 탈퇴 설계는 무동작이고 현재 tombstone 설계만 테이블을 만든다", () => {
+  assert.doesNotMatch(
+    retiredConflictingMigration,
+    /create\s+table\s+(?:if\s+not\s+exists\s+)?public\.account_withdrawals/i
+  );
+  assert.match(migration, /create table public\.account_withdrawals/i);
+  assert.match(retiredConflictingMigration, /no-op migration/i);
+});
+
+test("탈퇴 시작 RPC는 주문 상태 컬럼을 명시적으로 한정한다", () => {
+  assert.match(statusReferenceFixMigration, /update public\.orders as abandoned_order/i);
+  assert.match(
+    statusReferenceFixMigration,
+    /abandoned_order\.status = 'pending'/i
+  );
+  assert.doesNotMatch(statusReferenceFixMigration, /\band status = 'pending'/i);
 });
 
 test("민감한 탈퇴 작업은 최근 로그인 세션만 허용한다", () => {

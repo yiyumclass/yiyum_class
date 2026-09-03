@@ -53,7 +53,7 @@ type AdminProductManagerProps = {
   detailItems: Record<string, AdminProductDetailItem[]>;
   databaseReady: boolean;
   sourceMessage: string | null;
-  paymentMode: "free" | "toss_test" | "toss_live";
+  paymentMode: "free" | "toss_test" | "toss_live" | "invalid";
 };
 
 type TypeFilter = "all" | AdminProductType;
@@ -278,6 +278,15 @@ export default function AdminProductManager({
           <div>
             <strong>Toss Payments 테스트 결제 모드입니다.</strong>
             <p>입력한 판매가가 실제 주문 금액으로 사용되지만 테스트 카드에는 청구되지 않습니다.</p>
+          </div>
+        </div>
+      )}
+      {paymentMode === "invalid" && (
+        <div className={styles.setupNotice} role="alert">
+          <DatabaseIcon />
+          <div>
+            <strong>결제 모드 설정을 확인해야 합니다.</strong>
+            <p>PAYMENT_MODE가 없거나 허용되지 않은 값이라 유료 결제가 비활성화되었습니다.</p>
           </div>
         </div>
       )}

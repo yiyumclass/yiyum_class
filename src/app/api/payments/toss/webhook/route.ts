@@ -113,21 +113,25 @@ async function handleApprovedPayment(
   order: WebhookOrderRow,
   payment: TossPayment
 ) {
-  if (order.status === "paid" && order.payment_key === payment.paymentKey) {
-    return Response.json({ ok: true }, { status: 200 });
-  }
-  if (order.status !== "pending" && order.status !== "failed") {
+  const alreadyProcessed =
+    order.status === "paid" && order.payment_key === payment.paymentKey;
+  if (!alreadyProcessed && order.status !== "pending" && order.status !== "failed") {
     return Response.json({ ok: false }, { status: 409 });
   }
-  if (!order.refund_policy_version || !order.refund_policy_agreed_at) {
+  if (
+    !alreadyProcessed &&
+    (!order.refund_policy_version || !order.refund_policy_agreed_at)
+  ) {
     return Response.json({ ok: false }, { status: 409 });
   }
 
-  await admin
-    .from("orders")
-    .update({ payment_key: payment.paymentKey, approved_at: payment.approvedAt })
-    .eq("id", order.id)
-    .in("status", ["pending", "failed"]);
+  if (!alreadyProcessed) {
+    await admin
+      .from("orders")
+      .update({ payment_key: payment.paymentKey, approved_at: payment.approvedAt })
+      .eq("id", order.id)
+      .in("status", ["pending", "failed"]);
+  }
 
   const { error } = await admin.rpc("complete_toss_payment_server", {
     target_user_id: order.user_id,

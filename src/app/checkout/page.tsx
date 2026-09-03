@@ -121,7 +121,9 @@ export default async function CheckoutPage({
         <div style={{ fontSize: 13, color: "#7C7367", marginBottom: 32 }}>
           {isFreeProduct
             ? "무료 콘텐츠"
-            : paymentMode === "free"
+            : paymentMode === "invalid"
+              ? "결제 모드 설정 오류"
+              : paymentMode === "free"
               ? "결제 준비 중"
               : paymentMode === "toss_test"
               ? "Toss Payments 테스트 결제 · 실제 청구 없음"
@@ -216,7 +218,9 @@ export default async function CheckoutPage({
           />
         ) : (
           <p role="alert" style={{ color: "#F0A98C", fontSize: 13, lineHeight: 1.6 }}>
-            결제 설정을 확인하고 있습니다. 잠시 후 다시 시도해 주세요.
+            {paymentMode === "invalid"
+              ? "결제 모드 설정이 올바르지 않습니다. 운영자에게 문의해 주세요."
+              : "결제 설정을 확인하고 있습니다. 잠시 후 다시 시도해 주세요."}
           </p>
         )}
         <p style={{ fontSize: 12, color: "#7C7367", lineHeight: 1.7, margin: "16px 0 0" }}>
@@ -230,6 +234,8 @@ export default async function CheckoutPage({
               <br />
               {paymentMode === "toss_test"
                 ? "테스트 키 결제는 실제 카드에 청구되지 않습니다."
+                : paymentMode === "invalid"
+                  ? "결제 모드 환경변수를 확인해야 합니다."
                 : "결제 정보는 Toss Payments에서 안전하게 처리됩니다."}
             </>
           )}

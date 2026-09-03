@@ -116,6 +116,26 @@ test("결제 승인 직전에 멤버십 그룹 이용권을 다시 확인한다"
   assert.match(route, /fail_toss_payment_order/);
 });
 
+test("이미 완료된 Toss 결제도 확인 API와 웹훅에서 누락 이용권을 복구한다", () => {
+  const confirmRoute = readFileSync(
+    new URL("../src/app/api/payments/toss/confirm/route.ts", import.meta.url),
+    "utf8"
+  );
+  const webhookRoute = readFileSync(
+    new URL("../src/app/api/payments/toss/webhook/route.ts", import.meta.url),
+    "utf8"
+  );
+
+  const paidConfirmBranch = confirmRoute.slice(
+    confirmRoute.indexOf('if (data.status === "paid")'),
+    confirmRoute.indexOf('if (data.status !== "pending")')
+  );
+  assert.match(paidConfirmBranch, /completePaymentOrder\(/);
+  assert.match(paidConfirmBranch, /revalidateCompletedPayment\(/);
+  assert.match(webhookRoute, /const alreadyProcessed =[\s\S]*order\.status === "paid"/);
+  assert.match(webhookRoute, /admin\.rpc\("complete_toss_payment_server"/);
+});
+
 test("공개 강의는 하나로 보이고 가격은 수강 신청 뒤에만 노출한다", () => {
   const home = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const courseList = readFileSync(

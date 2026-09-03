@@ -33,6 +33,7 @@ import {
   calculateCourseProgressPercent,
   calculateLessonProgressPercent,
 } from "@/lib/learning/progress";
+import { resolveProgressProductSlug } from "@/lib/learning/progress-request";
 
 type FlatLesson = CourseLesson & {
   sectionId: string;
@@ -52,6 +53,7 @@ const MAX_VIDEO_RECOVERY_ATTEMPTS = 2;
 
 type ProgressSavePayload = {
   courseSlug: string;
+  productSlug: string;
   lessonId: string;
   positionSeconds: number;
   durationSeconds: number;
@@ -64,12 +66,14 @@ export default function CourseClassroom({
   displayName,
   progressPersistenceEnabled,
   isAdminPreview = false,
+  productSlug,
 }: {
   course: Course;
   initialProgress: CourseProgress;
   displayName: string;
   progressPersistenceEnabled: boolean;
   isAdminPreview?: boolean;
+  productSlug?: string;
 }) {
   const flatLessons: FlatLesson[] = course.sections.flatMap((section, sectionIndex) =>
     section.lessons.map((item, lessonIndex) => ({
@@ -264,13 +268,14 @@ export default function CourseClassroom({
 
       enqueueProgressSave({
         courseSlug: course.slug,
+        productSlug: resolveProgressProductSlug(course.slug, productSlug),
         lessonId,
         positionSeconds: safePosition,
         durationSeconds: safeDuration,
         completionAction,
       });
     },
-    [course.slug, enqueueProgressSave, progressPersistenceEnabled]
+    [course.slug, enqueueProgressSave, productSlug, progressPersistenceEnabled]
   );
 
   const persistActiveVideo = (

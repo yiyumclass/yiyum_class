@@ -25,9 +25,13 @@ export default async function LoginPage({
 }) {
   const query = await searchParams;
   const nextPath = normalizeInternalNext(readFirstParam(query.next));
-  const authError = readFirstParam(query.error) === "auth"
-    ? "카카오 로그인 연결을 완료하지 못했습니다. 다시 시도해 주세요."
-    : null;
+  const authErrorCode = readFirstParam(query.error);
+  const authError =
+    authErrorCode === "auth"
+      ? "카카오 로그인 연결을 완료하지 못했습니다. 다시 시도해 주세요."
+      : authErrorCode === "auth_unavailable"
+        ? "가입 정보를 확인하는 중 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        : null;
   const authNotice = readFirstParam(query.withdrawn) === "1"
     ? "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
     : null;

@@ -2,12 +2,12 @@ import { after, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import {
-  AUTH_CONSENT_ENFORCED_AT,
   AUTH_PRIVACY_VERSION,
   AUTH_TERMS_VERSION,
   OAUTH_CONSENT_COOKIE,
   readOAuthConsentCookieValue,
 } from "@/lib/auth/oauth-consent";
+import { resolveOAuthConsentGate } from "@/lib/auth/consent-gate";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
 import { sendSignupWelcomeMessage } from "@/lib/messaging/solapi";
 import { hasActiveAccount } from "@/lib/supabase/account-status";
@@ -44,27 +44,30 @@ export async function GET(request: Request) {
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle<{ user_id: string }>();
-      // 조회 자체가 실패한 경우(DB 일시 장애·마이그레이션 미적용 등)를 "동의 안 함"으로
-      // 취급하면 정상 회원까지 강제 로그아웃된다. 조회 실패는 기록만 하고 통과시킨다.
       if (consentLookupError) {
         console.error(
-          "Failed to look up auth consent; skipping the signup consent gate:",
+          "Failed to look up auth consent; blocking OAuth session:",
           consentLookupError.code
         );
       }
-      const requiresSignupConsent =
-        !isAdmin &&
-        !consentLookupError &&
-        new Date(user.created_at).getTime() >=
-          new Date(AUTH_CONSENT_ENFORCED_AT).getTime() &&
-        !existingConsent &&
-        !consentIntent;
       const isNewSignup =
         Boolean(consentIntent) &&
         !existingConsent &&
         isRecentlyCreated(user.created_at);
-      if (requiresSignupConsent) {
-        await supabase.auth.signOut();
+      const consentGate = resolveOAuthConsentGate({
+        isAdmin,
+        userCreatedAt: user.created_at,
+        existingConsent: Boolean(existingConsent),
+        consentIntent: Boolean(consentIntent),
+        consentLookupFailed: Boolean(consentLookupError),
+      });
+      if (consentGate === "unavailable") {
+        await supabase.auth.signOut({ scope: "local" });
+        cookieStore.delete(OAUTH_CONSENT_COOKIE);
+        return redirectToAuthUnavailable(origin, next, Boolean(consentIntent));
+      }
+      if (consentGate === "require") {
+        await supabase.auth.signOut({ scope: "local" });
         const signupUrl = new URL("/signup", origin);
         signupUrl.searchParams.set("error", "consent");
         if (next !== "/") signupUrl.searchParams.set("next", next);
@@ -80,7 +83,7 @@ export async function GET(request: Request) {
         });
         if (consentError) {
           console.error("Failed to record OAuth consent:", consentError.code);
-          await supabase.auth.signOut();
+          await supabase.auth.signOut({ scope: "local" });
           return redirectToLogin(origin, next);
         }
 
@@ -148,4 +151,13 @@ function redirectToLogin(origin: string, next: string) {
     loginUrl.searchParams.set("next", next);
   }
   return NextResponse.redirect(loginUrl);
+}
+
+function redirectToAuthUnavailable(origin: string, next: string, isSignup: boolean) {
+  const authUrl = new URL(isSignup ? "/signup" : "/login", origin);
+  authUrl.searchParams.set("error", "auth_unavailable");
+  if (next !== "/") {
+    authUrl.searchParams.set("next", next);
+  }
+  return NextResponse.redirect(authUrl);
 }

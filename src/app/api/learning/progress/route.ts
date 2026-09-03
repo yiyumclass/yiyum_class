@@ -3,7 +3,7 @@ import { isSameOriginRequest } from "@/lib/http/origin";
 import { readLimitedJson } from "@/lib/http/request-body";
 import { hasActiveCourseAccess } from "@/lib/store/entitlements";
 import {
-  loadMyCourseByContentSlug,
+  loadMyCourseByContentSlugResult,
   loadPublicCourseBySlug,
 } from "@/lib/store/public-course-catalog";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -13,6 +13,7 @@ type CompletionAction = "preserve" | "complete" | "incomplete";
 
 type ProgressPayload = {
   courseSlug?: unknown;
+  productSlug?: unknown;
   lessonId?: unknown;
   positionSeconds?: unknown;
   durationSeconds?: unknown;
@@ -59,14 +60,28 @@ export async function POST(request: Request) {
     return json({ error: "수강 신청이 필요한 강의입니다." }, 403);
   }
 
-  const catalogItem =
-    !isAdmin && hasCourseAccess
-      ? await loadMyCourseByContentSlug(
-          supabase,
-          payload.courseSlug,
-          payload.lessonId
-        )
-      : await loadPublicCourseBySlug(payload.courseSlug);
+  const catalogResult = !isAdmin
+    ? await loadMyCourseByContentSlugResult(
+        supabase,
+        payload.courseSlug,
+        payload.lessonId
+      )
+    : {
+        available: true as const,
+        course: await loadPublicCourseBySlug(payload.courseSlug),
+      };
+
+  if (!catalogResult.available) {
+    return json(
+      {
+        error: catalogResult.errorMessage,
+        code: "CATALOG_UNAVAILABLE",
+      },
+      503
+    );
+  }
+
+  const catalogItem = catalogResult.course;
 
   const course = catalogItem?.contentReady
     ? catalogItem.classroomCourse ?? undefined
