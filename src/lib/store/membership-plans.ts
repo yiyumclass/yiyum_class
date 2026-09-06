@@ -1,4 +1,4 @@
-export type EnrollmentOptionDefinition = {
+export type MembershipPlanDefinition = {
   slug: string;
   eyebrow: string;
   order: number;
@@ -51,24 +51,21 @@ export const membershipPlanDefinitions = [
     recommended: false,
     fallbackPriceKrw: 2_990_000,
   },
-] as const satisfies readonly EnrollmentOptionDefinition[];
+] as const satisfies readonly MembershipPlanDefinition[];
 
 export const phonePassDefinition = {
   slug: "yiyum-phone-pass",
   eyebrow: "1:1 PHONE",
-  order: 4,
-  icon: "📞",
   title: "이윰 1:1 전화권",
-  description: "10분씩 총 6회, 계정·콘텐츠·수익화 고민을 직접 상담하는 과정",
-  benefits: ["이윰 1:1 전화 10분 피드백", "계정·콘텐츠·수익화 고민 상담"],
-  recommended: false,
+  description: "이미 수강 중이고, 내 계정에 맞춘 짧은 상담이 필요할 때 이용해요.",
+  benefits: [
+    "계정 인사이트 분석",
+    "콘텐츠·알고리즘 점검",
+    "수익화 고민 상담",
+    "10분 × 6회 제공",
+  ],
   fallbackPriceKrw: 330_000,
-} as const satisfies EnrollmentOptionDefinition;
-
-export const enrollmentOptionDefinitions = [
-  ...membershipPlanDefinitions,
-  phonePassDefinition,
-] as const satisfies readonly EnrollmentOptionDefinition[];
+} as const;
 
 export const membershipEconomicOutcomeNotice =
   "본 과정은 SNS 계정 운영과 브랜드 협업 준비 방법을 다루는 교육 콘텐츠입니다. 수강만으로 협찬·광고·원고료 등 특정 경제적 성과를 보장하지 않으며, 결과는 계정 상태·활동 내용·시장 상황에 따라 달라질 수 있습니다.";

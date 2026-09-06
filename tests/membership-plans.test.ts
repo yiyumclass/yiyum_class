@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
-  enrollmentOptionDefinitions,
   getMembershipAccessLabel,
   getHighestMembershipPlanSlug,
   isMembershipPlanSlug,
@@ -36,28 +35,27 @@ test("상위 클래스는 하위 클래스의 혜택을 모두 포함한다", ()
   assert.match(ultra.benefits.join(" "), /10분 사용권 × 6회 제공/);
 });
 
-test("선택창은 요청한 네 가지 상품 문구를 순서대로 제공한다", () => {
+test("선택창은 요청한 세 클래스 문구를 순서대로 제공한다", () => {
   assert.deepEqual(
-    enrollmentOptionDefinitions.map(({ order, icon, title }) => ({ order, icon, title })),
+    membershipPlanDefinitions.map(({ order, icon, title }) => ({ order, icon, title })),
     [
       { order: 1, icon: "🎬", title: "베이직 클래스" },
       { order: 2, icon: "🔥", title: "부스터 클래스" },
       { order: 3, icon: "👑", title: "프리미엄 클래스" },
-      { order: 4, icon: "📞", title: "이윰 1:1 전화권" },
     ]
   );
   assert.equal(
-    enrollmentOptionDefinitions[0].description,
+    membershipPlanDefinitions[0].description,
     "혼자, 내 속도대로 배우는 기본 과정"
   );
-  assert.match(enrollmentOptionDefinitions[1].description, /과제\+피드백/);
-  assert.match(enrollmentOptionDefinitions[2].description, /가장 밀착된 피드백/);
+  assert.match(membershipPlanDefinitions[1].description, /과제\+피드백/);
+  assert.match(membershipPlanDefinitions[2].description, /가장 밀착된 피드백/);
 });
 
 test("별도 전화권은 33만원 총액과 6회 제공 문구를 유지한다", () => {
   assert.equal(phonePassDefinition.slug, "yiyum-phone-pass");
   assert.equal(phonePassDefinition.fallbackPriceKrw, 330_000);
-  assert.match(phonePassDefinition.description, /10분씩 총 6회/);
+  assert.match(phonePassDefinition.benefits.join(" "), /10분 × 6회/);
   assert.equal(getMembershipAccessLabel(phonePassDefinition.slug), "10분 × 6회 이용");
 });
 

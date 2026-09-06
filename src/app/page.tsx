@@ -9,10 +9,8 @@ import CourseEnrollmentPicker, {
 import {
   membershipEconomicOutcomeNotice,
   membershipPlanDefinitions,
-  phonePassDefinition,
 } from "@/lib/store/membership-plans";
 import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
-import { loadPublicProductBySlug } from "@/lib/store/public-products";
 
 // 상품 가격과 판매 상태는 어드민에서 바뀌므로 홈을 요청할 때 최신 DB 값을 읽는다.
 export const dynamic = "force-dynamic";
@@ -30,32 +28,17 @@ const landingLessonTitleOverrides: Record<string, string> = {
 };
 
 export default async function Home() {
-  const [courseCatalog, phonePassProduct] = await Promise.all([
-    loadPublicCourseCatalog(),
-    loadPublicProductBySlug(phonePassDefinition.slug),
-  ]);
+  const courseCatalog = await loadPublicCourseCatalog();
   const featuredItem = courseCatalog.find((item) => item.slug === featuredCourseSlug) ?? null;
   const pricingSlugs = new Set<string>(membershipPlanDefinitions.map((plan) => plan.slug));
-  const enrollmentProducts = [
-    ...courseCatalog
-      .filter((item) => item.source === "database" && pricingSlugs.has(item.slug))
-      .map((item) => ({
-        slug: item.slug,
-        priceKrw: item.priceKrw,
-        soldOut: item.soldOut,
-        checkoutHref: item.checkoutHref,
-      })),
-    ...(phonePassProduct
-      ? [
-          {
-            slug: phonePassProduct.slug,
-            priceKrw: phonePassProduct.priceKrw,
-            soldOut: phonePassProduct.soldOut,
-            checkoutHref: `/checkout?product=${encodeURIComponent(phonePassProduct.slug)}`,
-          },
-        ]
-      : []),
-  ];
+  const classProducts = courseCatalog
+    .filter((item) => item.source === "database" && pricingSlugs.has(item.slug))
+    .map((item) => ({
+      slug: item.slug,
+      priceKrw: item.priceKrw,
+      soldOut: item.soldOut,
+      checkoutHref: item.checkoutHref,
+    }));
   const sections = featuredItem?.course.sections ?? [];
   const lessonCount = sections.reduce(
     (total, section) => total + section.lessons.length,
@@ -65,7 +48,7 @@ export default async function Home() {
 
   return (
     <CourseEnrollmentProvider
-      products={enrollmentProducts}
+      products={classProducts}
       complianceNotice={membershipEconomicOutcomeNotice}
     >
       <span id="top" />

@@ -14,7 +14,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { enrollmentOptionDefinitions } from "@/lib/store/membership-plans";
+import { membershipPlanDefinitions } from "@/lib/store/membership-plans";
 import {
   calculateMonthlyInstallmentKrw,
   formatKrw,
@@ -149,7 +149,7 @@ export function CourseEnrollmentProvider({
         </header>
 
         <div className={styles.planGrid}>
-          {enrollmentOptionDefinitions.map((plan) => {
+          {membershipPlanDefinitions.map((plan) => {
             const product = productBySlug.get(plan.slug);
             const priceKrw = product?.priceKrw ?? plan.fallbackPriceKrw;
             const monthlyKrw = calculateMonthlyInstallmentKrw(
