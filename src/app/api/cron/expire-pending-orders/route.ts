@@ -19,19 +19,20 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return Response.json({ ok: false }, { status: 401 });
   }
-  if (!isTossPaymentConfigured()) {
-    return Response.json({ ok: false, reason: "payment_not_configured" }, { status: 503 });
-  }
-
   const admin = getAdminClient();
-  const { data, error } = await admin.rpc("expire_stale_toss_payment_orders", {
-    target_older_than_minutes: STALE_AFTER_MINUTES,
-  });
+  const [payment, accessLogs] = await Promise.all([
+    isTossPaymentConfigured()
+      ? admin.rpc("expire_stale_toss_payment_orders", { target_older_than_minutes: STALE_AFTER_MINUTES })
+      : Promise.resolve({ data: 0, error: null }),
+    admin.rpc("purge_expired_security_access_logs_server"),
+  ]);
+  const { data, error } = payment;
 
   if (error) {
     console.error("Failed to expire stale pending orders:", error.code);
-    return Response.json({ ok: false }, { status: 500 });
   }
+  if (accessLogs.error) console.error("Failed to purge security access logs:", accessLogs.error.code);
+  const accessLogsPurged = typeof accessLogs.data === "number" ? accessLogs.data : 0;
 
   const expired = typeof data === "number" ? data : 0;
   if (expired > 0) {
@@ -40,7 +41,8 @@ export async function GET(request: Request) {
     revalidatePath("/my/orders");
   }
 
-  return Response.json({ ok: true, expired }, { status: 200 });
+  const ok = !error && !accessLogs.error;
+  return Response.json({ ok, expired, securityAccessLogs: { purged: accessLogsPurged } }, { status: ok ? 200 : 500 });
 }
 
 /**

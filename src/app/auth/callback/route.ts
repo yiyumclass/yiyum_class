@@ -12,6 +12,7 @@ import { normalizeInternalNext } from "@/lib/auth/redirects";
 import { sendSignupWelcomeMessage } from "@/lib/messaging/solapi";
 import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/server";
+import { recordSecurityAccessEvent } from "@/lib/security/access-log";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,13 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = normalizeInternalNext(searchParams.get("next"));
   const cookieStore = await cookies();
+  const hasPkceVerifier = cookieStore.getAll()
+    .some(({ name }) => name.endsWith("-auth-token-code-verifier"));
+  const logAccess = (outcome: "success" | "failure" | "blocked", subject: string | null, failureCode?: string) => {
+    after(async () => {
+      await recordSecurityAccessEvent({ provider: "kakao", outcome, subject, failureCode, headers: request.headers });
+    });
+  };
 
   if (code) {
     const supabase = await createClient();
@@ -31,8 +39,12 @@ export async function GET(request: Request) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return redirectToLogin(origin, next);
+      if (!user) {
+        logAccess("failure", null, "session_user_missing");
+        return redirectToLogin(origin, next);
+      }
       if (!(await hasActiveAccount(supabase))) {
+        logAccess("blocked", user.id, "account_inactive");
         return NextResponse.redirect(new URL("/account/settings", origin));
       }
 
@@ -63,11 +75,13 @@ export async function GET(request: Request) {
         consentLookupFailed: Boolean(consentLookupError),
       });
       if (consentGate === "unavailable") {
+        logAccess("blocked", user.id, "consent_lookup_failed");
         await supabase.auth.signOut({ scope: "local" });
         cookieStore.delete(OAUTH_CONSENT_COOKIE);
         return redirectToAuthUnavailable(origin, next, Boolean(consentIntent));
       }
       if (consentGate === "require") {
+        logAccess("blocked", user.id, "signup_consent_required");
         await supabase.auth.signOut({ scope: "local" });
         cookieStore.delete(OAUTH_CONSENT_COOKIE);
         const loginUrl = new URL("/login", origin);
@@ -84,6 +98,7 @@ export async function GET(request: Request) {
           marketing_opt_in: consentIntent.marketingOptIn,
         });
         if (consentError) {
+          logAccess("blocked", user.id, "consent_record_failed");
           console.error("Failed to record OAuth consent:", consentError.code);
           await supabase.auth.signOut({ scope: "local" });
           return redirectToLogin(origin, next);
@@ -125,8 +140,10 @@ export async function GET(request: Request) {
           }
         });
       }
+      logAccess("success", user.id);
       return NextResponse.redirect(new URL(isAdmin ? "/admin" : next, origin));
     }
+    if (hasPkceVerifier) logAccess("failure", null, "oauth_exchange_failed");
   }
 
   // 실패 시 로그인 페이지로 (에러 표시)

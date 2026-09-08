@@ -32,13 +32,14 @@ export function createOAuthConsentCookieValue(marketingOptIn: boolean) {
 export function readOAuthConsentCookieValue(value: string | undefined) {
   if (!value) return null;
 
-  const [payload, signature] = value.split(".");
-  if (!payload || !signature || !verify(payload, signature)) return null;
+  const [payload, signature, extra] = value.split(".");
+  if (!payload || !signature || extra !== undefined || !verify(payload, signature)) return null;
 
   try {
     const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Partial<OAuthConsentIntent>;
     const issuedAt = typeof parsed.issuedAt === "number" ? parsed.issuedAt : 0;
-    if (Math.floor(Date.now() / 1000) - issuedAt > INTENT_TTL_SECONDS) return null;
+    const age = Math.floor(Date.now() / 1000) - issuedAt;
+    if (!Number.isInteger(issuedAt) || age < 0 || age > INTENT_TTL_SECONDS) return null;
     if (
       parsed.age14Confirmed !== true ||
       parsed.termsAgreed !== true ||

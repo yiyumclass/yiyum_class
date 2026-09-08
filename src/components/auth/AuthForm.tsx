@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { hasActiveAdminAccess } from "@/lib/admin/access";
-import { hasActiveAccount } from "@/lib/supabase/account-status";
-import { createClient } from "@/lib/supabase/client";
+import { loginWithEmailAction } from "@/app/login/actions";
 import ConsentBlock from "./ConsentBlock";
 import styles from "./AuthForm.module.css";
 
@@ -25,72 +22,19 @@ export default function AuthForm({
   authError: string | null;
   authNotice: string | null;
 }) {
-  const router = useRouter();
   const isSignup = mode === "signup";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [consent, setConsent] = useState({ valid: false, marketing: false });
-  const [loading, setLoading] = useState(false);
+  const [kakaoLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(authError);
-
-  // 이메일 로그인 폼 검증. 가입은 카카오 전용이라 이메일 검증은 로그인만 대상으로 한다.
-  const validate = () => {
-    if (!email.includes("@") || email.length < 5)
-      return "이메일 주소를 확인해 주세요.";
-    if (password.length < 6) return "비밀번호는 6자 이상이어야 해요.";
-    return null;
-  };
-
-  const translate = (message: string) => {
-    const m = message.toLowerCase();
-    if (m.includes("invalid login credentials"))
-      return "이메일 또는 비밀번호가 올바르지 않습니다.";
-    if (m.includes("already registered") || m.includes("already exists"))
-      return "이미 가입된 이메일이에요. 로그인해 주세요.";
-    if (m.includes("email not confirmed"))
-      return "이메일 인증이 필요해요. 받은 메일의 링크를 눌러 주세요.";
-    if (m.includes("password")) return "비밀번호는 6자 이상이어야 해요.";
-    return message;
-  };
-
-  // 이메일+비밀번호 로그인. 가입은 카카오 전용이라 이 경로는 로그인 폼에서만 호출된다.
-  const submitEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const v = validate();
-    if (v) {
-      setError(v);
-      return;
-    }
-    setLoading(true);
-    const supabase = createClient();
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      setError(translate(error.message));
-      setLoading(false);
-      return;
-    }
-    if (!data.user) {
-      setError("로그인 계정을 확인하지 못했습니다. 다시 시도해 주세요.");
-      setLoading(false);
-      return;
-    }
-    if (!(await hasActiveAccount(supabase))) {
-      router.push("/account/settings");
-      router.refresh();
-      return;
-    }
-    const isAdmin = data.user
-      ? await hasActiveAdminAccess(supabase, data.user.id)
-      : false;
-    router.push(isAdmin ? "/admin" : nextPath);
-    router.refresh();
-  };
+  const [emailState, emailLoginAction, emailPending] = useActionState(
+    loginWithEmailAction,
+    { message: null }
+  );
+  const loading = kakaoLoading || emailPending;
+  const visibleError = error ?? emailState.message;
 
   const signInWithKakao = async (switchAccount = false) => {
     setError(null);
@@ -160,12 +104,16 @@ export default function AuthForm({
 
         {/* 가입은 카카오 전용 → 이메일 폼은 로그인 모드에서만 렌더한다. */}
         {!isSignup && (
-          <form onSubmit={submitEmail} className={styles.emailForm}>
+          <form action={emailLoginAction} onSubmit={() => setError(null)} className={styles.emailForm}>
+            <input type="hidden" name="nextPath" value={nextPath} />
             <label className={styles.field}>
               <span className={styles.fieldLabel}>이메일</span>
               <input
                 className={styles.input}
                 type="email"
+                name="email"
+                required
+                maxLength={254}
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -179,6 +127,10 @@ export default function AuthForm({
               <input
                 className={styles.input}
                 type="password"
+                name="password"
+                required
+                minLength={6}
+                maxLength={512}
                 placeholder="비밀번호를 입력해 주세요"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -215,12 +167,12 @@ export default function AuthForm({
           </div>
         )}
 
-        {error && (
+        {visibleError && (
           <p role="alert" style={{ color: "#C0392B", fontSize: 13, margin: "16px 0 0" }}>
-            {error}
+            {visibleError}
           </p>
         )}
-        {authNotice && !error && (
+        {authNotice && !visibleError && (
           <p role="status" style={{ color: "#66725A", fontSize: 13, margin: "16px 0 0" }}>
             {authNotice}
           </p>

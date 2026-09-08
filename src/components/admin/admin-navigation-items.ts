@@ -13,6 +13,7 @@ export const adminNavigation = [
   { label: "회원 · 수강권", icon: "member", href: "/admin/members", ownerOnly: false },
   { label: "학습 현황", icon: "progress", href: "/admin/progress", ownerOnly: false },
   { label: "운영 기록", icon: "audit", href: "/admin/audit", ownerOnly: true },
+  { label: "접속 · 탈퇴 기록", icon: "audit", href: "/admin/privacy", ownerOnly: true },
   { label: "운영자 권한", icon: "settings", href: "/admin/settings", ownerOnly: true },
 ] as const;
 
