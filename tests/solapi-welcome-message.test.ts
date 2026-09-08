@@ -10,6 +10,10 @@ const callbackRoute = readFileSync(
   new URL("../src/app/auth/callback/route.ts", import.meta.url),
   "utf8"
 );
+const kakaoStartRoute = readFileSync(
+  new URL("../src/app/auth/kakao/start/route.ts", import.meta.url),
+  "utf8"
+);
 const solapiSender = readFileSync(
   new URL("../src/lib/messaging/solapi.ts", import.meta.url),
   "utf8"
@@ -37,6 +41,10 @@ test("Auth user phone takes precedence and Kakao metadata remains supported", ()
     }),
     "01033334444"
   );
+});
+
+test("Kakao OAuth requests the approved phone number scope", () => {
+  assert.match(kakaoStartRoute, /scopes:\s*"phone_number"/);
 });
 
 test("welcome Alimtalk is server-only, has no SMS fallback, and cannot block signup", () => {

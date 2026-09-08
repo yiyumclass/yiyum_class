@@ -75,7 +75,10 @@ async function createOAuthUrl(redirectTo: string) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "kakao",
-    options: { redirectTo },
+    options: {
+      redirectTo,
+      scopes: "phone_number",
+    },
   });
 
   if (error || !data.url) return null;
