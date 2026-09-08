@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const oauthUrl = await createOAuthUrl(redirectTo.toString());
+  const oauthUrl = await createOAuthUrl(redirectTo.toString(), mode);
   if (!oauthUrl) {
     return json({ ok: false, message: "카카오 로그인을 시작하지 못했습니다." }, 503);
   }
@@ -71,13 +71,18 @@ export async function POST(request: Request) {
   return response;
 }
 
-async function createOAuthUrl(redirectTo: string) {
+async function createOAuthUrl(
+  redirectTo: string,
+  mode: "login" | "signup"
+) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "kakao",
     options: {
       redirectTo,
       scopes: "phone_number",
+      // 카카오 세션이 남아 있어도 로그인에서는 계정 인증 화면을 거친다.
+      queryParams: mode === "login" ? { prompt: "login" } : undefined,
     },
   });
 

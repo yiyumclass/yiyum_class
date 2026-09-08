@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 type AuthSearchParams = Promise<{
   next?: string | string[];
   error?: string | string[];
+  notice?: string | string[];
 }>;
 
 export default async function SignupPage({
@@ -25,12 +26,15 @@ export default async function SignupPage({
   const query = await searchParams;
   const nextPath = normalizeInternalNext(readFirstParam(query.next));
   const authErrorCode = readFirstParam(query.error);
+  const authNoticeCode = readFirstParam(query.notice);
   const authError =
-    authErrorCode === "consent"
-      ? "회원가입을 계속하려면 필수 항목에 동의해 주세요."
-      : authErrorCode === "auth_unavailable"
-        ? "가입 정보를 확인하는 중 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
-        : null;
+    authErrorCode === "auth_unavailable"
+      ? "가입 정보를 확인하는 중 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해 주세요."
+      : null;
+  const authNotice =
+    authNoticeCode === "signup_required" || authErrorCode === "consent"
+      ? "카카오 회원가입이 아직 완료되지 않았어요. 필수 항목에 동의한 뒤 카카오로 시작해 주세요."
+      : null;
   const supabase = await createClient();
   const {
     data: { user },
@@ -48,7 +52,7 @@ export default async function SignupPage({
         mode="signup"
         nextPath={nextPath}
         authError={authError}
-        authNotice={null}
+        authNotice={authNotice}
       />
       <SiteFooter variant="compact" />
     </>

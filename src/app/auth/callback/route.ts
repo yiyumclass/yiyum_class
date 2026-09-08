@@ -70,7 +70,7 @@ export async function GET(request: Request) {
       if (consentGate === "require") {
         await supabase.auth.signOut({ scope: "local" });
         const signupUrl = new URL("/signup", origin);
-        signupUrl.searchParams.set("error", "consent");
+        signupUrl.searchParams.set("notice", "signup_required");
         if (next !== "/") signupUrl.searchParams.set("next", next);
         return NextResponse.redirect(signupUrl);
       }
