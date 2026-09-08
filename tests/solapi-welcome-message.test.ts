@@ -6,6 +6,7 @@ import {
   readAuthUserMobileNumber,
   readKakaoAccountMobileNumber,
 } from "../src/lib/messaging/phone.ts";
+import { readAuthUserDisplayName } from "../src/lib/messaging/profile.ts";
 
 const callbackRoute = readFileSync(
   new URL("../src/app/auth/callback/route.ts", import.meta.url),
@@ -64,6 +65,20 @@ test("Kakao user info phone number is normalized for SOLAPI", () => {
   assert.equal(readKakaoAccountMobileNumber(null), null);
 });
 
+test("Kakao display name is used and missing names fall back to 회원님", () => {
+  assert.equal(
+    readAuthUserDisplayName({ user_metadata: { full_name: "  이윰  " } }),
+    "이윰"
+  );
+  assert.equal(
+    readAuthUserDisplayName({
+      user_metadata: { full_name: "", preferred_username: "이윰 클래스" },
+    }),
+    "이윰 클래스"
+  );
+  assert.equal(readAuthUserDisplayName({ user_metadata: null }), "회원");
+});
+
 test("Kakao OAuth requests the approved phone number scope", () => {
   assert.match(kakaoStartRoute, /scopes:\s*"phone_number"/);
 });
@@ -72,6 +87,7 @@ test("welcome Alimtalk is server-only, has no SMS fallback, and cannot block sig
   assert.match(solapiSender, /import "server-only"/);
   assert.match(solapiSender, /SOLAPI_API_SECRET/);
   assert.match(solapiSender, /disableSms: true/);
+  assert.match(solapiSender, /"#\{이름\}": displayName/);
   assert.doesNotMatch(solapiSender, /NEXT_PUBLIC_SOLAPI/);
   assert.match(solapiSender, /fetchKakaoMobileNumber/);
 

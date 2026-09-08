@@ -3,6 +3,7 @@ import "server-only";
 import { SolapiMessageService } from "solapi";
 import { fetchKakaoMobileNumber } from "@/lib/auth/kakao-phone";
 import { readAuthUserMobileNumber } from "@/lib/messaging/phone";
+import { readAuthUserDisplayName } from "@/lib/messaging/profile";
 
 type AuthUserContact = Parameters<typeof readAuthUserMobileNumber>[0];
 
@@ -49,13 +50,16 @@ export async function sendSignupWelcomeMessage(
     return { status: "skipped", reason: "not_configured" };
   }
 
+  const displayName = readAuthUserDisplayName(user);
   const service = new SolapiMessageService(config.apiKey, config.apiSecret);
   await service.sendOne({
     to: recipient,
     kakaoOptions: {
       pfId: config.pfId,
       templateId: config.templateId,
-      variables: {},
+      variables: {
+        "#{이름}": displayName,
+      },
       disableSms: true,
     },
   });
