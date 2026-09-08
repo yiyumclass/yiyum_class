@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   normalizeKoreanMobileNumber,
   readAuthUserMobileNumber,
+  readKakaoAccountMobileNumber,
 } from "../src/lib/messaging/phone.ts";
 
 const callbackRoute = readFileSync(
@@ -16,6 +17,10 @@ const kakaoStartRoute = readFileSync(
 );
 const solapiSender = readFileSync(
   new URL("../src/lib/messaging/solapi.ts", import.meta.url),
+  "utf8"
+);
+const kakaoPhoneReader = readFileSync(
+  new URL("../src/lib/auth/kakao-phone.ts", import.meta.url),
   "utf8"
 );
 
@@ -43,6 +48,22 @@ test("Auth user phone takes precedence and Kakao metadata remains supported", ()
   );
 });
 
+test("Kakao user info phone number is normalized for SOLAPI", () => {
+  assert.equal(
+    readKakaoAccountMobileNumber({
+      kakao_account: { phone_number: "+82 10-3333-4444" },
+    }),
+    "01033334444"
+  );
+  assert.equal(
+    readKakaoAccountMobileNumber({
+      kakao_account: { phone_number_needs_agreement: false },
+    }),
+    null
+  );
+  assert.equal(readKakaoAccountMobileNumber(null), null);
+});
+
 test("Kakao OAuth requests the approved phone number scope", () => {
   assert.match(kakaoStartRoute, /scopes:\s*"phone_number"/);
 });
@@ -52,9 +73,16 @@ test("welcome Alimtalk is server-only, has no SMS fallback, and cannot block sig
   assert.match(solapiSender, /SOLAPI_API_SECRET/);
   assert.match(solapiSender, /disableSms: true/);
   assert.doesNotMatch(solapiSender, /NEXT_PUBLIC_SOLAPI/);
+  assert.match(solapiSender, /fetchKakaoMobileNumber/);
+
+  assert.match(kakaoPhoneReader, /kapi\.kakao\.com\/v2\/user\/me/);
+  assert.match(kakaoPhoneReader, /kakao_account\.phone_number/);
+  assert.match(kakaoPhoneReader, /Authorization: `Bearer \$\{token\}`/);
+  assert.doesNotMatch(kakaoPhoneReader, /console\.(?:log|warn).*token/);
 
   assert.match(callbackRoute, /Boolean\(consentIntent\)/);
   assert.match(callbackRoute, /isRecentlyCreated\(user\.created_at\)/);
+  assert.match(callbackRoute, /exchangeData\.session\?\.provider_token/);
   assert.match(callbackRoute, /after\(async \(\) =>/);
   assert.match(callbackRoute, /catch \(error\)/);
 });

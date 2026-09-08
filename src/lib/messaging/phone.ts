@@ -34,3 +34,17 @@ export function readAuthUserMobileNumber(user: AuthUserContact): string | null {
 
   return null;
 }
+
+/** 카카오 사용자 정보 API 응답에서 동의받은 휴대전화 번호를 읽는다. */
+export function readKakaoAccountMobileNumber(payload: unknown): string | null {
+  if (!isRecord(payload)) return null;
+
+  const account = payload.kakao_account;
+  if (!isRecord(account)) return null;
+
+  return normalizeKoreanMobileNumber(account.phone_number);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}

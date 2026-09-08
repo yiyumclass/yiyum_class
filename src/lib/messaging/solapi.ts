@@ -1,6 +1,7 @@
 import "server-only";
 
 import { SolapiMessageService } from "solapi";
+import { fetchKakaoMobileNumber } from "@/lib/auth/kakao-phone";
 import { readAuthUserMobileNumber } from "@/lib/messaging/phone";
 
 type AuthUserContact = Parameters<typeof readAuthUserMobileNumber>[0];
@@ -19,6 +20,10 @@ type SolapiWelcomeConfig = {
   templateId: string;
 };
 
+type WelcomeMessageOptions = {
+  kakaoAccessToken?: string | null;
+};
+
 /**
  * 신규 회원에게 SOLAPI 카카오 알림톡을 보낸다.
  *
@@ -26,9 +31,15 @@ type SolapiWelcomeConfig = {
  * 등록 발신번호 없이 동작하며, 이 함수에는 승인된 알림톡 templateId가 필요하다.
  */
 export async function sendSignupWelcomeMessage(
-  user: AuthUserContact
+  user: AuthUserContact,
+  options: WelcomeMessageOptions = {}
 ): Promise<WelcomeMessageResult> {
-  const recipient = readAuthUserMobileNumber(user);
+  const storedRecipient = readAuthUserMobileNumber(user);
+  const recipient =
+    storedRecipient ??
+    (options.kakaoAccessToken
+      ? await fetchKakaoMobileNumber(options.kakaoAccessToken)
+      : null);
   if (!recipient) {
     return { status: "skipped", reason: "invalid_recipient" };
   }

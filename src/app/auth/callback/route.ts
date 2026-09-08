@@ -25,7 +25,8 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: exchangeData, error } =
+      await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const {
         data: { user },
@@ -100,9 +101,15 @@ export async function GET(request: Request) {
 
       cookieStore.delete(OAUTH_CONSENT_COOKIE);
       if (isNewSignup) {
+        const kakaoAccessToken =
+          user.app_metadata.provider === "kakao"
+            ? exchangeData.session?.provider_token
+            : null;
         after(async () => {
           try {
-            const result = await sendSignupWelcomeMessage(user);
+            const result = await sendSignupWelcomeMessage(user, {
+              kakaoAccessToken,
+            });
             if (result.status === "skipped") {
               console.warn(
                 "Skipped SOLAPI signup welcome message:",
