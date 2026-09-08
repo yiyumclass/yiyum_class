@@ -12,8 +12,8 @@ const authCallbackRoute = readFileSync(
   new URL("../src/app/auth/callback/route.ts", import.meta.url),
   "utf8"
 );
-const signupPage = readFileSync(
-  new URL("../src/app/signup/page.tsx", import.meta.url),
+const loginPage = readFileSync(
+  new URL("../src/app/login/page.tsx", import.meta.url),
   "utf8"
 );
 
@@ -79,10 +79,10 @@ test("기존 동의 기록 또는 서명된 동의 의도가 있으면 진행한
   );
 });
 
-test("카카오 로그인은 남아 있는 카카오 세션을 자동 재사용하지 않는다", () => {
+test("다른 계정 로그인을 선택했을 때만 카카오 재인증을 요청한다", () => {
   assert.match(
     kakaoStartRoute,
-    /queryParams:\s*mode === "login" \? \{ prompt: "login" \} : undefined/
+    /queryParams:\s*switchAccount \? \{ prompt: "login" \} : undefined/
   );
 });
 
@@ -95,6 +95,7 @@ test("가입 미완료 계정은 오류가 아닌 명확한 가입 안내로 이
     authCallbackRoute,
     /searchParams\.set\("error", "consent"\)/
   );
-  assert.match(signupPage, /authNoticeCode === "signup_required"/);
-  assert.match(signupPage, /카카오 회원가입이 아직 완료되지 않았어요/);
+  assert.match(authCallbackRoute, /const loginUrl = new URL\("\/login", origin\);\s*loginUrl.searchParams.set\("notice", "signup_required"\)/);
+  assert.match(loginPage, /query.notice\) === "signup_required"/);
+  assert.match(loginPage, /다른 카카오 계정으로 로그인해 주세요/);
 });

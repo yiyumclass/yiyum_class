@@ -69,10 +69,11 @@ export async function GET(request: Request) {
       }
       if (consentGate === "require") {
         await supabase.auth.signOut({ scope: "local" });
-        const signupUrl = new URL("/signup", origin);
-        signupUrl.searchParams.set("notice", "signup_required");
-        if (next !== "/") signupUrl.searchParams.set("next", next);
-        return NextResponse.redirect(signupUrl);
+        cookieStore.delete(OAUTH_CONSENT_COOKIE);
+        const loginUrl = new URL("/login", origin);
+        loginUrl.searchParams.set("notice", "signup_required");
+        if (next !== "/") loginUrl.searchParams.set("next", next);
+        return NextResponse.redirect(loginUrl);
       }
 
       if (consentIntent) {

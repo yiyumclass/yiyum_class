@@ -15,6 +15,7 @@ const START_BODY_LIMIT_BYTES = 2 * 1024;
 
 type StartPayload = {
   mode?: unknown;
+  switchAccount?: unknown;
   next?: unknown;
   age14?: unknown;
   terms?: unknown;
@@ -52,7 +53,10 @@ export async function POST(request: Request) {
     }
   }
 
-  const oauthUrl = await createOAuthUrl(redirectTo.toString(), mode);
+  const oauthUrl = await createOAuthUrl(
+    redirectTo.toString(),
+    mode === "login" && payload.switchAccount === true
+  );
   if (!oauthUrl) {
     return json({ ok: false, message: "카카오 로그인을 시작하지 못했습니다." }, 503);
   }
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
 
 async function createOAuthUrl(
   redirectTo: string,
-  mode: "login" | "signup"
+  switchAccount: boolean
 ) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -81,8 +85,8 @@ async function createOAuthUrl(
     options: {
       redirectTo,
       scopes: "phone_number",
-      // 카카오 세션이 남아 있어도 로그인에서는 계정 인증 화면을 거친다.
-      queryParams: mode === "login" ? { prompt: "login" } : undefined,
+      // 사용자가 다른 계정 로그인을 선택했을 때만 재인증한다.
+      queryParams: switchAccount ? { prompt: "login" } : undefined,
     },
   });
 

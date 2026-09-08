@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 type AuthSearchParams = Promise<{
   next?: string | string[];
   error?: string | string[];
+  notice?: string | string[];
   withdrawn?: string | string[];
 }>;
 
@@ -34,7 +35,9 @@ export default async function LoginPage({
         : null;
   const authNotice = readFirstParam(query.withdrawn) === "1"
     ? "회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다."
-    : null;
+    : readFirstParam(query.notice) === "signup_required"
+      ? "가입되지 않았거나 가입이 완료되지 않은 카카오 계정입니다. 회원가입을 진행하거나 다른 카카오 계정으로 로그인해 주세요."
+      : null;
   const supabase = await createClient();
   const {
     data: { user },

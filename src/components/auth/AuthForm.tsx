@@ -92,7 +92,7 @@ export default function AuthForm({
     router.refresh();
   };
 
-  const signInWithKakao = async () => {
+  const signInWithKakao = async (switchAccount = false) => {
     setError(null);
     // 가입은 카카오 전용이므로 필수 약관 동의 없이는 진행하지 않는다.
     if (isSignup && !consent.valid) {
@@ -103,6 +103,7 @@ export default function AuthForm({
     const payload: Record<string, boolean | string> = {
       mode: isSignup ? "signup" : "login",
       next: nextPath,
+      switchAccount,
     };
     if (isSignup) {
       payload.age14 = true;
@@ -110,20 +111,25 @@ export default function AuthForm({
       payload.privacy = true;
       payload.marketing = consent.marketing;
     }
-    const response = await fetch("/auth/kakao/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const result = (await response.json().catch(() => null)) as
-      | { ok?: boolean; url?: string; message?: string }
-      | null;
-    if (!response.ok || !result?.ok || !result.url) {
-      setError(result?.message ?? "카카오 로그인을 시작하지 못했습니다.");
+    try {
+      const response = await fetch("/auth/kakao/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { ok?: boolean; url?: string; message?: string }
+        | null;
+      if (!response.ok || !result?.ok || !result.url) {
+        setError(result?.message ?? "카카오 로그인을 시작하지 못했습니다.");
+        setLoading(false);
+        return;
+      }
+      window.location.assign(result.url);
+    } catch {
+      setError("카카오 로그인 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       setLoading(false);
-      return;
     }
-    window.location.assign(result.url);
   };
 
   return (
@@ -237,7 +243,7 @@ export default function AuthForm({
         )}
 
         <button
-          onClick={signInWithKakao}
+          onClick={() => signInWithKakao()}
           disabled={loading || (isSignup && !consent.valid)}
           style={{
             width: "100%",
@@ -254,6 +260,27 @@ export default function AuthForm({
         >
           카카오로 {isSignup ? "시작하기" : "로그인"}
         </button>
+
+        {!isSignup && (
+          <button
+            type="button"
+            onClick={() => signInWithKakao(true)}
+            disabled={loading}
+            style={{
+              marginTop: 12,
+              padding: "8px 12px",
+              background: "transparent",
+              border: "none",
+              color: "#6D6255",
+              fontSize: 13,
+              textDecoration: "underline",
+              cursor: loading ? "default" : "pointer",
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            다른 카카오 계정으로 로그인
+          </button>
+        )}
 
         <p style={{ fontSize: 13, color: "#938B7F", marginTop: 22 }}>
           {isSignup ? (
