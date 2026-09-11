@@ -228,6 +228,7 @@ export function CourseEnrollmentProvider({
         </div>
 
         <footer className={styles.dialogFooter}>
+          <p><Link href="/terms#refund-policy">교환·환불 규정 확인</Link></p>
           <p>
             월 금액은 부가세 포함 총 결제금액을 12개월로 나눈 예상액입니다. 실제
             할부 가능 여부와 무이자 적용 조건은 카드사별로 다르며 토스 결제창에서

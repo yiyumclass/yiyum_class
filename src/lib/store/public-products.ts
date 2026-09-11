@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
-import { getMembershipAccessLabel } from "@/lib/store/membership-plans";
+import { phonePassDefinition, getMembershipAccessLabel } from "@/lib/store/membership-plans";
 import type { ProductType } from "@/lib/store/product-type";
 
 export type PublicProduct = {
@@ -46,6 +46,7 @@ type ProductRow = {
 export const loadPublicProductBySlug = cache(async function loadPublicProductBySlug(
   slug: string
 ): Promise<PublicProduct | null> {
+  if (slug === phonePassDefinition.slug) return null;
   const supabase = createPublicClient();
   const { data, error } = await supabase.rpc("get_public_products", {
     target_slug: slug,
@@ -77,7 +78,7 @@ export const loadPublicProductsByType = cache(async function loadPublicProductsB
 
   const rows = (Array.isArray(data) ? data : []) as ProductRow[];
   return rows
-    .filter((row) => row.product_type === productType)
+    .filter((row) => row.product_type === productType && row.slug !== phonePassDefinition.slug)
     .map(mapProductRow);
 });
 

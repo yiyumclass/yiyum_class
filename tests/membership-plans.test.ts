@@ -32,7 +32,7 @@ test("상위 클래스는 하위 클래스의 혜택을 모두 포함한다", ()
     )
   );
   assert.ok(feedback.benefits.every((benefit) => ultra.benefits.includes(benefit)));
-  assert.match(ultra.benefits.join(" "), /10분 사용권 × 6회 제공/);
+  assert.doesNotMatch(JSON.stringify(membershipPlanDefinitions), /1:1|피드백|전화/);
 });
 
 test("선택창은 요청한 세 클래스 문구를 순서대로 제공한다", () => {
@@ -48,8 +48,8 @@ test("선택창은 요청한 세 클래스 문구를 순서대로 제공한다",
     membershipPlanDefinitions[0].description,
     "혼자, 내 속도대로 배우는 기본 과정"
   );
-  assert.match(membershipPlanDefinitions[1].description, /과제\+피드백/);
-  assert.match(membershipPlanDefinitions[2].description, /가장 밀착된 피드백/);
+  assert.match(membershipPlanDefinitions[1].description, /과제/);
+  assert.match(membershipPlanDefinitions[2].description, /VOD 강의/);
 });
 
 test("별도 전화권은 33만원 총액과 6회 제공 문구를 유지한다", () => {

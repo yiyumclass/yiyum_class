@@ -110,7 +110,7 @@
 
 .eyebrow,
 .curriculumHeading span,
-.bottomCta span {
+.bottomCta > div > span {
   color: #a26b50;
   font-size: 10px;
   font-weight: 700;
@@ -466,6 +466,8 @@
   gap: 8px;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
   white-space: nowrap;
 }
 

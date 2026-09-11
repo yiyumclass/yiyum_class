@@ -4,7 +4,6 @@ export type CourseProduct = {
   tagline: string;
   price: number;
   accessLabel: string;
-  feedbackLabel: string;
   detailHref: string;
   checkoutHref: string;
   topics: string[];
@@ -21,7 +20,6 @@ export const courseProducts: CourseProduct[] = [
     tagline: "계정의 방향을 정하고 콘텐츠와 브랜드 협업 준비를 연결하는 방법",
     price: 0,
     accessLabel: "365일 VOD 수강",
-    feedbackLabel: "1:1 피드백 포함",
     detailHref: "/#curriculum",
     checkoutHref: "/checkout",
     topics: ["계정 설계", "콘텐츠", "알고리즘", "협찬", "브랜딩"],

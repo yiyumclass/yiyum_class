@@ -1,3 +1,4 @@
+import CoursePurchasePolicy from "./CoursePurchasePolicy";
 import Image from "next/image";
 import Link from "next/link";
 import SiteFooter from "@/components/layout/SiteFooter";
@@ -85,7 +86,7 @@ export default function SaleDetailPage({
               {isCourse ? (
                 <div className={styles.enrollmentPrompt}>
                   <span>수강 안내</span>
-                  <strong>신청할 때 필요한 도움의 범위를 선택할 수 있어요.</strong>
+                  <strong>클래스별 강의 구성과 제공 내용을 확인해 주세요.</strong>
                 </div>
               ) : (
                 <div className={styles.price}>
@@ -216,6 +217,8 @@ export default function SaleDetailPage({
             />
           </>
         )}
+
+        {isCourse && <CoursePurchasePolicy />}
 
         <section className={styles.bottomCta}>
           <div>

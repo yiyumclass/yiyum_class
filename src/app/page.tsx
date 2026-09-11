@@ -1,3 +1,4 @@
+import CoursePurchasePolicy from "@/components/store/CoursePurchasePolicy";
 import Image from "next/image";
 import LandingInteractions from "@/components/LandingInteractions";
 import ReviewMarquee from "@/components/ReviewMarquee";
@@ -281,7 +282,7 @@ export default async function Home() {
           <span style={{fontSize: '13px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#938B7F', fontWeight: '600'}}>Reviews</span>
         </div>
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(28px,3.6vw,42px)', letterSpacing: '-0.01em', margin: '0 0 8px', maxWidth: '16ch'}}>수강생들의 강의 후기</h2>
-        <p data-reveal="" style={{fontSize: '16px', color: '#938B7F', margin: '0 0 48px'}}>오픈카톡방에서의 1:1 밀착 피드백이 가장 큰 메리트예요.</p>
+        <p data-reveal="" style={{fontSize: '16px', color: '#938B7F', margin: '0 0 48px'}}>강의와 과제를 통해 배운 내용을 직접 적용해 보세요.</p>
         <ReviewMarquee alt="수강생 강의 후기" images={["/assets/reviews/review-01.jpg", "/assets/reviews/review-02.jpg", "/assets/reviews/review-03.jpg", "/assets/reviews/review-04.jpg", "/assets/reviews/review-05.jpg", "/assets/reviews/review-06.jpg", "/assets/reviews/review-07.jpg", "/assets/reviews/review-08.jpg", "/assets/reviews/review-09.jpg", "/assets/reviews/review-10.jpg", "/assets/reviews/review-13.jpg"]} />
       </section>
 
@@ -300,7 +301,8 @@ export default async function Home() {
           <details style={{borderBottom: '1px solid #DDD5C8'}}><summary style={{display: 'flex', gap: '20px', alignItems: 'center', padding: '24px 4px'}}><span style={{flex: '1', fontSize: '17px', fontWeight: '600'}}>랜딩페이지는 직접 만들어주시나요?</span><span className="chev" style={{fontSize: '20px', color: '#B85C38', fontWeight: '300'}}>+</span></summary><div className="cbody" style={{padding: '0 4px 24px 4px', fontSize: '15px', color: '#57514A', lineHeight: '1.8'}}>직접 제작해드리는 서비스는 아니며, 4강에서 랜딩페이지의 목적과 기본 구조, 만드는 방법을 알려드려요. 수강생이 직접 자신의 계정과 상품에 맞춰 적용하는 교육 과정입니다.</div></details>
           <details style={{borderBottom: '1px solid #DDD5C8'}}><summary style={{display: 'flex', gap: '20px', alignItems: 'center', padding: '24px 4px'}}><span style={{flex: '1', fontSize: '17px', fontWeight: '600'}}>원고료는 어떤 기준으로 검토하나요?</span><span className="chev" style={{fontSize: '20px', color: '#B85C38', fontWeight: '300'}}>+</span></summary><div className="cbody" style={{padding: '0 4px 24px 4px', fontSize: '15px', color: '#57514A', lineHeight: '1.8'}}>강의에서 특정 원고료를 제시하거나 보장하지 않아요. 계정과 제안 조건마다 다르기 때문에, 실제 협업에서 확인해야 할 제작 범위·사용 기간·수정 횟수와 협상 문구를 다룹니다.</div></details>
           <details style={{borderBottom: '1px solid #DDD5C8'}}><summary style={{display: 'flex', gap: '20px', alignItems: 'center', padding: '24px 4px'}}><span style={{flex: '1', fontSize: '17px', fontWeight: '600'}}>강의만 들으면 바로 협찬이 들어오나요?</span><span className="chev" style={{fontSize: '20px', color: '#B85C38', fontWeight: '300'}}>+</span></summary><div className="cbody" style={{padding: '0 4px 24px 4px', fontSize: '15px', color: '#57514A', lineHeight: '1.8'}}>아니요. 수강만으로 협찬·광고 등 특정 성과가 발생한다고 보장하지 않아요. 이 강의는 제가 경험한 계정 설계, 콘텐츠 운영, 제안 검토 기준을 교육 자료로 제공하며 실제 결과는 계정 상태와 활동 내용, 시장 상황에 따라 달라질 수 있습니다.</div></details>
-          <details style={{borderBottom: '1px solid #201C17'}}><summary style={{display: 'flex', gap: '20px', alignItems: 'center', padding: '24px 4px'}}><span style={{flex: '1', fontSize: '17px', fontWeight: '600'}}>협찬·광고 수익 세금 처리는 어떻게 하나요?</span><span className="chev" style={{fontSize: '20px', color: '#B85C38', fontWeight: '300'}}>+</span></summary><div className="cbody" style={{padding: '0 4px 24px 4px', fontSize: '15px', color: '#57514A', lineHeight: '1.8'}}>강의에서는 세금 관리 시 확인할 기본 사항과 전문가 상담이 필요한 지점을 소개해요. 개인 상황에 따른 신고·세무 판단은 세무 전문가와 별도로 확인해야 합니다.</div></details>
+          <details style={{borderBottom: '1px solid #DDD5C8'}}><summary style={{display: 'flex', gap: '20px', alignItems: 'center', padding: '24px 4px'}}><span style={{flex: '1', fontSize: '17px', fontWeight: '600'}}>협찬·광고 수익 세금 처리는 어떻게 하나요?</span><span className="chev" style={{fontSize: '20px', color: '#B85C38', fontWeight: '300'}}>+</span></summary><div className="cbody" style={{padding: '0 4px 24px 4px', fontSize: '15px', color: '#57514A', lineHeight: '1.8'}}>강의에서는 세금 관리 시 확인할 기본 사항과 전문가 상담이 필요한 지점을 소개해요. 개인 상황에 따른 신고·세무 판단은 세무 전문가와 별도로 확인해야 합니다.</div></details>
+          <CoursePurchasePolicy embedded />
         </div>
       </section>
 
@@ -309,7 +311,7 @@ export default async function Home() {
         <div data-reveal="" style={{maxWidth: '700px', margin: '0 auto'}}>
           <span style={{display: 'block', marginBottom: '18px', color: '#D9825E', fontSize: '11px', fontWeight: '700', letterSpacing: '0.2em'}}>READY TO START?</span>
           <h2 id="apply-title" className="serif" style={{fontSize: 'clamp(34px,5vw,56px)', lineHeight: '1.2', margin: '0'}}>이 강의가 필요하다고 느껴졌다면</h2>
-          <p style={{maxWidth: '560px', margin: '20px auto 32px', color: '#BDB3A7', fontSize: '16px', lineHeight: '1.8'}}>먼저 강의를 충분히 살펴본 뒤 신청해 주세요. 버튼을 누르면 VOD, 피드백, 초밀착 중 나에게 맞는 수강 방식을 비교할 수 있어요.</p>
+          <p style={{maxWidth: '560px', margin: '20px auto 32px', color: '#BDB3A7', fontSize: '16px', lineHeight: '1.8'}}>먼저 강의를 충분히 살펴본 뒤 신청해 주세요. 버튼을 누르면 베이직, 부스터, 프리미엄 클래스의 제공 내용을 비교할 수 있어요.</p>
           <CourseEnrollmentPicker
             triggerLabel="수강 방식 선택"
           />

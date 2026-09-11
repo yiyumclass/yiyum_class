@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { phonePassDefinition } from "@/lib/store/membership-plans";
 import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
@@ -37,6 +38,10 @@ export async function createPaymentOrderAction(
 ): Promise<CreatePaymentOrderResult> {
   if (!isTossPaymentConfigured()) {
     return { ok: false, message: "현재 결제 기능을 사용할 수 없습니다." };
+  }
+
+  if (productSlug === phonePassDefinition.slug) {
+    return { ok: false, message: "판매가 종료된 상품입니다." };
   }
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productSlug)) {
@@ -134,6 +139,10 @@ export async function claimFreeProductAction(
 ): Promise<FreeEnrollmentState> {
   void _previousState;
   void _formData;
+
+  if (productSlug === phonePassDefinition.slug) {
+    return { status: "error", message: "판매가 종료된 상품입니다." };
+  }
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productSlug)) {
     return { status: "error", message: "신청할 콘텐츠를 다시 확인해 주세요." };
