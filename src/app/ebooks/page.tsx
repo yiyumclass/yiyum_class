@@ -1,14 +1,21 @@
+import { redirect } from "next/navigation";
+import { publicSalesAvailability } from "@/lib/store/public-sales-availability";
 import type { Metadata } from "next";
 import ShelfPage from "@/components/store/ShelfPage";
 import { loadPublicResourceCatalog } from "@/lib/store/public-sale";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicSalesAvailability.ebooks ? {
   title: "전자책 | 이윰 클래스",
   description:
     "이윰이 만든 전자책을 모았습니다. 한 권으로 정리한 실전 워크북을 만나보세요.",
+} : {
+  title: "클래스 | 이윰 클래스",
+  robots: { index: false, follow: false },
 };
 
 export default async function EbooksPage() {
+  if (!publicSalesAvailability.ebooks) redirect("/courses");
+
   const catalog = await loadPublicResourceCatalog();
   // 파는 것과 나눠주는 것을 한 화면에 세우지 않는다. 무료 자료가 곁에 있으면
   // 전자책 값이 싸 보인다.

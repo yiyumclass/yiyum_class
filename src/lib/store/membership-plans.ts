@@ -29,8 +29,8 @@ export const membershipPlanDefinitions = [
     icon: "🔥",
     title: "부스터 클래스",
     description:
-      "동기들과 함께 과제를 수행하며 강의 내용을 적용하는 과정",
-    benefits: ["VOD 강의", "과제", "동기 오픈카톡방"],
+      "강의를 듣고 과제를 수행하며 배운 내용을 적용하는 과정",
+    benefits: ["VOD 강의", "과제"],
     recommended: true,
     fallbackPriceKrw: 1_200_000,
   },
@@ -40,11 +40,10 @@ export const membershipPlanDefinitions = [
     order: 3,
     icon: "👑",
     title: "프리미엄 클래스",
-    description: "VOD 강의와 과제, 동기 오픈카톡방으로 학습하는 과정",
+    description: "VOD 강의와 과제로 계정 운영을 차근차근 익히는 과정",
     benefits: [
       "VOD 강의",
       "과제",
-      "동기 오픈카톡방",
     ],
     recommended: false,
     fallbackPriceKrw: 2_990_000,

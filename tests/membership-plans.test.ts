@@ -32,7 +32,7 @@ test("상위 클래스는 하위 클래스의 혜택을 모두 포함한다", ()
     )
   );
   assert.ok(feedback.benefits.every((benefit) => ultra.benefits.includes(benefit)));
-  assert.doesNotMatch(JSON.stringify(membershipPlanDefinitions), /1:1|피드백|전화/);
+  assert.doesNotMatch(JSON.stringify(membershipPlanDefinitions), /1:1|피드백|전화|오픈카톡|오픈채팅|동기/);
 });
 
 test("선택창은 요청한 세 클래스 문구를 순서대로 제공한다", () => {

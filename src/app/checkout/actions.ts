@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { phonePassDefinition } from "@/lib/store/membership-plans";
 import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -55,6 +56,10 @@ export async function createPaymentOrderAction(
   const identity = await getVerifiedIdentity(supabase);
   if (!identity) {
     return { ok: false, message: "로그인 후 다시 결제해 주세요." };
+  }
+
+  if (!(await loadPublicProductBySlug(productSlug))) {
+    return { ok: false, message: "현재 신청할 수 없는 상품입니다." };
   }
 
   const { data, error } = await supabase.rpc("create_toss_payment_order", {
@@ -153,6 +158,10 @@ export async function claimFreeProductAction(
 
   if (!identity) {
     return { status: "error", message: "로그인 후 다시 신청해 주세요." };
+  }
+
+  if (!(await loadPublicProductBySlug(productSlug))) {
+    return { status: "error", message: "현재 신청할 수 없는 자료입니다." };
   }
 
   const { error } = await supabase.rpc("claim_free_product", {

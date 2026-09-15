@@ -1,3 +1,4 @@
+import { isPublicProductAvailable } from "@/lib/store/public-sales-availability";
 import "server-only";
 
 import { cache } from "react";
@@ -59,6 +60,7 @@ export const loadPublicProductBySlug = cache(async function loadPublicProductByS
   const row = Array.isArray(data) ? (data[0] as ProductRow | undefined) : undefined;
   if (!row) return canUseLocalCatalogFallback() ? buildTemporaryProduct(slug) : null;
 
+  if (!isPublicProductAvailable(row.product_type, row.price_krw)) return null;
   return mapProductRow(row);
 });
 
@@ -78,7 +80,7 @@ export const loadPublicProductsByType = cache(async function loadPublicProductsB
 
   const rows = (Array.isArray(data) ? data : []) as ProductRow[];
   return rows
-    .filter((row) => row.product_type === productType && row.slug !== phonePassDefinition.slug)
+    .filter((row) => row.product_type === productType && row.slug !== phonePassDefinition.slug && isPublicProductAvailable(row.product_type, row.price_krw))
     .map(mapProductRow);
 });
 

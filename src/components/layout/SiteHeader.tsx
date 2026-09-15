@@ -1,3 +1,4 @@
+import { publicSalesAvailability } from "@/lib/store/public-sales-availability";
 import Link from "next/link";
 import { hasActiveAdminAccess } from "@/lib/admin/access";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -27,9 +28,9 @@ const navigationItems: Array<{
   href: string;
 }> = [
   { key: "courses", label: "강의", href: "/courses" },
-  // 파는 것과 나눠주는 것을 한 메뉴에 두면 전자책 값이 싸 보인다.
-  // 예전에는 전자책이 상세 없이 곧바로 결제로 갔는데, 이제 각자 목록을 가진다.
-  { key: "ebook", label: "전자책", href: "/ebooks" },
+  ...(publicSalesAvailability.ebooks
+    ? [{ key: "ebook" as const, label: "전자책", href: "/ebooks" }]
+    : []),
   { key: "library", label: "무료자료", href: "/library" },
   { key: "reviews", label: "후기", href: "/#reviews" },
   { key: "sns", label: "SNS", href: "/sns" },
