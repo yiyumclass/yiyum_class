@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { retryPendingPaymentNotifications } from "@/lib/messaging/payment-notifications";
 import { revalidatePath } from "next/cache";
 import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -19,6 +21,7 @@ export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
     return Response.json({ ok: false }, { status: 401 });
   }
+  after(async () => { await retryPendingPaymentNotifications(); });
   const admin = getAdminClient();
   const [payment, accessLogs] = await Promise.all([
     isTossPaymentConfigured()

@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { dispatchPaymentNotification } from "@/lib/messaging/payment-notifications";
 import { revalidatePath } from "next/cache";
 import { isSameOriginRequest } from "@/lib/http/origin";
 import { readLimitedJson } from "@/lib/http/request-body";
@@ -121,6 +123,7 @@ export async function POST(request: Request) {
 
     const completedRow = readCompletedPaymentRow(completed);
     revalidateCompletedPayment(completedRow);
+    after(async () => { await dispatchPaymentNotification(input.orderId); });
     return json(
       {
         ok: true,
@@ -253,6 +256,7 @@ export async function POST(request: Request) {
 
   const completedRow = readCompletedPaymentRow(completed);
   revalidateCompletedPayment(completedRow);
+  after(async () => { await dispatchPaymentNotification(input.orderId); });
 
   return json(
     {

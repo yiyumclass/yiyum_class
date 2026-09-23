@@ -91,15 +91,23 @@ test("서명된 동의는 변조·미래 발급·만료·추가 토큰을 거부
 
 test("결제 미설정 상태에서도 로그 파기 실행, 인증 없는 cron은 DB에 접근하지 않는다", async () => {
   const calls: string[] = [];
+  const deferred: Array<() => Promise<void>> = [];
+  let notificationRetries = 0;
   const subjectModule = load<{GET: (r: Request) => Promise<Response>}>("app/api/cron/expire-pending-orders/route.ts", {
     "next/cache": { revalidatePath() {} },
+    "next/server": { after: (callback: () => Promise<void>) => deferred.push(callback) },
+    "@/lib/messaging/payment-notifications": { retryPendingPaymentNotifications: async () => { notificationRetries++; } },
     "@/lib/store/free-enrollment": { isTossPaymentConfigured: () => false },
     "@/lib/supabase/admin": { getAdminClient: () => ({ rpc: async (name: string) => { calls.push(name); return {data: 2, error: null}; } }) },
   }, { CRON_SECRET: "test-cron" });
   assert.equal((await subjectModule.GET(new Request("https://example.com/cron"))).status, 401);
   assert.equal(calls.length, 0);
+  assert.equal(deferred.length, 0);
   const response = await subjectModule.GET(new Request("https://example.com/cron", {headers: {authorization: "Bearer test-cron"}}));
   assert.equal(response.status, 200);
   assert.deepEqual(calls, ["purge_expired_security_access_logs_server"]);
   assert.equal((await response.json()).securityAccessLogs.purged, 2);
+  assert.equal(deferred.length, 1);
+  await deferred[0]();
+  assert.equal(notificationRetries, 1);
 });

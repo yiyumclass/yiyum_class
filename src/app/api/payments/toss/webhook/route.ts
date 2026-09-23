@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { dispatchPaymentNotification } from "@/lib/messaging/payment-notifications";
 import { revalidatePath } from "next/cache";
 import { FixedWindowRateLimiter } from "@/lib/http/fixed-window-rate-limiter";
 import { readLimitedJson } from "@/lib/http/request-body";
@@ -146,6 +148,7 @@ async function handleApprovedPayment(
   }
 
   revalidatePaymentPaths();
+  after(async () => { await dispatchPaymentNotification(order.order_uid); });
   return Response.json({ ok: true }, { status: 200 });
 }
 
