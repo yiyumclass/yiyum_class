@@ -220,6 +220,7 @@ export default function SaleDetailPage({
 
         {isCourse && <CoursePurchasePolicy />}
 
+        {!(item.productType === "ebook" && item.priceKrw === 0) && (
         <section className={styles.bottomCta}>
           <div>
             <span>READY TO START?</span>
@@ -244,6 +245,7 @@ export default function SaleDetailPage({
             )}
           </div>
         </section>
+        )}
       </main>
 
       <SiteFooter />
