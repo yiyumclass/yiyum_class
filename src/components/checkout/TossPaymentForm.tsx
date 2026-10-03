@@ -6,6 +6,14 @@ import { useState } from "react";
 import { createPaymentOrderAction } from "@/app/checkout/actions";
 import type { ProductType } from "@/lib/store/product-type";
 
+const CARD_COMPANIES_WITHOUT_HYUNDAI = [
+  "IBK_BC", "GWANGJUBANK", "LOTTE", "KDBBANK", "BC", "SAMSUNG",
+  "SAEMAUL", "SHINHAN", "SHINHYEOP", "CITI", "WOORI", "POST",
+  "SAVINGBANK", "JEONBUKBANK", "JEJUBANK", "KAKAOBANK", "KBANK",
+  "TOSSBANK", "HANA", "KOOKMIN", "NONGHYEOP", "SUHYEOP", "PCP", "KBS",
+  "DINERS", "MASTER", "UNIONPAY", "AMEX", "JCB", "VISA",
+].join("|");
+
 type TossPaymentFormProps = {
   productSlug: string;
   clientKey: string;
@@ -58,6 +66,7 @@ export default function TossPaymentForm({
         failUrl: `${origin}/checkout/fail?product=${encodeURIComponent(productSlug)}`,
         card: {
           flowMode: "DEFAULT",
+          cardCompany: CARD_COMPANIES_WITHOUT_HYUNDAI,
           useEscrow: false,
           maxCardInstallmentPlan: 12,
         },
@@ -133,6 +142,9 @@ export default function TossPaymentForm({
             ? "테스트 결제하기"
             : "결제하기"}
       </button>
+      <p style={{ color: "#B7A995", fontSize: 13, lineHeight: 1.6, margin: "14px 0 0" }}>
+        현재 현대카드는 이용이 어렵습니다. 다른 카드를 이용해 주세요.
+      </p>
       {message && (
         <p
           role="alert"
