@@ -8,7 +8,7 @@ import {
   hasActiveMembershipPlanEntitlement,
   hasActiveProductEntitlement,
 } from "@/lib/store/entitlements";
-import { getPaymentMode, isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { getPaymentMode, isTossPaymentWindowConfigured } from "@/lib/store/free-enrollment";
 import {
   getMembershipBenefits,
   isMembershipPlanSlug,
@@ -69,7 +69,8 @@ export default async function CheckoutPage({
   const paymentMode = getPaymentMode();
   const tossClientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "";
   const isFreeProduct = product.priceKrw === 0;
-  const canRequestTossPayment = isTossPaymentConfigured() && tossClientKey.length > 0;
+  const tossVariantKey = process.env.NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY ?? "";
+  const canRequestTossPayment = isTossPaymentWindowConfigured();
 
   return (
     <>
@@ -215,6 +216,8 @@ export default async function CheckoutPage({
             customerEmail={identity.email?.slice(0, 100) ?? null}
             paymentMode={paymentMode === "toss_live" ? "toss_live" : "toss_test"}
             productType={product.productType}
+            amount={product.priceKrw}
+            variantKey={tossVariantKey}
           />
         ) : (
           <p role="alert" style={{ color: "#F0A98C", fontSize: 13, lineHeight: 1.6 }}>

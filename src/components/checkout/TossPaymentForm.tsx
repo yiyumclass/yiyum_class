@@ -2,17 +2,14 @@
 
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import Link from "next/link";
-import { useState } from "react";
-import { createPaymentOrderAction } from "@/app/checkout/actions";
+import { useEffect, useRef, useState } from "react";
+import { createPaymentOrderAction, markPaymentOrderFailedAction } from "@/app/checkout/actions";
 import type { ProductType } from "@/lib/store/product-type";
-
-const CARD_COMPANIES_WITHOUT_HYUNDAI = [
-  "IBK_BC", "GWANGJUBANK", "LOTTE", "KDBBANK", "BC", "SAMSUNG",
-  "SAEMAUL", "SHINHAN", "SHINHYEOP", "CITI", "WOORI", "POST",
-  "SAVINGBANK", "JEONBUKBANK", "JEJUBANK", "KAKAOBANK", "KBANK",
-  "TOSSBANK", "HANA", "KOOKMIN", "NONGHYEOP", "SUHYEOP", "PCP", "KBS",
-  "DINERS", "MASTER", "UNIONPAY", "AMEX", "JCB", "VISA",
-].join("|");
+import {
+  isPaymentCanceled,
+  paymentWindowCanceled,
+  requestTossPaymentWindow,
+} from "@/lib/payments/payment-window";
 
 type TossPaymentFormProps = {
   productSlug: string;
@@ -22,6 +19,8 @@ type TossPaymentFormProps = {
   customerEmail: string | null;
   paymentMode: "toss_test" | "toss_live";
   productType: ProductType;
+  amount: number;
+  variantKey: string;
 };
 
 export default function TossPaymentForm({
@@ -32,57 +31,78 @@ export default function TossPaymentForm({
   customerEmail,
   paymentMode,
   productType,
+  amount,
+  variantKey,
 }: TossPaymentFormProps) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
+  const inFlight = useRef(false);
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
 
   async function requestPayment() {
-    if (pending) return;
+    if (inFlight.current || !policyAccepted) return;
+    inFlight.current = true;
+    const controller = new AbortController();
+    activeRequest.current = controller;
     setPending(true);
     setMessage("");
+    let orderId: string | null = null;
 
     try {
       const result = await createPaymentOrderAction(productSlug, policyAccepted);
       if (!result.ok) {
-        setMessage(result.message);
+        if (!controller.signal.aborted) setMessage(result.message);
+        return;
+      }
+      orderId = result.order.orderId;
+      if (controller.signal.aborted) throw paymentWindowCanceled();
+      if (result.order.amount !== amount) {
+        setMessage("결제 금액이 변경되었습니다. 새로고침 후 금액을 확인해 주세요.");
+        await markPaymentOrderFailedAction(orderId).catch(() => undefined);
         return;
       }
       const tossPayments = await loadTossPayments(clientKey);
-      const payment = tossPayments.payment({ customerKey });
+      const widgets = tossPayments.widgets({ customerKey });
       const origin = window.location.origin;
 
-      await payment.requestPayment({
-        method: "CARD",
-        amount: {
-          currency: "KRW",
-          value: result.order.amount,
-        },
-        orderId: result.order.orderId,
-        orderName: result.order.orderName,
-        customerName,
-        customerEmail,
-        successUrl: `${origin}/checkout/success?product=${encodeURIComponent(productSlug)}`,
-        failUrl: `${origin}/checkout/fail?product=${encodeURIComponent(productSlug)}`,
-        card: {
-          flowMode: "DEFAULT",
-          cardCompany: CARD_COMPANIES_WITHOUT_HYUNDAI,
-          useEscrow: false,
-          maxCardInstallmentPlan: 12,
-        },
-        metadata: {
-          productSlug: result.order.productSlug,
+      await requestTossPaymentWindow({
+        widgets,
+        amount: result.order.amount,
+        variantKey,
+        signal: controller.signal,
+        request: {
+          orderId: result.order.orderId,
+          orderName: result.order.orderName,
+          customerName,
+          customerEmail,
+          successUrl: `${origin}/checkout/success?product=${encodeURIComponent(productSlug)}`,
+          failUrl: `${origin}/checkout/fail?product=${encodeURIComponent(productSlug)}&orderId=${encodeURIComponent(orderId)}`,
+          metadata: {
+            productSlug: result.order.productSlug,
+          },
         },
       });
     } catch (error) {
-      setMessage(resolvePaymentError(error));
+      if (!controller.signal.aborted) setMessage(resolvePaymentError(error));
+      if (orderId && isPaymentCanceled(error) && !controller.signal.aborted) {
+        await markPaymentOrderFailedAction(orderId).catch(() => undefined);
+      }
     } finally {
-      setPending(false);
+      inFlight.current = false;
+      if (!controller.signal.aborted) setPending(false);
+      if (activeRequest.current === controller) activeRequest.current = null;
     }
   }
 
   return (
     <div>
+      <p style={{ color: "#B7A995", fontSize: 13, lineHeight: 1.7, margin: "0 0 20px" }}>
+        카드사와 할부는 다음 토스 결제창에서 선택합니다.
+        <br />할부 가능 여부와 무이자 혜택은 카드사·카드 종류에 따라 다릅니다.
+      </p>
       <label
         style={{
           display: "flex",
@@ -137,14 +157,11 @@ export default function TossPaymentForm({
         }}
       >
         {pending
-          ? "결제창 준비 중..."
+          ? "토스 결제창 진행 중..."
           : paymentMode === "toss_test"
             ? "테스트 결제하기"
             : "결제하기"}
       </button>
-      <p style={{ color: "#B7A995", fontSize: 13, lineHeight: 1.6, margin: "14px 0 0" }}>
-        현재 현대카드는 이용이 어렵습니다. 다른 카드를 이용해 주세요.
-      </p>
       {message && (
         <p
           role="alert"
@@ -177,7 +194,13 @@ function resolvePaymentError(error: unknown) {
     return "결제를 취소했습니다. 결제를 원하시면 다시 시도해 주세요.";
   }
   if (code === "INVALID_CLIENT_KEY" || code === "UNAUTHORIZED_KEY") {
-    return "결제 테스트 키 설정을 확인해 주세요.";
+    return "토스 결제창형 연동 키 설정을 확인해 주세요.";
+  }
+  if (code === "CARD_ONLY") {
+    return "현재 신용·체크카드 결제만 가능합니다. 카드를 선택해 다시 시도해 주세요.";
+  }
+  if (code === "INVALID_VARIANT_KEY" || code === "NOT_REGISTERED_PAYMENT_WIDGET") {
+    return "토스 결제 UI 설정을 확인하고 있습니다. 운영자에게 문의해 주세요.";
   }
 
   return "결제창을 열지 못했습니다. 잠시 후 다시 시도해 주세요.";

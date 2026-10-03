@@ -1,8 +1,10 @@
 import "server-only";
 
 import {
+  getPaymentMode,
   isTossPaymentEnabled,
 } from "./payment-mode";
+import { isPaymentWindowKeyPair } from "../payments/payment-window";
 
 export { getPaymentMode, isTossPaymentEnabled } from "./payment-mode";
 export type { PaymentMode } from "./payment-mode";
@@ -19,4 +21,14 @@ export function isTossPaymentConfigured() {
     Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
     Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
   );
+}
+
+export function isTossPaymentWindowConfigured() {
+  return isTossPaymentConfigured() &&
+    Boolean(process.env.NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY?.trim()) &&
+    isPaymentWindowKeyPair(
+      process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "",
+      process.env.TOSS_SECRET_KEY ?? "",
+      getPaymentMode()
+    );
 }

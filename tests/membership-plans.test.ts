@@ -174,12 +174,25 @@ test("공개 강의는 하나로 보이고 가격은 수강 신청 뒤에만 노
   assert.match(picker, /aria-modal="true"/);
 });
 
-test("토스 결제창은 구매자가 최대 12개월 할부를 선택할 수 있게 연다", () => {
+test("카드사와 할부는 자체 UI 없이 토스 결제창형에서 선택한다", () => {
   const paymentForm = readFileSync(
     new URL("../src/components/checkout/TossPaymentForm.tsx", import.meta.url),
     "utf8"
   );
 
-  assert.match(paymentForm, /maxCardInstallmentPlan:\s*12/);
+  assert.match(paymentForm, /tossPayments\.widgets\(/);
+  assert.match(paymentForm, /requestTossPaymentWindow\(/);
+  assert.doesNotMatch(paymentForm, /maxCardInstallmentPlan/);
   assert.doesNotMatch(paymentForm, /freeInstallmentPlans/);
+  assert.doesNotMatch(paymentForm, /<select|type="radio"|flowMode|cardCompany/);
+});
+
+test("결제창형은 중복 요청과 가격 변경을 방어하고 취소 URL에 주문을 남긴다", () => {
+  const paymentForm = readFileSync(
+    new URL("../src/components/checkout/TossPaymentForm.tsx", import.meta.url),
+    "utf8"
+  );
+  assert.match(paymentForm, /inFlight\.current \|\| !policyAccepted/);
+  assert.match(paymentForm, /result\.order\.amount !== amount/);
+  assert.match(paymentForm, /failUrl:.*orderId=/);
 });

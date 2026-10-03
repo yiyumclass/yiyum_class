@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isTossPaymentConfigured } from "@/lib/store/free-enrollment";
+import { isTossPaymentWindowConfigured } from "@/lib/store/free-enrollment";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { phonePassDefinition } from "@/lib/store/membership-plans";
 import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
@@ -37,7 +37,7 @@ export async function createPaymentOrderAction(
   productSlug: string,
   refundPolicyAccepted: boolean
 ): Promise<CreatePaymentOrderResult> {
-  if (!isTossPaymentConfigured()) {
+  if (!isTossPaymentWindowConfigured()) {
     return { ok: false, message: "현재 결제 기능을 사용할 수 없습니다." };
   }
 
