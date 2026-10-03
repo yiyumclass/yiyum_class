@@ -99,7 +99,7 @@ export default async function Home() {
         <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 64px', maxWidth: '18ch'}}>작은 계정부터 시작하는 브랜드 협업 준비</h2>
 
         <div className="about-grid" style={{display: 'grid', gridTemplateColumns: '1fr 0.82fr', columnGap: '72px', rowGap: '40px', alignItems: 'stretch'}}>
-          <p data-reveal="" className="serif" style={{gridColumn: '1 / -1', gridRow: '1', fontSize: 'clamp(22px,2.6vw,30px)', lineHeight: '1.6', letterSpacing: '-0.01em', margin: '0', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3주 만에 팔로워 1,000명, 12주 만에 1만 명을 넘겼어요.{" "}<br className="bk" />그리고 지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
+          <p data-reveal="" className="serif" style={{gridColumn: '1 / -1', gridRow: '1', fontSize: 'clamp(22px,2.6vw,30px)', lineHeight: '1.6', letterSpacing: '-0.01em', margin: '0', color: '#201C17'}}>안녕하세요, 리빙 크리에이터 <span style={{color: '#B85C38'}}>이윰</span>입니다.{" "}<br className="bk" />리빙 인스타그램을 시작한 지 3달 만에 팔로워 1만 명, 5달 만에 2만 명을 넘겼어요.{" "}<br className="bk" />버는 돈 0원이던 주부가 얼굴 노출 없는 인스타로 남편 월급을 뛰어넘게 되었고{" "}<br className="bk" />지금은 <span style={{color: '#B85C38'}}>100명이 넘는 수강생</span> 분과 함께 성장하고 있습니다.</p>
           <figure data-reveal="" data-reveal-delay="120" className="about-figure" style={{gridColumn: '2', gridRow: '2', margin: '0'}}>
             <div className="about-imgwrap" style={{overflow: 'hidden', borderRadius: '8px'}}><Image src="/assets/profile.jpg" width={1646} height={1646} sizes="(max-width: 760px) 100vw, 45vw" alt="리빙 크리에이터 이윰" className="about-img" /></div>
           </figure>
@@ -128,19 +128,19 @@ export default async function Home() {
           </div>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', paddingTop: '28px', borderTop: '1px solid #DDD5C8'}}>
             <div>
-              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>3주 만에</div>
-              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>1,000</div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>3달 만에</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>10,000</div>
               <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워</div>
             </div>
             <div>
-              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>7주차</div>
-              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>5,000</div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#938B7F', marginBottom: '7px'}}>5달 만에</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#201C17'}}>20,000</div>
               <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워</div>
             </div>
             <div>
-              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#B85C38', marginBottom: '7px'}}>12주차</div>
-              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#B85C38'}}>10,000</div>
-              <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>팔로워 달성</div>
+              <div style={{fontSize: '11px', letterSpacing: '0.04em', color: '#B85C38', marginBottom: '7px'}}>함께 성장하는</div>
+              <div className="serif" style={{fontSize: 'clamp(26px,3.2vw,34px)', lineHeight: '1', color: '#B85C38'}}>100+</div>
+              <div style={{fontSize: '12px', color: '#938B7F', marginTop: '6px'}}>수강생</div>
             </div>
           </div>
         </div>
