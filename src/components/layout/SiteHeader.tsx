@@ -63,16 +63,19 @@ export default async function SiteHeader({
         </Link>
 
         <nav className={styles.navigation} aria-label="주요 메뉴">
-          {navigationItems.map((item) => (
-            <Link
+          {navigationItems.map((item) => {
+            const NavigationLink = item.href.startsWith("/#") ? "a" : Link;
+            return (
+            <NavigationLink
               key={item.key}
               href={item.href}
               className={`${styles.navLink} ${item.key === "courses" ? styles.courseLink : ""} ${active === item.key ? styles.active : ""}`}
               aria-current={active === item.key ? "page" : undefined}
             >
               {item.label}
-            </Link>
-          ))}
+            </NavigationLink>
+            );
+          })}
         </nav>
 
         <div className={styles.actions}>

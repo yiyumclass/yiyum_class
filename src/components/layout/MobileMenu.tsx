@@ -78,18 +78,21 @@ export default function MobileMenu({
         </div>
 
         <ul className={styles.list}>
-          {navItems.map((item) => (
+          {navItems.map((item) => {
+            const NavigationLink = item.href.startsWith("/#") ? "a" : Link;
+            return (
             <li key={item.key}>
-              <Link
+              <NavigationLink
                 href={item.href}
                 className={`${styles.link} ${activeKey === item.key ? styles.active : ""}`}
                 aria-current={activeKey === item.key ? "page" : undefined}
                 onClick={close}
               >
                 {item.label}
-              </Link>
+              </NavigationLink>
             </li>
-          ))}
+            );
+          })}
         </ul>
 
         <div className={styles.footerActions}>
