@@ -34,7 +34,8 @@ try {
     await database.exec(definition(new RegExp(`create table (?:if not exists )?public\\.${table} \\([\\s\\S]*?\\n\\);`, "g")));
   }
   await database.exec("alter table orders add column refund_policy_version text, add column refund_policy_agreed_at timestamptz;");
-  for (const name of ["generate_order_uid", "create_toss_payment_order", "record_toss_refund_policy_consent", "fail_toss_payment_order", "complete_toss_payment_server", "begin_toss_refund_server", "complete_toss_refund_server"]) {
+  await database.exec("alter table products add column detail_body text, add column list_price_krw integer, add column file_path text;");
+  for (const name of ["is_admin", "get_public_products", "generate_order_uid", "create_toss_payment_order", "record_toss_refund_policy_consent", "fail_toss_payment_order", "complete_toss_payment_server", "begin_toss_refund_server", "complete_toss_refund_server"]) {
     await database.exec(definition(new RegExp(`create (?:or replace )?function public\\.${name}\\([\\s\\S]*?\\$\\$;`, "g"), true));
   }
   const refundMigration = migrations.find(migration => migration.name === "20260722130000_create_toss_refund_flow.sql");
@@ -84,6 +85,45 @@ try {
   await assert.rejects(complete(), /order is not pending/);
   await assert.rejects(beginRefund(), /already refunded/);
   console.log("PASS: isolated PostgreSQL order/cancel/retry, ownership/amount/role validation, approval replay, single entitlement/notification, expiry, refund retry, duplicate cancellation, revocation and post-refund rejection");
+
+  await database.exec(migrations.find(migration => migration.name === "20261004100000_add_owner_payment_verification.sql").sql);
+  const verificationSlug = "admin-payment-verification-100";
+  const createVerification = () => rows("select * from create_toss_payment_order($1)", [verificationSlug]);
+  const setActor = (userId) => rows("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claim.role','authenticated',false)", [userId]);
+  assert.equal((await rows("select * from get_public_products($1)", [verificationSlug])).length, 0);
+  assert.ok((await rows("select * from get_public_products(null)")).every(product => product.slug !== verificationSlug));
+  await setActor("");
+  await assert.rejects(createVerification(), /authentication required/);
+  await setActor(buyerId);
+  await assert.rejects(createVerification(), /owner role required/);
+  await rows("insert into admin_users(user_id,role,is_active) values($1,'operator',true)", [otherId]);
+  await setActor(otherId);
+  await assert.rejects(createVerification(), /owner role required/);
+  await setActor(ownerId);
+  await rows("update admin_users set is_active=false where user_id=$1", [ownerId]);
+  await assert.rejects(createVerification(), /owner role required/);
+  await rows("update admin_users set is_active=true where user_id=$1", [ownerId]);
+  await assert.rejects(rows("update products set price_krw=1 where slug=$1", [verificationSlug]), /products_payment_verification_restricted/);
+  await assert.rejects(rows("update products set status='active' where slug=$1", [verificationSlug]), /products_payment_verification_restricted/);
+  await assert.rejects(rows("update products set access_period_days=null where slug=$1", [verificationSlug]), /products_payment_verification_restricted/);
+  await rows("insert into products(slug,product_type,title,price_krw,status) values('other-draft','course','Draft',100,'draft')");
+  await assert.rejects(rows("select * from create_toss_payment_order('other-draft')"), /active product not found/);
+  const verificationOrder = (await createVerification())[0];
+  assert.equal(verificationOrder.amount, 100);
+  assert.equal((await createVerification())[0].order_uid, verificationOrder.order_uid);
+  await rows("select record_toss_refund_policy_consent($1,'2026-07-29')", [verificationOrder.order_uid]);
+  await database.exec("select set_config('request.jwt.claim.role','service_role',false)");
+  await rows("select * from complete_toss_payment_server($1,$2,'qa-100-payment',100,now())", [ownerId, verificationOrder.order_uid]);
+  assert.equal((await rows("select count(*)::int as count from product_entitlements where user_id=$1 and status='active'", [ownerId]))[0].count, 1);
+  const verificationOrderId = (await rows("select id from orders where order_uid=$1", [verificationOrder.order_uid]))[0].id;
+  const verificationRefund = (await rows("select * from begin_toss_refund_server($1,$2,'RFD-QA-100','qa-100-refund','100 KRW verification')", [verificationOrderId, ownerId]))[0];
+  await rows("select * from complete_toss_refund_server($1,'qa-100-payment',100,now(),'qa-100-cancel',$2,$3,'100 KRW verification')", [verificationOrder.order_uid, verificationRefund.refund_uid, ownerId]);
+  assert.equal((await rows("select status from orders where id=$1", [verificationOrderId]))[0].status, "refunded");
+  assert.equal((await rows("select status from product_entitlements where user_id=$1", [ownerId]))[0].status, "revoked");
+  await rows("update products set status='archived' where slug=$1", [verificationSlug]);
+  await assert.rejects(createVerification(), /active product not found/);
+  assert.equal((await rows("select price_krw from products where slug='sns-monetization-feedback'"))[0].price_krw, 1200000);
+  console.log("PASS: owner-only 100 KRW verification, hidden catalog, anonymous/member/operator/inactive-owner rejection, fixed price, no unrelated draft checkout, shared approval/refund and archival");
 } finally {
   await database.close();
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isTossPaymentWindowConfigured } from "@/lib/store/free-enrollment";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
+import { loadCheckoutProduct } from "@/lib/store/checkout-products";
 import { phonePassDefinition } from "@/lib/store/membership-plans";
 import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
@@ -58,7 +59,7 @@ export async function createPaymentOrderAction(
     return { ok: false, message: "로그인 후 다시 결제해 주세요." };
   }
 
-  if (!(await loadPublicProductBySlug(productSlug))) {
+  if (!(await loadCheckoutProduct(productSlug))) {
     return { ok: false, message: "현재 신청할 수 없는 상품입니다." };
   }
 

@@ -14,7 +14,8 @@ import {
   isMembershipPlanSlug,
 } from "@/lib/store/membership-plans";
 import { loadPublicCourseBySlug } from "@/lib/store/public-course-catalog";
-import { loadPublicProductBySlug } from "@/lib/store/public-products";
+import { loadCheckoutProduct } from "@/lib/store/checkout-products";
+import { isPaymentVerificationProduct } from "@/lib/payments/verification-product";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
@@ -44,7 +45,7 @@ export default async function CheckoutPage({
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const product = await loadPublicProductBySlug(productSlug);
+  const product = await loadCheckoutProduct(productSlug);
   if (!product) notFound();
   const [courseItem, alreadyEnrolled] = await Promise.all([
     product.productType === "course"
@@ -130,6 +131,14 @@ export default async function CheckoutPage({
               ? "Toss Payments 테스트 결제 · 실제 청구 없음"
               : "Toss Payments 안전 결제"}
         </div>
+
+        {isPaymentVerificationProduct(product.slug) && (
+          <p role="note" style={{ color: "#F0A98C", fontSize: 13, lineHeight: 1.7 }}>
+            소유자 관리자 전용 100원 결제 검증입니다.
+            <br />운영 모드에서는 실제로 100원이 청구됩니다.
+            <br />정규 강의 이용권은 발급되지 않으며, 검증 후 전액 취소합니다.
+          </p>
+        )}
 
         {membershipBenefits.length > 0 && (
           <div
