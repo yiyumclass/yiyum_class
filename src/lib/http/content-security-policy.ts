@@ -26,15 +26,13 @@ export function buildContentSecurityPolicy({
     "blob:",
     supabaseOrigin,
     "https://*.supabase.co",
-    "https://stream.mux.com",
+    "https://*.mux.com",
   ].filter(Boolean);
 
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDevelopment ? " 'unsafe-eval'" : ""} https://js.tosspayments.com`,
-    // React style 속성은 현재 화면 전반에서 사용하므로 style-src-attr에만 한정 허용한다.
-    // 스타일 태그와 외부 스타일은 nonce 및 명시한 출처만 허용한다.
-    `style-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com`,
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
     "style-src-attr 'unsafe-inline'",
     "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com",
     "img-src 'self' blob: data: https://*.supabase.co https://image.mux.com",

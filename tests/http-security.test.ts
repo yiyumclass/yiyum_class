@@ -72,7 +72,7 @@ test("post-login redirects remain internal", () => {
   assert.equal(normalizeInternalNext("/auth/callback?next=/admin"), "/");
 });
 
-test("production CSP nonces style elements while limiting unsafe-inline to style attributes", () => {
+test("production CSP allows Mux inline styles without weakening script protections", () => {
   const policy = buildContentSecurityPolicy({
     nonce: "test-nonce",
     isDevelopment: false,
@@ -86,11 +86,51 @@ test("production CSP nonces style elements while limiting unsafe-inline to style
   );
 
   assert.deepEqual(directives.get("style-src-attr"), ["'unsafe-inline'"]);
-  assert.equal(directives.get("style-src")?.includes("'unsafe-inline'"), false);
-  assert.equal(directives.get("style-src")?.includes("'nonce-test-nonce'"), true);
+  assert.equal(directives.get("style-src")?.includes("'unsafe-inline'"), true);
+  assert.equal(
+    directives.get("style-src")?.some((value) => /^'(?:nonce-|sha\d+-)/.test(value)),
+    false
+  );
+  assert.equal(directives.has("style-src-elem"), false);
+  assert.equal(directives.get("script-src")?.includes("'nonce-test-nonce'"), true);
+  assert.equal(directives.get("script-src")?.includes("'strict-dynamic'"), true);
+  assert.equal(directives.get("script-src")?.includes("'unsafe-inline'"), false);
   assert.equal(directives.get("script-src")?.includes("'unsafe-eval'"), false);
+  assert.deepEqual(directives.get("default-src"), ["'self'"]);
+  assert.deepEqual(directives.get("object-src"), ["'none'"]);
+  assert.deepEqual(directives.get("base-uri"), ["'self'"]);
+  assert.deepEqual(directives.get("frame-ancestors"), ["'none'"]);
+  assert.deepEqual(directives.get("form-action"), ["'self'", "https://*.tosspayments.com"]);
   assert.equal(directives.has("upgrade-insecure-requests"), true);
   assert.equal(directives.get("connect-src")?.includes("https://project.supabase.co"), true);
+});
+
+test("CSP permits native HLS on Mux CDN subdomains without allowing arbitrary media", () => {
+  for (const isDevelopment of [false, true]) {
+    const policy = buildContentSecurityPolicy({
+      nonce: "video-nonce",
+      isDevelopment,
+      supabaseUrl: "https://project.supabase.co/rest/v1",
+    });
+    const directives = new Map(
+      policy.split("; ").map((directive) => {
+        const [name, ...values] = directive.split(" ");
+        return [name, values];
+      })
+    );
+
+    assert.deepEqual(directives.get("media-src"), [
+      "'self'",
+      "blob:",
+      "https://project.supabase.co",
+      "https://*.supabase.co",
+      "https://*.mux.com",
+    ]);
+    assert.equal(directives.get("connect-src")?.includes("https://*.mux.com"), true);
+    assert.deepEqual(directives.get("worker-src"), ["'self'", "blob:"]);
+    assert.equal(directives.get("script-src")?.includes("'unsafe-eval'"), isDevelopment);
+    assert.equal(directives.has("upgrade-insecure-requests"), !isDevelopment);
+  }
 });
 
 test("webhook limiter checks combined rules atomically and resets after its window", () => {
