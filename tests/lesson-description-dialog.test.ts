@@ -11,16 +11,16 @@ const savedUpdatedAt = "2026-10-05T10:00:00.000001Z";
 
 type TestElement = { type: unknown; props: Record<string, unknown> };
 
-function findElement(tree: unknown, type: unknown): TestElement | undefined {
+function findElement(tree: unknown, type: unknown, matches: (element: TestElement) => boolean = () => true): TestElement | undefined {
   if (Array.isArray(tree)) {
     for (const child of tree) {
-      const found = findElement(child, type);
+      const found = findElement(child, type, matches);
       if (found) return found;
     }
   } else if (tree && typeof tree === "object" && "props" in tree) {
     const element = tree as TestElement;
-    if (element.type === type) return element;
-    return findElement(element.props.children, type);
+    if (element.type === type && matches(element)) return element;
+    return findElement(element.props.children, type, matches);
   }
 }
 
@@ -130,6 +130,7 @@ function createDialogHarness({
   };
   return {
     element, lesson, confirmCalls, saveCalls,
+    savedNotice: () => findElement(render(), "admin-dialog", (dialog) => dialog.props.title === "저장 완료"),
     closeCount: () => closeCount,
     setConfirmResult: (value: boolean) => { confirmResult = value; },
     edit: (value: string) => {
@@ -163,11 +164,42 @@ test("description dialog keeps controlled saved text and advances the CAS token 
   assert.equal(harness.closeCount(), 1);
 });
 
+test("successful saves show an acknowledgement popup instead of an inline success message", async () => {
+  const harness = createDialogHarness();
+  assert.equal(harness.element("admin-dialog").props.title, "강의 안내 수정");
+  assert.equal(harness.element("dialog-actions").props.submitLabel, "강의 안내 저장");
+  assert.equal(harness.savedNotice(), undefined);
+  harness.edit("공지와 참고 링크");
+  await harness.submit();
+  const notice = harness.savedNotice();
+  assert.ok(notice);
+  assert.equal(notice.props.description, "강의 안내가 저장되었습니다.");
+  assert.equal(notice.props.size, "notice");
+  const acknowledge = findElement(notice, "button");
+  assert.ok(acknowledge);
+  assert.equal(acknowledge.props.type, "button");
+  assert.equal(acknowledge.props.children, "확인");
+  (acknowledge.props.onClick as () => void)();
+  assert.equal(harness.savedNotice(), undefined);
+  assert.equal(harness.element("textarea").props.value, "공지와 참고 링크");
+  assert.equal(harness.closeCount(), 0);
+  assert.equal(harness.element("dialog-actions").props.disabled, true);
+  assert.equal(findElement(harness.element("form"), "p", (element) => element.props.role === "status"), undefined);
+
+  harness.edit("두 번째 안내");
+  await harness.submit();
+  assert.ok(harness.savedNotice());
+  (harness.savedNotice()?.props.onClose as () => void)();
+  assert.equal(harness.savedNotice(), undefined);
+  assert.equal(harness.element("textarea").props.value, "두 번째 안내");
+});
+
 test("failed or conflicting saves preserve the draft and previous token and require dirty-close confirmation", async () => {
   for (const message of ["저장 실패", "다른 곳에서 변경되었습니다."]) {
     const harness = createDialogHarness({ save: async () => ({ status: "error", message, fieldErrors: {} }) });
     harness.edit("삭제되면 안 되는 설명");
     await harness.submit();
+    assert.equal(harness.savedNotice(), undefined);
     assert.equal(harness.element("textarea").props.value, "삭제되면 안 되는 설명");
     assert.equal(harness.hiddenValues().get("expectedUpdatedAt"), initialUpdatedAt);
     await harness.close();
@@ -184,6 +216,7 @@ test("transport failures retain controlled text and allow a retry with the origi
   harness.edit("재시도할 설명");
   const result = await harness.submit();
   assert.equal(result.status, "error");
+  assert.equal(harness.savedNotice(), undefined);
   assert.equal(harness.element("textarea").props.value, "재시도할 설명");
   assert.equal(harness.hiddenValues().get("expectedUpdatedAt"), initialUpdatedAt);
   assert.equal(harness.element("admin-dialog").props.busy, false);
@@ -194,6 +227,7 @@ test("saving blocks dialog close and disables controls until the captured submis
   const harness = createDialogHarness({ save: () => new Promise((resolve) => { finish = resolve; }) });
   harness.edit("저장 요청 내용");
   const submission = harness.submit();
+  assert.equal(harness.savedNotice(), undefined);
   assert.equal(harness.element("admin-dialog").props.busy, true);
   assert.equal(harness.element("textarea").props.disabled, true);
   await harness.close();
@@ -203,6 +237,7 @@ test("saving blocks dialog close and disables controls until the captured submis
   assert.equal(harness.saveCalls[0].get("expectedUpdatedAt"), initialUpdatedAt);
   finish({ status: "success", message: "저장", fieldErrors: {}, savedDescription: "저장 요청 내용", savedDescriptionUpdatedAt: savedUpdatedAt });
   await submission;
+  assert.ok(harness.savedNotice());
   assert.equal(harness.element("admin-dialog").props.busy, false);
   await harness.close();
   assert.equal(harness.closeCount(), 1);

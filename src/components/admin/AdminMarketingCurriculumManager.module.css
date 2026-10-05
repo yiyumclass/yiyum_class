@@ -208,6 +208,61 @@
   min-width: 0;
 }
 
+.chapterToggle {
+  padding: var(--admin-gap-md) var(--admin-panel-pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--admin-gap-md);
+  color: var(--admin-ink);
+  list-style: none;
+  cursor: pointer;
+}
+
+.chapterToggle::-webkit-details-marker {
+  display: none;
+}
+
+.chapterToggle:hover {
+  background: var(--admin-surface-sunken);
+}
+
+.chapterToggle:focus-visible {
+  outline: 2px solid var(--admin-accent-ink);
+  outline-offset: -3px;
+}
+
+.chapterOverview {
+  min-width: 0;
+  display: grid;
+  gap: var(--admin-gap-xs);
+  overflow-wrap: anywhere;
+}
+
+.chapterOverview strong {
+  font-size: var(--admin-text-md);
+}
+
+.chapterNumber,
+.chapterCount {
+  color: var(--admin-ink-soft);
+  font-size: var(--admin-text-xs);
+}
+
+.chapterChevron {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.chapter details[open] > .chapterToggle {
+  border-bottom: 1px solid var(--admin-line);
+}
+
+.chapter details[open] > .chapterToggle .chapterChevron {
+  transform: rotate(180deg);
+}
+
 .chapterList,
 .itemList {
   margin: 0;
@@ -430,6 +485,10 @@
   .chapterHeader {
     padding: var(--admin-panel-pad-mobile);
     flex-wrap: wrap;
+  }
+
+  .chapterToggle {
+    padding-inline: var(--admin-panel-pad-mobile);
   }
 
   .chapterTitle {

@@ -33,6 +33,7 @@ function loadModule<Module>(path: string, dependencies: Record<string, unknown>)
   });
   runInNewContext(compiled.outputText, {
     exports,
+    crypto: globalThis.crypto,
     console: { error: () => {} },
     require: (name: string) => {
       if (Object.hasOwn(dependencies, name)) return dependencies[name];
@@ -332,9 +333,9 @@ test("stale and missing migration saves return explicit failures without success
   }
 });
 
-function renderAdmin(initialResult: curriculumTypes.MarketingCurriculumLoadResult) {
+function loadAdmin(overrides: Record<string, unknown> = {}) {
   const components = loadModule<{
-    default: React.ComponentType<{ initialResult: curriculumTypes.MarketingCurriculumLoadResult }>;
+    default: (props: { initialResult: curriculumTypes.MarketingCurriculumLoadResult }) => React.ReactElement;
   }>("src/components/admin/AdminMarketingCurriculumManager.tsx", {
     react: React,
     "react/jsx-runtime": jsxRuntime,
@@ -343,10 +344,15 @@ function renderAdmin(initialResult: curriculumTypes.MarketingCurriculumLoadResul
     "@/lib/store/marketing-curriculum-types": curriculumTypes,
     "@/lib/store/marketing-curriculum-validation": curriculumValidation,
     "./AdminFeedback": { useAdminFeedback: () => ({ toast: () => {}, confirm: async () => false }) },
-    "./icons": { ArrowUpIcon: () => null, ArrowDownIcon: () => null, PlusIcon: () => null },
+    "./icons": { ArrowUpIcon: () => null, ArrowDownIcon: () => null, ChevronIcon: () => null, PlusIcon: () => null },
     "./AdminMarketingCurriculumManager.module.css": { default: {} },
+    ...overrides,
   });
-  return renderToStaticMarkup(React.createElement(components.default, { initialResult }));
+  return components.default;
+}
+
+function renderAdmin(initialResult: curriculumTypes.MarketingCurriculumLoadResult) {
+  return renderToStaticMarkup(React.createElement(loadAdmin(), { initialResult }));
 }
 
 test("admin missing schema renders approved copy, assignment semantics and disables editing and saving", () => {
@@ -357,6 +363,8 @@ test("admin missing schema renders approved copy, assignment semantics and disab
   assert.match(markup, /강의 번호|차시 번호/);
   assert.match(markup, /과제/);
   assert.match(markup, /카테고리 잘못 고르면 시작부터 불리합니다/);
+  assert.equal((markup.match(/<summary>/g) ?? []).length, 10);
+  assert.doesNotMatch(markup, /<details[^>]*open/);
 });
 
 test("admin persisted row enables accessible editing but save stays disabled until something changes", () => {
@@ -368,4 +376,96 @@ test("admin persisted row enables accessible editing but save stays disabled unt
   assert.match(markup, /1번째 챕터 위로 이동/);
   assert.match(markup, /1번째 챕터 제목/);
   assert.match(markup, /최신 내용 다시 불러오기/);
+  assert.equal((markup.match(/<summary>/g) ?? []).length, 10);
+  assert.doesNotMatch(markup, /<details[^>]*open/);
+});
+
+type AdminTestElement = React.ReactElement<Record<string, unknown>>;
+
+function adminElements(tree: unknown, type: string): AdminTestElement[] {
+  if (Array.isArray(tree)) return tree.flatMap((child) => adminElements(child, type));
+  if (!React.isValidElement<Record<string, unknown>>(tree)) return [];
+  return [...(tree.type === type ? [tree] : []), ...adminElements(tree.props.children, type)];
+}
+
+function adminInteractionHarness() {
+  const hooks: unknown[] = [];
+  const saves: { chapters: curriculumTypes.MarketingCurriculumChapter[] }[] = [];
+  let hookIndex = 0;
+  let pending = Promise.resolve();
+  const initialResult = resolveMarketingCurriculumLoad({ curriculum_key: "sns-monetization", chapters: draft(), version: 3, updated_at: "2026-10-05T00:00:00Z" }, null, snsMarketingCurriculumSeed);
+  const Component = loadAdmin({
+    react: {
+      useState(initial: unknown) {
+        const index = hookIndex++;
+        if (!(index in hooks)) hooks[index] = typeof initial === "function" ? initial() : initial;
+        return [hooks[index], (next: unknown) => {
+          hooks[index] = typeof next === "function" ? next(hooks[index]) : next;
+        }];
+      },
+      useRef(initial: unknown) {
+        const index = hookIndex++;
+        if (!(index in hooks)) hooks[index] = { current: initial };
+        return hooks[index];
+      },
+      useMemo: (calculate: () => unknown) => calculate(),
+      useEffect: () => {},
+      useTransition: () => [false, (action: () => Promise<void>) => { pending = action(); }],
+    },
+    "@/app/admin/curriculum/actions": { saveMarketingCurriculumAction: async (input: typeof saves[number]) => {
+      saves.push(input);
+      return { ok: true, version: 4, chapters: input.chapters };
+    } },
+  });
+  function elements(type: string) {
+    hookIndex = 0;
+    return adminElements(Component({ initialResult }), type);
+  }
+  function toggle(index: number, open: boolean) {
+    const onToggle = elements("details")[index].props.onToggle as (event: unknown) => void;
+    onToggle({ currentTarget: { open } });
+  }
+  return { elements, toggle, saves, saved: () => pending };
+}
+
+test("chapter toggles preserve drafts and whole-curriculum saves even when all chapters are closed", async () => {
+  const harness = adminInteractionHarness();
+  const firstItem = snsMarketingCurriculumSeed[0].items[0];
+  assert.ok(harness.elements("details").every((element) => element.props.open === false));
+  harness.toggle(0, true);
+  assert.equal(harness.elements("details")[0].props.open, true);
+  assert.equal(harness.elements("button").find((element) => element.props.type === "submit")?.props.disabled, true);
+
+  const itemInput = harness.elements("input").find((element) => element.props.id === `item-title-${firstItem.key}`);
+  assert.ok(itemInput);
+  (itemInput.props.onChange as (event: unknown) => void)({ target: { value: "수정한 제목" } });
+  harness.toggle(0, false);
+  harness.toggle(0, true);
+  assert.equal(harness.elements("input").find((element) => element.props.id === `item-title-${firstItem.key}`)?.props.value, "수정한 제목");
+  harness.toggle(0, false);
+  (harness.elements("form")[0].props.onSubmit as (event: unknown) => void)({ preventDefault() {} });
+  await harness.saved();
+  assert.equal(harness.saves.length, 1);
+  assert.equal(harness.saves[0].chapters.length, 10);
+  assert.equal(harness.saves[0].chapters.flatMap((chapter) => chapter.items).length, 102);
+  assert.equal(countMarketingLessons(harness.saves[0].chapters), 89);
+  assert.equal(harness.saves[0].chapters[0].items[0].title, "수정한 제목");
+  assert.ok(harness.elements("details").every((element) => element.props.open === false));
+});
+
+test("chapter expansion follows stable keys on reorder and new chapters open automatically", () => {
+  const harness = adminInteractionHarness();
+  harness.toggle(0, true);
+  const moveButton = harness.elements("button").find((element) => element.props["aria-label"] === "1번째 챕터 아래로 이동");
+  assert.ok(moveButton);
+  (moveButton.props.onClick as () => void)();
+  assert.equal(harness.elements("details")[0].props.open, false);
+  assert.equal(harness.elements("details")[1].props.open, true);
+  const addButton = harness.elements("button").find((element) => (element.props.children as unknown[])?.includes("챕터 추가"));
+  assert.ok(addButton);
+  (addButton.props.onClick as () => void)();
+  const details = harness.elements("details");
+  assert.equal(details.length, 11);
+  assert.equal(details[10].props.open, true);
+  assert.equal(details[1].props.open, true);
 });

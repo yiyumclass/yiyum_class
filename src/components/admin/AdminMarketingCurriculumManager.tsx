@@ -14,7 +14,7 @@ import {
 } from "@/lib/store/marketing-curriculum-types";
 import { validateMarketingCurriculum } from "@/lib/store/marketing-curriculum-validation";
 import { useAdminFeedback } from "./AdminFeedback";
-import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from "./icons";
+import { ArrowDownIcon, ArrowUpIcon, ChevronIcon, PlusIcon } from "./icons";
 import styles from "./AdminMarketingCurriculumManager.module.css";
 
 type AdminMarketingCurriculumManagerProps = {
@@ -55,6 +55,7 @@ export default function AdminMarketingCurriculumManager({
   const { toast, confirm } = useAdminFeedback();
   const [chapters, setChapters] = useState(curriculum.chapters);
   const [savedChapters, setSavedChapters] = useState(curriculum.chapters);
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(() => new Set());
   const [version, setVersion] = useState(curriculum.version);
   const [failure, setFailure] = useState<SaveFailure | null>(null);
   const [busy, setBusy] = useState<"saving" | "confirming" | "reloading" | null>(null);
@@ -103,11 +104,23 @@ export default function AdminMarketingCurriculumManager({
 
   function addChapter() {
     if (!canEdit || busyLock.current || chapters.length >= MAX_MARKETING_CHAPTERS) return;
+    const key = `chapter-${crypto.randomUUID()}`;
     updateChapters([...chapters, {
-      key: `chapter-${crypto.randomUUID()}`,
+      key,
       title: "새 챕터",
       items: [],
     }]);
+    setExpandedChapters((current) => new Set(current).add(key));
+  }
+
+  function toggleChapter(key: string, open: boolean) {
+    setExpandedChapters((current) => {
+      if (current.has(key) === open) return current;
+      const next = new Set(current);
+      if (open) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   }
 
   function addItem(chapter: MarketingCurriculumChapter, kind: MarketingCurriculumItem["kind"]) {
@@ -232,7 +245,7 @@ export default function AdminMarketingCurriculumManager({
         <div className={styles.editorHeading}>
           <div>
             <h2>챕터 구성</h2>
-            <p id="curriculum-number-help">위·아래 버튼으로 순서를 바꿉니다. 차시 번호는 전체 챕터 기준이며 순서를 바꿔도 유지됩니다. 번호가 있는 과제도 차시 수에 포함됩니다.</p>
+            <p id="curriculum-number-help">챕터 제목을 클릭하면 펼치거나 접을 수 있습니다. 펼친 뒤 위·아래 버튼으로 순서를 바꿉니다. 차시 번호는 전체 챕터 기준이며 순서를 바꿔도 유지됩니다. 번호가 있는 과제도 차시 수에 포함됩니다.</p>
           </div>
           <button type="button" className={styles.secondaryButton} disabled={!canEdit || locked || chapters.length >= MAX_MARKETING_CHAPTERS} onClick={addChapter}><PlusIcon />챕터 추가</button>
         </div>
@@ -255,66 +268,76 @@ export default function AdminMarketingCurriculumManager({
               const atItemLimit = chapter.items.length >= MAX_MARKETING_ITEMS_PER_CHAPTER || items.length >= MAX_MARKETING_ITEMS;
               return (
                 <li key={chapter.key} className={styles.chapter}>
-                  <div className={styles.chapterHeader}>
-                    <div className={styles.chapterTitle}>
-                      <label htmlFor={`chapter-title-${chapter.key}`}>{chapterLabel} 제목</label>
-                      <input id={`chapter-title-${chapter.key}`} type="text" value={chapter.title} placeholder="챕터 제목을 입력하세요" onChange={(event) => updateChapter(chapter.key, { title: event.target.value })} />
+                  <details open={expandedChapters.has(chapter.key)} onToggle={(event) => toggleChapter(chapter.key, event.currentTarget.open)}>
+                    <summary className={styles.chapterToggle}>
+                      <span className={styles.chapterOverview}>
+                        <span className={styles.chapterNumber}>Chapter {chapterIndex + 1}</span>
+                        <strong>{chapter.title || "제목 없는 챕터"}</strong>
+                        <span className={styles.chapterCount}>항목 {chapter.items.length}개 · 번호 있는 차시 {countMarketingLessons([chapter])}개</span>
+                      </span>
+                      <ChevronIcon className={styles.chapterChevron} />
+                    </summary>
+                    <div className={styles.chapterHeader}>
+                      <div className={styles.chapterTitle}>
+                        <label htmlFor={`chapter-title-${chapter.key}`}>{chapterLabel} 제목</label>
+                        <input id={`chapter-title-${chapter.key}`} type="text" value={chapter.title} placeholder="챕터 제목을 입력하세요" onChange={(event) => updateChapter(chapter.key, { title: event.target.value })} />
+                      </div>
+                      <div className={styles.rowActions}>
+                        <button type="button" className={styles.iconButton} aria-label={`${chapterLabel} 위로 이동`} disabled={chapterIndex === 0} onClick={() => updateChapters(moveEntry(chapters, chapterIndex, -1))}><ArrowUpIcon /></button>
+                        <button type="button" className={styles.iconButton} aria-label={`${chapterLabel} 아래로 이동`} disabled={chapterIndex === chapters.length - 1} onClick={() => updateChapters(moveEntry(chapters, chapterIndex, 1))}><ArrowDownIcon /></button>
+                        <button type="button" className={styles.dangerButton} aria-label={`${chapterLabel} 삭제`} onClick={() => void confirmChange({
+                          title: "챕터를 삭제할까요?",
+                          description: `“${chapter.title || chapterLabel}”의 항목 ${chapter.items.length}개가 함께 삭제됩니다. 전체 저장 전에는 변경 취소로 되돌릴 수 있습니다.`,
+                          confirmLabel: "챕터 삭제",
+                          tone: "danger",
+                        }, () => setChapters(chapters.filter((entry) => entry.key !== chapter.key)))}>삭제</button>
+                      </div>
                     </div>
-                    <div className={styles.rowActions}>
-                      <button type="button" className={styles.iconButton} aria-label={`${chapterLabel} 위로 이동`} disabled={chapterIndex === 0} onClick={() => updateChapters(moveEntry(chapters, chapterIndex, -1))}><ArrowUpIcon /></button>
-                      <button type="button" className={styles.iconButton} aria-label={`${chapterLabel} 아래로 이동`} disabled={chapterIndex === chapters.length - 1} onClick={() => updateChapters(moveEntry(chapters, chapterIndex, 1))}><ArrowDownIcon /></button>
-                      <button type="button" className={styles.dangerButton} aria-label={`${chapterLabel} 삭제`} onClick={() => void confirmChange({
-                        title: "챕터를 삭제할까요?",
-                        description: `“${chapter.title || chapterLabel}”의 항목 ${chapter.items.length}개가 함께 삭제됩니다. 전체 저장 전에는 변경 취소로 되돌릴 수 있습니다.`,
-                        confirmLabel: "챕터 삭제",
-                        tone: "danger",
-                      }, () => setChapters(chapters.filter((entry) => entry.key !== chapter.key)))}>삭제</button>
+                    <div className={styles.chapterMeta}><span>항목 {chapter.items.length} / {MAX_MARKETING_ITEMS_PER_CHAPTER}개</span><span>번호 있는 차시 {countMarketingLessons([chapter])}개</span></div>
+                    {chapter.items.length === 0 && <p className={styles.emptyChapter}>아직 항목이 없습니다. 강의 또는 과제를 추가해 주세요.</p>}
+                    <ol className={styles.itemList}>
+                      {chapter.items.map((item, itemIndex) => {
+                        const itemLabel = `${chapterLabel} ${itemIndex + 1}번째 항목`;
+                        return (
+                          <li key={item.key} className={styles.item}>
+                            <span className={styles.itemPosition}>{itemIndex + 1}<span className={styles.srOnly}>번째 항목</span></span>
+                            <div className={styles.kindField}>
+                              <label htmlFor={`kind-${item.key}`}>유형<span className={styles.srOnly}> · {itemLabel}</span></label>
+                              <select id={`kind-${item.key}`} value={item.kind} onChange={(event) => {
+                                const kind = event.target.value as MarketingCurriculumItem["kind"];
+                                updateItem(chapter.key, item.key, { kind, lessonNumber: kind === "lesson" && item.lessonNumber === null ? nextLessonNumber(chapters) : item.lessonNumber });
+                              }}><option value="lesson">강의</option><option value="assignment">과제</option></select>
+                            </div>
+                            <div className={styles.numberField}>
+                              <label htmlFor={`number-${item.key}`}>차시 번호<span className={styles.srOnly}> · {itemLabel}{item.kind === "assignment" ? " (선택)" : " (필수)"}</span></label>
+                              <input id={`number-${item.key}`} type="number" min="1" max="999" step="1" required={item.kind === "lesson"} inputMode="numeric" value={item.lessonNumber ?? ""} placeholder={item.kind === "assignment" ? "없음" : "번호"} onChange={(event) => updateItem(chapter.key, item.key, { lessonNumber: event.target.value === "" ? null : Number(event.target.value) })} />
+                            </div>
+                            <div className={styles.itemTitle}>
+                              <label htmlFor={`item-title-${item.key}`}>{item.kind === "assignment" ? "과제 제목" : "강의 제목"}<span className={styles.srOnly}> · {itemLabel}</span></label>
+                              <input id={`item-title-${item.key}`} type="text" value={item.title} placeholder={item.kind === "assignment" ? "과제 제목을 입력하세요" : "강의 제목을 입력하세요"} onChange={(event) => updateItem(chapter.key, item.key, { title: event.target.value })} />
+                            </div>
+                            <div className={styles.rowActions}>
+                              <button type="button" className={styles.iconButton} aria-label={`${itemLabel} 위로 이동`} disabled={itemIndex === 0} onClick={() => updateChapter(chapter.key, { items: moveEntry(chapter.items, itemIndex, -1) })}><ArrowUpIcon /></button>
+                              <button type="button" className={styles.iconButton} aria-label={`${itemLabel} 아래로 이동`} disabled={itemIndex === chapter.items.length - 1} onClick={() => updateChapter(chapter.key, { items: moveEntry(chapter.items, itemIndex, 1) })}><ArrowDownIcon /></button>
+                              <button type="button" className={styles.dangerButton} aria-label={`${itemLabel} 삭제`} onClick={() => void confirmChange({
+                                title: `${item.kind === "assignment" ? "과제" : "강의"} 항목을 삭제할까요?`,
+                                description: `“${item.title || itemLabel}”을 공개 목록에서 삭제합니다. 전체 저장 전에는 변경 취소로 되돌릴 수 있습니다.`,
+                                confirmLabel: "항목 삭제",
+                                tone: "danger",
+                              }, () => setChapters(chapters.map((entry) => entry.key === chapter.key ? { ...entry, items: entry.items.filter((entryItem) => entryItem.key !== item.key) } : entry)))}>삭제</button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                    <div className={styles.chapterFooter}>
+                      <div className={styles.addActions}>
+                        <button type="button" className={styles.secondaryButton} disabled={atItemLimit} onClick={() => addItem(chapter, "lesson")}><PlusIcon />강의 추가</button>
+                        <button type="button" className={styles.secondaryButton} disabled={atItemLimit} onClick={() => addItem(chapter, "assignment")}><PlusIcon />과제 추가</button>
+                      </div>
+                      <span>{atItemLimit ? "추가 가능한 항목 수에 도달했습니다." : "과제는 차시 번호를 비워 둘 수 있습니다."}</span>
                     </div>
-                  </div>
-                  <div className={styles.chapterMeta}><span>항목 {chapter.items.length} / {MAX_MARKETING_ITEMS_PER_CHAPTER}개</span><span>번호 있는 차시 {countMarketingLessons([chapter])}개</span></div>
-                  {chapter.items.length === 0 && <p className={styles.emptyChapter}>아직 항목이 없습니다. 강의 또는 과제를 추가해 주세요.</p>}
-                  <ol className={styles.itemList}>
-                    {chapter.items.map((item, itemIndex) => {
-                      const itemLabel = `${chapterLabel} ${itemIndex + 1}번째 항목`;
-                      return (
-                        <li key={item.key} className={styles.item}>
-                          <span className={styles.itemPosition}>{itemIndex + 1}<span className={styles.srOnly}>번째 항목</span></span>
-                          <div className={styles.kindField}>
-                            <label htmlFor={`kind-${item.key}`}>유형<span className={styles.srOnly}> · {itemLabel}</span></label>
-                            <select id={`kind-${item.key}`} value={item.kind} onChange={(event) => {
-                              const kind = event.target.value as MarketingCurriculumItem["kind"];
-                              updateItem(chapter.key, item.key, { kind, lessonNumber: kind === "lesson" && item.lessonNumber === null ? nextLessonNumber(chapters) : item.lessonNumber });
-                            }}><option value="lesson">강의</option><option value="assignment">과제</option></select>
-                          </div>
-                          <div className={styles.numberField}>
-                            <label htmlFor={`number-${item.key}`}>차시 번호<span className={styles.srOnly}> · {itemLabel}{item.kind === "assignment" ? " (선택)" : " (필수)"}</span></label>
-                            <input id={`number-${item.key}`} type="number" min="1" max="999" step="1" required={item.kind === "lesson"} inputMode="numeric" value={item.lessonNumber ?? ""} placeholder={item.kind === "assignment" ? "없음" : "번호"} onChange={(event) => updateItem(chapter.key, item.key, { lessonNumber: event.target.value === "" ? null : Number(event.target.value) })} />
-                          </div>
-                          <div className={styles.itemTitle}>
-                            <label htmlFor={`item-title-${item.key}`}>{item.kind === "assignment" ? "과제 제목" : "강의 제목"}<span className={styles.srOnly}> · {itemLabel}</span></label>
-                            <input id={`item-title-${item.key}`} type="text" value={item.title} placeholder={item.kind === "assignment" ? "과제 제목을 입력하세요" : "강의 제목을 입력하세요"} onChange={(event) => updateItem(chapter.key, item.key, { title: event.target.value })} />
-                          </div>
-                          <div className={styles.rowActions}>
-                            <button type="button" className={styles.iconButton} aria-label={`${itemLabel} 위로 이동`} disabled={itemIndex === 0} onClick={() => updateChapter(chapter.key, { items: moveEntry(chapter.items, itemIndex, -1) })}><ArrowUpIcon /></button>
-                            <button type="button" className={styles.iconButton} aria-label={`${itemLabel} 아래로 이동`} disabled={itemIndex === chapter.items.length - 1} onClick={() => updateChapter(chapter.key, { items: moveEntry(chapter.items, itemIndex, 1) })}><ArrowDownIcon /></button>
-                            <button type="button" className={styles.dangerButton} aria-label={`${itemLabel} 삭제`} onClick={() => void confirmChange({
-                              title: `${item.kind === "assignment" ? "과제" : "강의"} 항목을 삭제할까요?`,
-                              description: `“${item.title || itemLabel}”을 공개 목록에서 삭제합니다. 전체 저장 전에는 변경 취소로 되돌릴 수 있습니다.`,
-                              confirmLabel: "항목 삭제",
-                              tone: "danger",
-                            }, () => setChapters(chapters.map((entry) => entry.key === chapter.key ? { ...entry, items: entry.items.filter((entryItem) => entryItem.key !== item.key) } : entry)))}>삭제</button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                  <div className={styles.chapterFooter}>
-                    <div className={styles.addActions}>
-                      <button type="button" className={styles.secondaryButton} disabled={atItemLimit} onClick={() => addItem(chapter, "lesson")}><PlusIcon />강의 추가</button>
-                      <button type="button" className={styles.secondaryButton} disabled={atItemLimit} onClick={() => addItem(chapter, "assignment")}><PlusIcon />과제 추가</button>
-                    </div>
-                    <span>{atItemLimit ? "추가 가능한 항목 수에 도달했습니다." : "과제는 차시 번호를 비워 둘 수 있습니다."}</span>
-                  </div>
+                  </details>
                 </li>
               );
             })}

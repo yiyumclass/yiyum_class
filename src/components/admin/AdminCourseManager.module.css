@@ -1462,10 +1462,9 @@
   outline-offset: 3px;
 }
 
-.lessonDescriptionSaved {
-  margin: 0;
-  color: #68745d;
-  font-size: var(--admin-text-sm);
+.lessonDescriptionNoticeActions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .selectControl {

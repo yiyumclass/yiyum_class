@@ -155,4 +155,6 @@ test("description display uses escaped React text and protected external anchors
   assert.doesNotMatch(component, /dangerouslySetInnerHTML|innerHTML/);
   assert.match(component, /href=\{part\.href\} target="_blank" rel="noopener noreferrer"/);
   assert.match(component, /\{part\.text\}/);
+  assert.match(component, /<h2 id="lesson-description-title">강의 안내<\/h2>/);
+  assert.doesNotMatch(component, /영상 설명/);
 });

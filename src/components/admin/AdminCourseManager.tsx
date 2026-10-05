@@ -848,7 +848,7 @@ function CourseSectionCard({
                       className={styles.lessonDescriptionAction}
                       onClick={() => onOpenDialog({ type: "edit-lesson-description", lesson })}
                     >
-                      영상 설명
+                      강의 안내
                     </button>
                   )}
                 </small>

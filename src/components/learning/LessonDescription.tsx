@@ -12,7 +12,7 @@ export default function LessonDescription({
 
   return (
     <section className={className} aria-labelledby="lesson-description-title">
-      <h2 id="lesson-description-title">영상 설명</h2>
+      <h2 id="lesson-description-title">강의 안내</h2>
       {paragraphs.map((parts, paragraphIndex) => (
         <p key={paragraphIndex}>
           {parts.map((part, partIndex) => part.type === "link" ? (

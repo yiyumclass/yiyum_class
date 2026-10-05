@@ -36,11 +36,11 @@ export function validateLessonDescription(value: unknown):
   | { valid: true; description: string }
   | { valid: false; message: string } {
   if (typeof value !== "string" || value.includes("\0")) {
-    return { valid: false, message: "영상 설명을 일반 텍스트로 입력해 주세요." };
+    return { valid: false, message: "강의 안내를 일반 텍스트로 입력해 주세요." };
   }
   const description = value.replace(/\r\n?/g, "\n").trim();
   if (description.length > MAX_LESSON_DESCRIPTION_LENGTH) {
-    return { valid: false, message: "영상 설명은 10,000자 이하로 입력해 주세요." };
+    return { valid: false, message: "강의 안내는 10,000자 이하로 입력해 주세요." };
   }
   return { valid: true, description };
 }

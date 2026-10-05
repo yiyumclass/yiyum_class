@@ -29,7 +29,7 @@ export default function AdminDialog({
   description?: string;
   /** 저장 중처럼 닫으면 안 되는 상태. ESC와 배경 클릭을 막는다. */
   busy?: boolean;
-  size?: "small" | "medium" | "large";
+  size?: "notice" | "small" | "medium" | "large";
   onClose: () => void;
   footer?: ReactNode;
   children: ReactNode;

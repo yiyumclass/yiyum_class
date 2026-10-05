@@ -14,6 +14,7 @@
   background: rgb(28 24 20 / 52%);
 }
 
+.notice,
 .small { width: min(100%, 460px); }
 .medium { width: min(100%, 640px); }
 .large { width: min(100%, 860px); }
@@ -184,5 +185,20 @@
 
   .actions button {
     width: 100%;
+  }
+
+  .notice {
+    width: min(460px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 48px);
+    height: fit-content;
+    margin: auto;
+    border: 1px solid var(--admin-line);
+    border-radius: var(--admin-radius-lg);
+  }
+
+  .notice .frame {
+    max-height: calc(100dvh - 48px);
+    height: auto;
   }
 }
