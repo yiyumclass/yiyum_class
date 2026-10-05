@@ -19,6 +19,7 @@
 | [admin-members-setup.md](./admin-members-setup.md) | 관리자 회원 조회와 수강권 지급·회수·기간 관리 | 🧱 수강권 운영 |
 | [admin-progress-setup.md](./admin-progress-setup.md) | 관리자 강의별·회원별 학습 진도와 장기 미학습 조회 | 🧱 학습 현황 |
 | [solapi-welcome-message.md](./solapi-welcome-message.md) | 카카오 신규 가입자 SOLAPI 환영 알림톡 설정과 검증 | 💬 메시지 연동 |
+| [admin-kakao-notifications.md](./admin-kakao-notifications.md) | 관리자 템플릿 선택·미리보기·개별 알림톡 발송 및 운영 설정 | 💬 관리자 알림 |
 
 ## 전체 진행 상황
 

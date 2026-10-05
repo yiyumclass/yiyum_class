@@ -1,0 +1,28 @@
+.layout { display: grid; gap: 20px; color: #322f29; }
+.layout p, .layout h3 { margin: 0; }
+.layout small { color: #6a6359; line-height: 1.65; }
+.recipient { display: grid; gap: 6px; }
+.recipient span { font-size: 13px; color: #6a6359; }
+.fields { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.fields > label, .field label { font-size: 14px; font-weight: 600; }
+.field { display: grid; gap: 8px; }
+.fields select, .field input { width: 100%; min-width: 0; border: 1px solid #ddd7cd; border-radius: 8px; padding: 11px 12px; background: #fff; color: #322f29; font: inherit; font-size: 14px; }
+.field input[readonly] { background: #f4f1eb; }
+.fields :focus-visible, .secondary:focus-visible, .check input:focus-visible { outline: 2px solid #a34736; outline-offset: 3px; }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.6; }
+.check input { flex: 0 0 auto; margin-top: 5px; accent-color: #a34736; }
+.notice, .error { padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.7; }
+.notice { background: #f4f1eb; color: #625747; }
+.error { background: #fff0eb; color: #8c3023; }
+.preview { display: grid; gap: 14px; border: 1px solid #d6c2a4; border-radius: 12px; padding: 20px; min-width: 0; }
+.preview h3, .history h3 { font-size: 16px; }
+.message { white-space: pre-wrap; overflow-wrap: anywhere; background: #faf7f0; border-radius: 8px; padding: 18px; font-size: 14px; line-height: 1.8; }
+.linkPreview { display: grid; gap: 6px; font-size: 13px; padding: 12px; border: 1px solid #e8e0d3; border-radius: 6px; overflow-wrap: anywhere; }
+.linkPreview span { color: #6a6359; }
+.secondary { background: #fff; border: 1px solid #d9d2c7; border-radius: 6px; padding: 8px 12px; font: inherit; font-size: 13px; color: #574c3d; cursor: pointer; }
+.secondary:disabled { cursor: default; opacity: .5; }
+.history { display: grid; gap: 12px; border-top: 1px solid #e8e0d3; padding-top: 20px; }
+.history header { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.history ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.history li { display: grid; gap: 5px; padding: 12px 0; border-bottom: 1px solid #eee7dd; font-size: 13px; }
+@media (max-width: 600px) { .preview { padding: 14px; } .history header { align-items: flex-start; } }

@@ -7,6 +7,10 @@ const templates: Record<string, { templateId: string; product: string }> = {
   "sns-monetization-ultra": { templateId: "KA01TP260922041738461z54SAXgqqVp", product: "프리미엄 클래스" },
 };
 
+export function paymentTemplateProductSlug(templateId: string) {
+  return Object.entries(templates).find(([, template]) => template.templateId === templateId)?.[0] ?? null;
+}
+
 export type PaymentMessageOrder = {
   order_id: string;
   order_uid: string;

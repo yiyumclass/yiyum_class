@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   exportAdminMembersAction,
@@ -35,6 +36,8 @@ import type {
 } from "@/lib/admin/members";
 import { useTableParams } from "@/lib/admin/use-table-params";
 import styles from "./AdminMemberManager.module.css";
+
+const AdminNotificationDialog = dynamic(() => import("./AdminNotificationDialog"));
 
 type AdminMemberManagerProps = {
   /** 서버가 이미 거르고 정렬해 잘라 준 한 페이지. 여기서 다시 거르지 않는다. */
@@ -93,6 +96,7 @@ export default function AdminMemberManager({
   const { values, setValues, numberOf } = useTableParams(memberTableDefaults);
   const [searchInput, setSearchInput] = useState(values.q);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [notificationMemberId, setNotificationMemberId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const query = values.q;
@@ -373,6 +377,7 @@ export default function AdminMemberManager({
                       row={row}
                       canManage={canOpenEntitlementManager}
                       onManage={() => setSelectedMemberId(row.member.id)}
+                      onNotify={() => setNotificationMemberId(row.member.id)}
                       onCopyId={() => copyMemberId(row.member)}
                     />
                   ))}
@@ -406,6 +411,9 @@ export default function AdminMemberManager({
         )}
       </section>
 
+      {notificationMemberId && canOpenEntitlementManager && (
+        <AdminNotificationDialog key={notificationMemberId} memberId={notificationMemberId} onClose={() => setNotificationMemberId(null)} />
+      )}
       {selectedMember && canOpenEntitlementManager && (
         <EntitlementDialog
           member={selectedMember}
@@ -477,11 +485,13 @@ function MemberRow({
   row,
   canManage,
   onManage,
+  onNotify,
   onCopyId,
 }: {
   row: MemberRowData;
   canManage: boolean;
   onManage: () => void;
+  onNotify: () => void;
   onCopyId: () => void;
 }) {
   const { member, activeEntitlements } = row;
@@ -528,9 +538,9 @@ function MemberRow({
         <span className={styles.rowActions}>
           <MemberCrossLinks email={member.email} />
           {canManage ? (
-            <button type="button" onClick={onManage}>
+            <><button type="button" onClick={onManage}>
               수강권 관리
-            </button>
+            </button><button type="button" onClick={onNotify}>카톡 알림</button></>
           ) : (
             <span className={styles.emptyValue}>조회 전용</span>
           )}

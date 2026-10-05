@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+export const maxDuration = 60;
 import { Suspense } from "react";
 import AdminMemberManager from "@/components/admin/AdminMemberManager";
 import { requireAdmin } from "@/lib/admin/auth";

@@ -87,7 +87,9 @@ test("백그라운드 작업은 cron 인증과 기능 플래그로 보호되며 
   const route = readFileSync(new URL("../src/app/api/cron/payment-notifications/route.ts", import.meta.url), "utf8");
   const reconciliation = readFileSync(new URL("../src/lib/messaging/payment-delivery.ts", import.meta.url), "utf8");
   assert.match(route, /!secret \|\| request.headers.get\("authorization"\) !== `Bearer \$\{secret\}`/);
-  assert.match(route, /SOLAPI_PAYMENT_NOTIFICATIONS_ENABLED !== "true"/);
+  assert.match(route, /paymentEnabled = process.env.SOLAPI_PAYMENT_NOTIFICATIONS_ENABLED === "true"/);
+  assert.match(route, /!paymentEnabled && !adminNotificationsEnabled\(\)/);
+  assert.match(route, /if \(!paymentEnabled\)/);
   assert.match(reconciliation, /\.eq\("status", row.status\)\.eq\("updated_at", row.updated_at\)/);
   assert.doesNotMatch(reconciliation, /sendPaymentMessageOnce|requestPayment|cancelToss/);
 });
