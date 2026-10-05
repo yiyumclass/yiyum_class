@@ -95,24 +95,21 @@ function ResourceCard({ item, priority }: { item: SaleCard; priority: boolean })
     <article className={styles.card}>
       <Link href={item.detailHref} className={styles.visual} aria-label={`${item.title} 자세히 보기`}>
         {item.thumbnailSrc ? (
-          <>
-            <Image
-              src={item.thumbnailSrc}
-              alt={item.title}
-              fill
-              priority={priority}
-              sizes="(max-width: 680px) 100vw, (max-width: 1020px) 50vw, 25vw"
-              className={styles.image}
-            />
-            <div className={styles.imageShade} aria-hidden="true" />
-          </>
+          <Image
+            src={item.thumbnailSrc}
+            alt={item.title}
+            fill
+            preload={priority}
+            sizes="(max-width: 680px) 100vw, (max-width: 1020px) 50vw, 25vw"
+            className={styles.image}
+          />
         ) : (
           <div className={styles.placeholder} aria-hidden="true">
             <span>{item.visualLabel}</span>
             <strong className="serif">{item.title.slice(0, 1)}</strong>
           </div>
         )}
-        <span className={styles.badge}>{item.visualLabel}</span>
+        {!item.thumbnailSrc && <span className={styles.badge}>{item.visualLabel}</span>}
       </Link>
 
       <div className={styles.body}>

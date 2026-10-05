@@ -49,6 +49,18 @@
   object-position: center 52%;
 }
 
+.visual.resourceVisual {
+  min-height: 0;
+  aspect-ratio: 3 / 4;
+  align-self: start;
+  background: #241d19;
+}
+
+.courseImage.resourceImage {
+  object-fit: contain;
+  object-position: center;
+}
+
 .visualPlaceholder {
   position: absolute;
   inset: 0;

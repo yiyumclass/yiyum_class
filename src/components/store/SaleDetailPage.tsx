@@ -29,6 +29,7 @@ export default function SaleDetailPage({
   const course = item.course;
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
   const isCourse = item.productType === "course";
+  const hasResourceCover = item.productType === "ebook" && Boolean(item.thumbnailSrc);
   const hasMembershipOptions = membershipProducts !== undefined;
   const marketing = item.marketingCurriculum ?? course?.marketingCurriculum;
   const curriculumSections = marketing
@@ -66,26 +67,30 @@ export default function SaleDetailPage({
         </div>
 
         <section className={styles.hero} aria-labelledby="course-title">
-          <div className={styles.visual}>
+          <div className={`${styles.visual}${hasResourceCover ? ` ${styles.resourceVisual}` : ""}`}>
             {item.thumbnailSrc ? (
               <>
                 <Image
                   src={item.thumbnailSrc}
-                  alt={`${item.visualCaption}의 ${item.title}`}
+                  alt={hasResourceCover ? item.title : `${item.visualCaption}의 ${item.title}`}
                   fill
-                  priority
+                  preload
                   sizes="(max-width: 760px) 100vw, 43vw"
-                  className={styles.courseImage}
+                  className={`${styles.courseImage}${hasResourceCover ? ` ${styles.resourceImage}` : ""}`}
                 />
-                <div className={styles.imageShade} aria-hidden="true" />
+                {!hasResourceCover && <div className={styles.imageShade} aria-hidden="true" />}
               </>
             ) : (
               <div className={styles.visualPlaceholder} aria-hidden="true">
                 <strong className="serif">{item.title.slice(0, 1)}</strong>
               </div>
             )}
-            <span className={styles.imageLabel}>{item.visualLabel}</span>
-            <span className={styles.instructor}>{item.visualCaption}</span>
+            {!hasResourceCover && (
+              <>
+                <span className={styles.imageLabel}>{item.visualLabel}</span>
+                <span className={styles.instructor}>{item.visualCaption}</span>
+              </>
+            )}
           </div>
 
           <div className={styles.heroContent}>

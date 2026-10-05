@@ -127,13 +127,7 @@
 }
 
 .image {
-  object-fit: cover;
-}
-
-.imageShade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(32, 28, 23, 0) 45%, rgba(32, 28, 23, 0.5) 100%);
+  object-fit: contain;
 }
 
 .placeholder {
