@@ -10,6 +10,7 @@ import {
 import { resolveOAuthConsentGate } from "@/lib/auth/consent-gate";
 import { normalizeInternalNext } from "@/lib/auth/redirects";
 import { sendSignupWelcomeMessage } from "@/lib/messaging/solapi";
+import { resolveUserNotificationContact } from "@/lib/messaging/notification-contact-store";
 import { hasActiveAccount } from "@/lib/supabase/account-status";
 import { createClient } from "@/lib/supabase/server";
 import { recordSecurityAccessEvent } from "@/lib/security/access-log";
@@ -116,13 +117,17 @@ export async function GET(request: Request) {
       }
 
       cookieStore.delete(OAUTH_CONSENT_COOKIE);
-      if (isNewSignup) {
+      if (user.identities?.some(identity => identity.provider === "kakao")) {
         const kakaoAccessToken =
           user.app_metadata.provider === "kakao"
             ? exchangeData.session?.provider_token
             : null;
         after(async () => {
           try {
+            if (!isNewSignup) {
+              await resolveUserNotificationContact(user, { accessToken: kakaoAccessToken, refresh: true });
+              return;
+            }
             const result = await sendSignupWelcomeMessage(user, {
               kakaoAccessToken,
             });
@@ -134,7 +139,7 @@ export async function GET(request: Request) {
             }
           } catch (error) {
             console.error(
-              "Failed to send SOLAPI signup welcome message:",
+              "Failed to prepare Kakao notification contact or welcome message:",
               readErrorCode(error)
             );
           }

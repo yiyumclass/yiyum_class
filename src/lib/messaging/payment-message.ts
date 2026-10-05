@@ -1,3 +1,5 @@
+import { NotificationContactError } from "./notification-contact.ts";
+
 /** 고객이 등록한 승인 템플릿. 본문과 버튼은 SOLAPI에서 관리한다. */
 const templates: Record<string, { templateId: string; product: string }> = {
   "sns-monetization": { templateId: "KA01TP260922040813314fVYjYZjPBWX", product: "베이직 클래스" },
@@ -38,7 +40,7 @@ export function buildPaymentMessage(order: PaymentMessageOrder, name: string) {
 }
 
 export type PaymentMessageOutcome = {
-  status: "accepted" | "failed" | "unknown";
+  status: "accepted" | "failed" | "unknown" | "waiting_contact";
   code: string | null;
   messageId?: string;
   groupId?: string;
@@ -60,8 +62,11 @@ export async function deliverPaymentMessage(order: PaymentMessageOrder, ports: P
   let message: PreparedMessage;
   try {
     message = await ports.prepare(order);
-  } catch {
-    await finishSafely({ status: "failed", code: "PREPARATION_FAILED" });
+  } catch (error) {
+    await finishSafely({
+      status: error instanceof NotificationContactError && error.needsContact ? "waiting_contact" : "failed",
+      code: error instanceof NotificationContactError ? error.code : "PREPARATION_FAILED",
+    });
     return;
   }
 

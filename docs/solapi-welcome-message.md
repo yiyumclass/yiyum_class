@@ -23,6 +23,7 @@ SOLAPI_API_KEY=
 SOLAPI_API_SECRET=
 SOLAPI_PF_ID=
 SOLAPI_WELCOME_TEMPLATE_ID=
+KAKAO_ADMIN_KEY=
 ```
 
 환경 변수를 바꾼 뒤에는 개발 서버를 재시작하거나 새 배포를 생성한다.
@@ -30,15 +31,20 @@ SOLAPI_WELCOME_TEMPLATE_ID=
 ## 카카오 전화번호 제공 설정
 
 카카오 디벨로퍼스의 카카오 로그인 동의항목에서 `phone_number` 제공 권한과
-동의 단계를 설정해야 한다. Supabase의 카카오 사용자 메타데이터에 전화번호가
-없으면 가입은 완료되지만 환영 알림톡은 건너뛴다. 국내 번호는 카카오의
+동의 단계를 설정해야 한다. 가입·로그인에서 카카오 API로 회원번호와 전화번호 제공 동의를
+확인하고 서버 전용 `user_notification_contacts`에 저장한다. 기존 회원은 어드민 키로도
+조회할 수 있다. 전화번호가 없거나 동의하지 않았으면 가입은 완료되지만 알림톡은 건너뛴다.
+사용자가 수정할 수 있는 Auth metadata의 전화번호는 발송에 사용하지 않는다. 국내 번호는 카카오의
 `+82 10-1234-5678` 형식에서 SOLAPI의 `01012345678` 형식으로 변환한다.
 
 ## 동작 확인
 
 1. 기존 연결 이력이 없는 카카오 계정으로 `/signup`에서 가입한다.
-2. Vercel Runtime Logs에 `Skipped SOLAPI signup welcome message` 또는
-   `Failed to send SOLAPI signup welcome message`가 없는지 확인한다.
+2. Vercel Runtime Logs에서 가입 알림 및 `Kakao notification contact` 오류를 확인한다.
 3. SOLAPI 콘솔의 메시지 발송 내역에서 수신 성공 여부를 확인한다.
 
 전화번호나 API 자격 증명은 애플리케이션 로그에 기록하지 않는다.
+
+신규 연락처 마이그레이션을 먼저 적용해야 한다. 저장·조회 실패가 로그인이나 결제를
+차단하지는 않지만 알림은 실패하므로, 적용 순서는 [결제 알림 운영 문서](./payment-notifications.md)를 따른다.
+기존 회원 로그인은 연락처만 갱신하며 환영 메시지를 다시 발송하지 않는다.

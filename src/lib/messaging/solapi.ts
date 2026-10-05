@@ -1,11 +1,11 @@
 import "server-only";
 
 import { SolapiMessageService } from "solapi";
-import { fetchKakaoMobileNumber } from "@/lib/auth/kakao-phone";
-import { readAuthUserMobileNumber } from "@/lib/messaging/phone";
+import { resolveUserNotificationContact } from "@/lib/messaging/notification-contact-store";
+import { NotificationContactError, type NotificationContactUser } from "@/lib/messaging/notification-contact";
 import { readAuthUserDisplayName } from "@/lib/messaging/profile";
 
-type AuthUserContact = Parameters<typeof readAuthUserMobileNumber>[0];
+type AuthUserContact = NotificationContactUser & Parameters<typeof readAuthUserDisplayName>[0];
 
 export type WelcomeMessageResult =
   | { status: "sent" }
@@ -35,14 +35,12 @@ export async function sendSignupWelcomeMessage(
   user: AuthUserContact,
   options: WelcomeMessageOptions = {}
 ): Promise<WelcomeMessageResult> {
-  const storedRecipient = readAuthUserMobileNumber(user);
-  const recipient =
-    storedRecipient ??
-    (options.kakaoAccessToken
-      ? await fetchKakaoMobileNumber(options.kakaoAccessToken)
-      : null);
-  if (!recipient) {
-    return { status: "skipped", reason: "invalid_recipient" };
+  let recipient: string;
+  try {
+    recipient = await resolveUserNotificationContact(user, { accessToken: options.kakaoAccessToken, refresh: true });
+  } catch (error) {
+    if (error instanceof NotificationContactError && error.needsContact) return { status: "skipped", reason: "invalid_recipient" };
+    throw error;
   }
 
   const config = readSolapiWelcomeConfig();

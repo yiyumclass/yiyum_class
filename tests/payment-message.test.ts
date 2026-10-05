@@ -3,6 +3,7 @@ import test from "node:test";
 import { createHmac } from "node:crypto";
 import { buildPaymentMessage, deliverPaymentMessage, type PaymentMessageOrder, type PaymentMessagePorts, type PaymentMessageOutcome } from "../src/lib/messaging/payment-message.ts";
 import { PaymentMessageRejected, sendPaymentMessageOnce } from "../src/lib/messaging/solapi-payment-transport.ts";
+import { NotificationContactError } from "../src/lib/messaging/notification-contact.ts";
 
 const order: PaymentMessageOrder = {
   order_id: "order-id", order_uid: "ORD-example", user_id: "user-id", product_slug: "sns-monetization",
@@ -68,6 +69,20 @@ test("발송 직전 DB 오류는 재발송 가능한 상태로 임의 변경하�
   assert.equal(f.sends(), 0);
   assert.deepEqual(f.outcomes, []);
   assert.deepEqual(f.logs, ["CLAIM_TRANSITION_FAILED"]);
+});
+
+test("번호·동의 누락은 재시도 횟수를 소모하지 않는 연락처 대기로 기록한다", async () => {
+  const state = fixture({ prepare: async () => { throw new NotificationContactError("PHONE_CONSENT_REQUIRED"); } });
+  await deliverPaymentMessage(order, state.ports);
+  assert.equal(state.sends(), 0);
+  assert.deepEqual(state.outcomes, [{ status: "waiting_contact", code: "PHONE_CONSENT_REQUIRED" }]);
+});
+
+test("일시적인 카카오 조회 실패는 식별 가능한 재시도 오류로 남긴다", async () => {
+  const state = fixture({ prepare: async () => { throw new NotificationContactError("KAKAO_LOOKUP_FAILED"); } });
+  await deliverPaymentMessage(order, state.ports);
+  assert.equal(state.sends(), 0);
+  assert.deepEqual(state.outcomes, [{ status: "failed", code: "KAKAO_LOOKUP_FAILED" }]);
 });
 
 test("확실한 접수 거절과 접수 여부 불명확한 통신 오류를 구분한다", async () => {

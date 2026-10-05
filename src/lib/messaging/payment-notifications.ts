@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getAdminClient } from "@/lib/supabase/admin";
-import { readAuthUserMobileNumber } from "@/lib/messaging/phone";
+import { resolveUserNotificationContact } from "@/lib/messaging/notification-contact-store";
 import { readAuthUserDisplayName } from "@/lib/messaging/profile";
 import { buildPaymentMessage, deliverPaymentMessage, type PaymentMessageOrder } from "@/lib/messaging/payment-message";
 import { PaymentMessageRejected, sendPaymentMessageOnce } from "@/lib/messaging/solapi-payment-transport";
@@ -27,8 +27,7 @@ export async function dispatchPaymentNotification(orderUid?: string): Promise<bo
       async prepare(order) {
         const { data, error } = await admin.auth.admin.getUserById(order.user_id);
         if (error || !data.user) throw new Error("RECIPIENT_UNAVAILABLE");
-        const to = readAuthUserMobileNumber(data.user);
-        if (!to) throw new Error("RECIPIENT_UNAVAILABLE");
+        const to = await resolveUserNotificationContact(data.user);
         return { to, ...buildPaymentMessage(order, readAuthUserDisplayName(data.user)) };
       },
       async beginSend(order, templateId) {
@@ -52,6 +51,7 @@ export async function dispatchPaymentNotification(orderUid?: string): Promise<bo
         }).eq("order_id", order.order_id).eq("attempt_id", order.attempt_id)
           .in("status", ["preparing", "sending"]).select("order_id");
         if (error || data?.length !== 1) throw new Error("RESULT_PERSIST_FAILED");
+        if (outcome.status !== "accepted") console.error("Payment notification needs attention:", outcome.code, order.order_id);
       },
       isDefiniteRejection: (error) => error instanceof PaymentMessageRejected,
       log: (code, id) => console.error("Payment notification:", code, id),

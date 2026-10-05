@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import AdminOrderManager from "@/components/admin/AdminOrderManager";
 import PaymentRecoveryQueue from "@/components/admin/PaymentRecoveryQueue";
 import { loadPaymentRecoveryOverview } from "@/lib/admin/payment-recovery";
+import PaymentNotificationOverview from "@/components/admin/PaymentNotificationOverview";
+import { loadPaymentNotificationOverview } from "@/lib/admin/payment-notifications";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   readOption,
@@ -36,7 +38,9 @@ export default async function AdminOrdersPage({
   searchParams: Promise<OrdersSearchParams>;
 }) {
   const admin = await requireAdmin();
-  const recovery = admin.role === "owner" ? await loadPaymentRecoveryOverview() : null;
+  const [recovery, notifications] = admin.role === "owner"
+    ? await Promise.all([loadPaymentRecoveryOverview(), loadPaymentNotificationOverview()])
+    : [null, null];
   const params = await searchParams;
 
   // URL은 관리자가 손으로 고칠 수 있다. SQL로 내려보내기 전에 허용값으로 좁힌다.
@@ -74,6 +78,7 @@ export default async function AdminOrdersPage({
   return (
     <Suspense fallback={null}>
       {recovery && <PaymentRecoveryQueue overview={recovery} />}
+      {notifications && <PaymentNotificationOverview overview={notifications} />}
       <AdminOrderManager
         orders={result.orders}
         totalCount={result.totalCount}

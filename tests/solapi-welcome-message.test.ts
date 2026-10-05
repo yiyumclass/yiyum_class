@@ -21,7 +21,7 @@ const solapiSender = readFileSync(
   "utf8"
 );
 const kakaoPhoneReader = readFileSync(
-  new URL("../src/lib/auth/kakao-phone.ts", import.meta.url),
+  new URL("../src/lib/auth/kakao-phone-request.ts", import.meta.url),
   "utf8"
 );
 
@@ -89,11 +89,13 @@ test("welcome Alimtalk is server-only, has no SMS fallback, and cannot block sig
   assert.match(solapiSender, /disableSms: true/);
   assert.match(solapiSender, /"#\{이름\}": displayName/);
   assert.doesNotMatch(solapiSender, /NEXT_PUBLIC_SOLAPI/);
-  assert.match(solapiSender, /fetchKakaoMobileNumber/);
+  assert.match(solapiSender, /resolveUserNotificationContact/);
 
   assert.match(kakaoPhoneReader, /kapi\.kakao\.com\/v2\/user\/me/);
   assert.match(kakaoPhoneReader, /kakao_account\.phone_number/);
-  assert.match(kakaoPhoneReader, /Authorization: `Bearer \$\{token\}`/);
+  assert.match(kakaoPhoneReader, /`Bearer \$\{token\}`/);
+  assert.match(kakaoPhoneReader, /payload.id !== input.kakaoUserId/);
+  assert.match(kakaoPhoneReader, /phone_number_needs_agreement !== false/);
   assert.doesNotMatch(kakaoPhoneReader, /console\.(?:log|warn).*token/);
 
   assert.match(callbackRoute, /Boolean\(consentIntent\)/);

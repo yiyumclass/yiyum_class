@@ -9,7 +9,14 @@ type MessageRequest = {
   orderId: string;
 };
 
-type SolapiConfig = { apiKey: string; apiSecret: string; pfId: string };
+export type SolapiConfig = { apiKey: string; apiSecret: string; pfId: string };
+
+export function createSolapiAuthorization(config: Pick<SolapiConfig, "apiKey" | "apiSecret">) {
+  const date = new Date().toISOString();
+  const salt = randomBytes(16).toString("hex");
+  const signature = createHmac("sha256", config.apiSecret).update(date + salt).digest("hex");
+  return `HMAC-SHA256 apiKey=${config.apiKey}, date=${date}, salt=${salt}, signature=${signature}`;
+}
 
 /** SDK의 POST 자동 재시도를 피한다. 접수 여부가 불명확하면 상위에서 수동 확인 대상으로 기록한다. */
 export async function sendPaymentMessageOnce(
@@ -17,13 +24,10 @@ export async function sendPaymentMessageOnce(
   message: MessageRequest,
   request: typeof fetch = fetch
 ): Promise<{ messageId: string; groupId: string }> {
-  const date = new Date().toISOString();
-  const salt = randomBytes(16).toString("hex");
-  const signature = createHmac("sha256", config.apiSecret).update(date + salt).digest("hex");
   const response = await request("https://api.solapi.com/messages/v4/send-many/detail", {
     method: "POST",
     headers: {
-      Authorization: `HMAC-SHA256 apiKey=${config.apiKey}, date=${date}, salt=${salt}, signature=${signature}`,
+      Authorization: createSolapiAuthorization(config),
       "Content-Type": "application/json",
     },
     cache: "no-store",
