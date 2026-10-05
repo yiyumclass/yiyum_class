@@ -218,7 +218,7 @@ export default async function Home() {
           </div>
           <div style={{fontSize: '14px', color: '#57514A'}}>{sections.length}개 챕터 · 총 <span className="serif" style={{fontSize: '20px', color: '#201C17'}}>{lessonCount}</span>강</div>
         </div>
-        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '18ch'}}>{sections.length > 0 ? landingCourseDescription : "공개된 커리큘럼을 확인해 보세요."}</h2>
+        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '36ch'}}>{sections.length > 0 ? landingCourseDescription : "공개된 커리큘럼을 확인해 보세요."}</h2>
 
         <div style={{borderTop: '1px solid #201C17'}}>
           {sections.length > 0 ? (
