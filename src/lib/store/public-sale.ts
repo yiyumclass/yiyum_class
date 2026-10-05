@@ -172,7 +172,7 @@ function mapCourseCard(item: PublicCourseCatalogItem): SaleCard {
     key: item.productId,
     productType: "course",
     slug: item.slug,
-    title: item.title,
+    title: isMembershipPlanSlug(item.slug) ? item.course.title : item.title,
     summary: item.summary,
     priceKrw: item.priceKrw,
     listPriceKrw: item.listPriceKrw,

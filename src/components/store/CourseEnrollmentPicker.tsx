@@ -25,6 +25,7 @@ const installmentMonths = 12;
 
 export type MembershipProductOption = {
   slug: string;
+  title: string;
   priceKrw: number;
   soldOut: boolean;
   checkoutHref: string;
@@ -151,6 +152,7 @@ export function CourseEnrollmentProvider({
         <div className={styles.planGrid}>
           {membershipPlanDefinitions.map((plan) => {
             const product = productBySlug.get(plan.slug);
+            const title = product?.title ?? plan.title;
             const priceKrw = product?.priceKrw ?? plan.fallbackPriceKrw;
             const monthlyKrw = calculateMonthlyInstallmentKrw(
               priceKrw,
@@ -172,7 +174,7 @@ export function CourseEnrollmentProvider({
                 <span className={styles.planEyebrow}>{plan.eyebrow}</span>
                 <h3
                   className={`${styles.planTitle} serif`}
-                  aria-label={`${plan.order}번 ${plan.icon} ${plan.title}`}
+                  aria-label={`${plan.order}번 ${plan.icon} ${title}`}
                 >
                   <span className={styles.planTitleNumber} aria-hidden="true">
                     {plan.order}
@@ -181,7 +183,7 @@ export function CourseEnrollmentProvider({
                     {plan.icon}
                   </span>
                   <span className={styles.planTitleText} aria-hidden="true">
-                    {plan.title}
+                    {title}
                   </span>
                 </h3>
                 <p className={styles.planDescription}>{plan.description}</p>
@@ -204,7 +206,7 @@ export function CourseEnrollmentProvider({
                   </div>
                 </div>
 
-                <ul aria-label={`${plan.icon} ${plan.title} 포함 혜택`}>
+                <ul aria-label={`${plan.icon} ${title} 포함 혜택`}>
                   {plan.benefits.map((benefit) => (
                     <li key={benefit}>
                       <span aria-hidden="true">✓</span>
@@ -219,7 +221,7 @@ export function CourseEnrollmentProvider({
                   </span>
                 ) : (
                   <Link href={product.checkoutHref} className={styles.selectAction}>
-                    {plan.icon} {plan.title} 선택 <span aria-hidden="true">→</span>
+                    {plan.icon} {title} 선택 <span aria-hidden="true">→</span>
                   </Link>
                 )}
               </article>

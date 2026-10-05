@@ -37,11 +37,11 @@ export default function TossPaymentConfirmation({
       const payload: unknown = await response.json().catch(() => null);
       const message = readMessage(payload);
 
-      if (!response.ok) {
+      if (!response.ok || !readOk(payload)) {
         setState({
           status: "error",
-          message: message ?? "결제 승인을 확인하지 못했습니다.",
-          retryable: readRetryable(payload),
+          message: message ?? "결제 완료 여부를 아직 확인하지 못했습니다.",
+          retryable: response.ok ? true : readRetryable(payload),
         });
         return;
       }
@@ -111,7 +111,7 @@ export default function TossPaymentConfirmation({
         <div style={{ display: "grid", gap: 12 }}>
           {state.retryable && (
             <button type="button" onClick={confirm} style={primaryButtonStyle}>
-              다시 확인하기
+              결제 상태 다시 확인하기
             </button>
           )}
           <Link
@@ -154,4 +154,9 @@ function readMessage(payload: unknown) {
 function readRetryable(payload: unknown) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
   return (payload as Record<string, unknown>).retryable === true;
+}
+
+function readOk(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
+  return (payload as Record<string, unknown>).ok === true;
 }

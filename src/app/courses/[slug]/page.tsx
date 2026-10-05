@@ -48,6 +48,7 @@ export default async function CourseDetailRoute({ params }: SaleDetailRouteProps
         )
         .map((course) => ({
           slug: course.slug,
+          title: course.title,
           priceKrw: course.priceKrw,
           soldOut: course.soldOut,
           checkoutHref: course.checkoutHref,

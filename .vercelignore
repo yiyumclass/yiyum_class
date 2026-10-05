@@ -1,0 +1,14 @@
+.git
+.vercel
+.next
+node_modules
+.env*
+.omx
+.omc
+.codex
+.agents
+.playwright-mcp
+supabase/.temp
+private-media
+*.tsbuildinfo
+*.pem

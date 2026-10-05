@@ -21,15 +21,24 @@ export async function confirmTossPayment(input: {
   paymentKey: string;
   orderId: string;
   amount: number;
+  idempotencyKey: string;
 }): Promise<TossApiResult> {
+  const { idempotencyKey, ...body } = input;
   return requestTossPayment("/payments/confirm", {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify(body),
+    headers: { "Idempotency-Key": idempotencyKey },
   });
 }
 
 export async function getTossPayment(paymentKey: string): Promise<TossApiResult> {
   return requestTossPayment(`/payments/${encodeURIComponent(paymentKey)}`, {
+    method: "GET",
+  });
+}
+
+export async function getTossPaymentByOrderId(orderId: string): Promise<TossApiResult> {
+  return requestTossPayment(`/payments/orders/${encodeURIComponent(orderId)}`, {
     method: "GET",
   });
 }

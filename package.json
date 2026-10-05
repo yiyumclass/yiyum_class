@@ -8,6 +8,8 @@
     "start": "next start",
     "test": "node --no-warnings --experimental-strip-types --test tests/*.test.ts",
     "lint": "eslint",
+    "verify:payments": "node scripts/verify-payment-recovery-db.mjs",
+    "verify:payment-scheduler": "node scripts/verify-payment-scheduler.mjs",
     "verify:admin": "node scripts/verify-admin-integration.mjs",
     "verify:admin-tabs": "node scripts/verify-admin-tabs-live.mjs"
   },

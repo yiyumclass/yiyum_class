@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { isTossPaymentWindowConfigured } from "@/lib/store/free-enrollment";
+import { getPaymentMode, isTossPaymentWindowConfigured } from "@/lib/store/free-enrollment";
 import { loadPublicProductBySlug } from "@/lib/store/public-products";
 import { loadCheckoutProduct } from "@/lib/store/checkout-products";
 import { phonePassDefinition } from "@/lib/store/membership-plans";
 import { REFUND_POLICY_VERSION } from "@/lib/payments/refund-policy";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getVerifiedIdentity } from "@/lib/supabase/claims";
 import { createClient } from "@/lib/supabase/server";
 
@@ -71,6 +72,7 @@ export async function createPaymentOrderAction(
     const setupRequired =
       error.code === "42883" || error.code === "PGRST202" || error.code === "PGRST205";
     const alreadyEnrolled = error.code === "23505";
+    const priorPaymentNeedsReview = error.code === "55000";
     if (!setupRequired && !alreadyEnrolled) {
       console.error("Failed to create Toss payment order:", error.code);
     }
@@ -80,7 +82,9 @@ export async function createPaymentOrderAction(
         ? "결제 데이터베이스 설정이 아직 적용되지 않았습니다."
         : alreadyEnrolled
           ? "이미 이용 중이거나 결제가 진행 중인 상품입니다. 마이 클래스에서 확인해 주세요."
-          : "결제 주문을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.",
+          : priorPaymentNeedsReview
+            ? "이전 결제 상태를 확인 중입니다. 다시 결제하지 말고 주문번호로 문의해 주세요."
+            : "결제 주문을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
 
@@ -109,6 +113,30 @@ export async function createPaymentOrderAction(
     return {
       ok: false,
       message: "환불 정책 동의를 기록하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    };
+  }
+
+  const paymentMode = getPaymentMode();
+  if (paymentMode !== "toss_test" && paymentMode !== "toss_live") {
+    await supabase.rpc("fail_toss_payment_order", { target_order_uid: row.order_uid });
+    return { ok: false, message: "현재 결제 기능을 사용할 수 없습니다." };
+  }
+
+  const admin = getAdminClient();
+  const { data: modeBound, error: modeError } = await admin.rpc(
+    "bind_toss_order_mode_server",
+    {
+      target_user_id: identity.userId,
+      target_order_uid: row.order_uid,
+      target_mode: paymentMode,
+    }
+  );
+  if (modeError || modeBound !== true) {
+    console.error("Failed to bind Toss payment mode:", modeError?.code ?? "FALSE");
+    await supabase.rpc("fail_toss_payment_order", { target_order_uid: row.order_uid });
+    return {
+      ok: false,
+      message: "결제 실행 환경을 주문에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
 

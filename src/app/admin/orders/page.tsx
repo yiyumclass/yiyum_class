@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import AdminOrderManager from "@/components/admin/AdminOrderManager";
+import PaymentRecoveryQueue from "@/components/admin/PaymentRecoveryQueue";
+import { loadPaymentRecoveryOverview } from "@/lib/admin/payment-recovery";
 import { requireAdmin } from "@/lib/admin/auth";
 import {
   readOption,
@@ -34,6 +36,7 @@ export default async function AdminOrdersPage({
   searchParams: Promise<OrdersSearchParams>;
 }) {
   const admin = await requireAdmin();
+  const recovery = admin.role === "owner" ? await loadPaymentRecoveryOverview() : null;
   const params = await searchParams;
 
   // URL은 관리자가 손으로 고칠 수 있다. SQL로 내려보내기 전에 허용값으로 좁힌다.
@@ -70,6 +73,7 @@ export default async function AdminOrdersPage({
   // 검색·필터 상태를 URL 쿼리에 두므로 useSearchParams용 경계가 필요하다.
   return (
     <Suspense fallback={null}>
+      {recovery && <PaymentRecoveryQueue overview={recovery} />}
       <AdminOrderManager
         orders={result.orders}
         totalCount={result.totalCount}

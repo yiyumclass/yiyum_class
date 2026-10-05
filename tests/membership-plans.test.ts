@@ -103,15 +103,18 @@ test("진도 저장은 상품 slug가 아니라 원본 강의 접근 권한을 �
   assert.doesNotMatch(route, /hasActiveProductEntitlement/);
 });
 
-test("결제 승인 직전에 멤버십 그룹 이용권을 다시 확인한다", () => {
+test("결제 승인 직전 접근 재확인은 SQL prepare가 담당한다", () => {
   const route = readFileSync(
     new URL("../src/app/api/payments/toss/confirm/route.ts", import.meta.url),
     "utf8"
   );
 
-  assert.match(route, /isMembershipPlanSlug\(targetProduct\.slug\)/);
-  assert.match(route, /loadMyActiveProductEntitlements/);
-  assert.match(route, /fail_toss_payment_order/);
+  assert.match(route, /prepare_toss_confirmation_server/);
+  assert.ok(
+    route.indexOf("prepareConfirmation(admin") < route.indexOf("confirmTossPayment({")
+  );
+  assert.doesNotMatch(route, /fail_toss_payment_order/);
+  assert.doesNotMatch(route, /loadMyActiveProductEntitlements/);
 });
 
 test("이미 완료된 Toss 결제도 확인 API와 웹훅에서 누락 이용권을 복구한다", () => {
@@ -124,14 +127,10 @@ test("이미 완료된 Toss 결제도 확인 API와 웹훅에서 누락 이용�
     "utf8"
   );
 
-  const paidConfirmBranch = confirmRoute.slice(
-    confirmRoute.indexOf('if (data.status === "paid")'),
-    confirmRoute.indexOf('if (data.status !== "pending")')
-  );
-  assert.match(paidConfirmBranch, /completePaymentOrder\(/);
-  assert.match(paidConfirmBranch, /revalidateCompletedPayment\(/);
-  assert.match(webhookRoute, /const alreadyProcessed =[\s\S]*order\.status === "paid"/);
-  assert.match(webhookRoute, /admin\.rpc\("complete_toss_payment_server"/);
+  assert.match(confirmRoute, /settleFromProviderLookup/);
+  assert.match(confirmRoute, /settleVerifiedTossPayment/);
+  assert.match(webhookRoute, /settleVerifiedTossPayment/);
+  assert.match(webhookRoute, /requireCompletedEntitlement: lookup\.payment\.status === "DONE"/);
 });
 
 test("공개 강의는 하나로 보이고 가격은 수강 신청 뒤에만 노출한다", () => {

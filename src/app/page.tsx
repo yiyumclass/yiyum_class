@@ -36,6 +36,7 @@ export default async function Home() {
     .filter((item) => item.source === "database" && pricingSlugs.has(item.slug))
     .map((item) => ({
       slug: item.slug,
+      title: item.title,
       priceKrw: item.priceKrw,
       soldOut: item.soldOut,
       checkoutHref: item.checkoutHref,
@@ -45,7 +46,7 @@ export default async function Home() {
     (total, section) => total + section.lessons.length,
     0
   );
-  const courseTitle = featuredItem?.title ?? "이윰 SNS 수익화 클래스";
+  const courseTitle = featuredItem?.course.title ?? "이윰 SNS 수익화 클래스";
 
   return (
     <CourseEnrollmentProvider
