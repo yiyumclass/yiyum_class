@@ -15,6 +15,8 @@ import {
   membershipPlanDefinitions,
 } from "@/lib/store/membership-plans";
 import type { ProductType } from "@/lib/store/product-type";
+import { countMarketingLessons, type MarketingCurriculum } from "@/lib/store/marketing-curriculum-types";
+import { loadPublicMarketingCurriculum } from "@/lib/store/marketing-curriculum";
 import {
   loadPublicCourseBySlug,
   loadPublicCourseCatalog,
@@ -62,6 +64,7 @@ export type SaleDetail = SaleCard & {
   facts: SaleFact[];
   /** 강의일 때만 채워진다. 히어로 아래에 커리큘럼을 그린다. */
   course: PublicCourseCatalogItem | null;
+  marketingCurriculum?: MarketingCurriculum | null;
   ctaLabel: string;
   /** 히어로 버튼이 가는 곳. 보낼 데가 없으면 버튼을 그리지 않는다. */
   ctaHref: string | null;
@@ -102,6 +105,7 @@ export const loadPublicSaleCatalog = cache(async function loadPublicSaleCatalog(
 function collapseMembershipCourseOptions(
   courses: PublicCourseCatalogItem[]
 ): PublicCourseCatalogItem[] {
+  const membershipCourses = courses.filter((course) => isMembershipPlanSlug(course.slug));
   const representative = membershipPlanDefinitions
     .map((plan) => courses.find((course) => course.slug === plan.slug))
     .find((course): course is PublicCourseCatalogItem => Boolean(course));
@@ -112,7 +116,7 @@ function collapseMembershipCourseOptions(
     if (membershipCourseAdded || !representative) return [];
 
     membershipCourseAdded = true;
-    return [representative];
+    return [{ ...representative, soldOut: membershipCourses.every((option) => option.soldOut) }];
   });
 }
 
@@ -129,6 +133,10 @@ export const loadPublicSaleDetail = cache(async function loadPublicSaleDetail(
 ): Promise<SaleDetail | null> {
   const course = await loadPublicCourseBySlug(slug);
   if (course) return mapCourseDetail(course);
+
+  if (isMembershipPlanSlug(slug)) {
+    return mapMarketingCourseDetail(await loadPublicMarketingCurriculum());
+  }
 
   const product = await loadPublicProductBySlug(slug);
   if (!product) return null;
@@ -167,6 +175,7 @@ function mapCourseCard(item: PublicCourseCatalogItem): SaleCard {
     (total, lesson) => total + lesson.durationSeconds,
     0
   );
+  const marketing = item.marketingCurriculum;
 
   return {
     key: item.productId,
@@ -182,7 +191,11 @@ function mapCourseCard(item: PublicCourseCatalogItem): SaleCard {
     visualLabel: "VOD CLASS",
     visualCaption: item.course.instructor || item.title,
     eyebrow: "SNS · MONETIZATION",
-    metaItems: item.outlineReady
+    metaItems: marketing
+      ? marketing.chapters.length > 0
+        ? [`${countMarketingLessons(marketing.chapters)}강`, item.accessLabel]
+        : ["커리큘럼 준비 중", item.accessLabel]
+      : item.outlineReady
       ? [`${lessons.length}강`, formatDuration(totalSeconds), item.accessLabel]
       : ["커리큘럼 준비 중", item.accessLabel],
   };
@@ -195,6 +208,10 @@ function mapCourseDetail(item: PublicCourseCatalogItem): SaleDetail {
     (total, lesson) => total + lesson.durationSeconds,
     0
   );
+  const marketing = item.marketingCurriculum;
+  const curriculumReady = marketing ? marketing.chapters.length > 0 : item.outlineReady;
+  const chapterCount = marketing ? marketing.chapters.length : item.course.sections.length;
+  const lessonCount = marketing ? countMarketingLessons(marketing.chapters) : lessons.length;
 
   return {
     ...card,
@@ -204,21 +221,64 @@ function mapCourseDetail(item: PublicCourseCatalogItem): SaleDetail {
     facts: [
       {
         label: "커리큘럼",
-        value: item.outlineReady
-          ? `${item.course.sections.length}개 챕터 · ${lessons.length}강`
+        value: curriculumReady
+          ? `${chapterCount}개 챕터 · ${lessonCount}강`
           : "준비 중",
       },
       {
         label: "총 재생 시간",
-        value: item.outlineReady ? formatDuration(totalSeconds) : "안내 예정",
+        value: totalSeconds > 0 ? formatDuration(totalSeconds) : "안내 예정",
       },
       { label: "수강 기간", value: item.accessLabel },
       { label: "수강 방식", value: "마이 클래스에서 VOD 재생" },
     ],
     course: item,
+    marketingCurriculum: item.marketingCurriculum,
     ctaLabel: "수강 신청",
     ctaHref: item.checkoutHref,
     unlockHref: item.checkoutHref,
+    unlockLabel: "수강 신청",
+    detailParagraphs: [],
+    detailItems: [],
+    hasFile: false,
+    pageView: emptyPageView,
+    headerActive: "courses",
+    breadcrumbHref: "/courses",
+    breadcrumbLabel: "클래스",
+  };
+}
+
+function mapMarketingCourseDetail(curriculum: MarketingCurriculum): SaleDetail {
+  const key = membershipPlanDefinitions[0].slug;
+  const accessLabel = "안내 예정";
+  return {
+    key: `marketing:${curriculum.key}`,
+    productType: "course",
+    slug: key,
+    title: "이윰 SNS 수익화 클래스",
+    summary: "계정 세팅부터 콘텐츠, 알고리즘, 브랜드 협업 준비와 브랜딩까지 계정을 체계적으로 운영하는 전 과정을 배웁니다.",
+    priceKrw: 0,
+    listPriceKrw: null,
+    soldOut: false,
+    thumbnailSrc: null,
+    detailHref: `/courses/${key}`,
+    visualLabel: "YIYUM VOD CLASS",
+    visualCaption: "이윰",
+    eyebrow: "SNS · MONETIZATION",
+    metaItems: [`${countMarketingLessons(curriculum.chapters)}강`, accessLabel],
+    checkoutHref: "",
+    accessLabel,
+    facts: [
+      { label: "커리큘럼", value: curriculum.chapters.length > 0 ? `${curriculum.chapters.length}개 챕터 · ${countMarketingLessons(curriculum.chapters)}강` : "준비 중" },
+      { label: "총 재생 시간", value: "안내 예정" },
+      { label: "수강 기간", value: accessLabel },
+      { label: "수강 방식", value: "마이 클래스에서 VOD 재생" },
+    ],
+    course: null,
+    marketingCurriculum: curriculum,
+    ctaLabel: "수강 신청",
+    ctaHref: null,
+    unlockHref: "",
     unlockLabel: "수강 신청",
     detailParagraphs: [],
     detailItems: [],

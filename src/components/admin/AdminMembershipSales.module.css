@@ -1,0 +1,110 @@
+.panel {
+  padding: 24px;
+  border: 1px solid var(--admin-border, #e6e2dc);
+  border-radius: 16px;
+  background: var(--admin-surface, #fff);
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.panel p {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.summary {
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.tier {
+  padding: 18px;
+  border: 1px solid var(--admin-border, #e6e2dc);
+  border-radius: 12px;
+}
+
+.tier h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.tier code {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.tier .price {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tier form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tier button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #c6beb2;
+  border-radius: 8px;
+  background: #fff;
+  color: #37332c;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tier button[aria-pressed="true"] {
+  border-color: #706047;
+  background: #f0ebe3;
+  font-weight: 700;
+}
+
+.tier button:disabled {
+  cursor: default;
+}
+
+.tier button:disabled:not([aria-pressed="true"]) {
+  opacity: 0.5;
+}
+
+.tier button:focus-visible {
+  outline: 2px solid #706047;
+  outline-offset: 3px;
+}
+
+.hint {
+  color: #716c63;
+}
+
+.feedback,
+.error {
+  min-height: 21px;
+}
+
+.feedback {
+  color: #226344;
+}
+
+.error {
+  color: #a1312f;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,7 @@
 export type CourseLesson = {
   id: string;
   title: string;
+  description?: string;
   durationSeconds: number;
   videoSrc?: string;
   availability?: "available" | "coming-soon";

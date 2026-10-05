@@ -214,7 +214,7 @@ export default async function AdminDashboardPage() {
               label="상품·강의 DB"
               ready={productResult.databaseReady && courseResult.databaseReady}
             />
-            <IntegrationState label="공개 커리큘럼" ready={integrationHealth.publicOutlineReady} />
+            <IntegrationState label="강의 콘텐츠 목차" ready={integrationHealth.publicOutlineReady} />
             <IntegrationState
               label="무료 신청·수강권"
               ready={

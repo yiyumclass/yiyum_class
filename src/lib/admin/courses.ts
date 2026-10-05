@@ -2,6 +2,7 @@ import "server-only";
 
 import { requireAdmin } from "@/lib/admin/auth";
 import { courses as catalogCourses } from "@/lib/learning/catalog";
+import { isLessonDescriptionSchemaMissing } from "@/lib/learning/lesson-description";
 import {
   canUseLocalCatalogFallback,
   logProductionCatalogFallbackBlocked,
@@ -23,6 +24,9 @@ export type AdminLesson = {
   id: string;
   key: string;
   title: string;
+  description: string;
+  descriptionEditable: boolean;
+  descriptionUpdatedAt: string | null;
   durationSeconds: number;
   // 관리자 화면 전체가 "재생 가능한가"만 보면 되도록 여기서 한 번 판정한다.
   hasVideo: boolean;
@@ -48,7 +52,7 @@ export type AdminCourse = {
   id: string;
   productId: string;
   productTitle: string;
-  productStatus: "draft" | "active" | "paused" | "archived";
+  productStatus: "draft" | "active" | "sold_out" | "paused" | "archived";
   slug: string;
   title: string;
   shortTitle: string;
@@ -65,7 +69,7 @@ export type CourseProductOption = {
   id: string;
   slug: string;
   title: string;
-  status: "draft" | "active" | "paused" | "archived";
+  status: "draft" | "active" | "sold_out" | "paused" | "archived";
 };
 
 export type AdminCoursesResult = {
@@ -210,13 +214,37 @@ export async function loadAdminCourses(): Promise<AdminCoursesResult> {
     }
   }
 
+  const descriptionByLessonId = new Map<string, { description: string; updated_at: string }>();
+  let descriptionEditable = false;
+  if (lessonRows.length > 0) {
+    const { data, error } = await supabase
+      .from("lesson_descriptions")
+      .select("lesson_id, description, updated_at")
+      .in("lesson_id", lessonRows.map((lesson) => lesson.id))
+      .returns<Array<{ lesson_id: string; description: string; updated_at: string }>>();
+
+    if (error) {
+      if (!isLessonDescriptionSchemaMissing(error.code)) {
+        console.error("Failed to load admin lesson descriptions:", error.message);
+      }
+    } else {
+      descriptionEditable = true;
+      for (const row of data ?? []) descriptionByLessonId.set(row.lesson_id, row);
+    }
+  }
+
   const productById = new Map(products.map((product) => [product.id, product]));
   const lessonsBySection = new Map<string, AdminLesson[]>();
   const sectionsByCourse = new Map<string, AdminCourseSection[]>();
 
   for (const lesson of lessonRows) {
     const current = lessonsBySection.get(lesson.section_id) ?? [];
-    current.push(mapLesson(lesson));
+    current.push({
+      ...mapLesson(lesson),
+      description: descriptionByLessonId.get(lesson.id)?.description ?? "",
+      descriptionUpdatedAt: descriptionByLessonId.get(lesson.id)?.updated_at ?? null,
+      descriptionEditable,
+    });
     lessonsBySection.set(lesson.section_id, current);
   }
 
@@ -278,6 +306,9 @@ function mapLesson(lesson: LessonRow): AdminLesson {
     id: lesson.id,
     key: lesson.lesson_key,
     title: lesson.title,
+    description: "",
+    descriptionEditable: false,
+    descriptionUpdatedAt: null,
     durationSeconds: lesson.duration_seconds,
     hasVideo: lesson.mux_status === "ready" && Boolean(lesson.mux_playback_id),
     videoStatus: lesson.mux_status,
@@ -353,6 +384,9 @@ function buildCatalogFallback(): AdminCourse[] {
           id: `catalog:${course.slug}:${section.id}:${lesson.id}`,
           key: lesson.id,
           title: lesson.title,
+          description: "",
+          descriptionEditable: false,
+          descriptionUpdatedAt: null,
           durationSeconds: lesson.durationSeconds,
           hasVideo: Boolean(lesson.videoSrc),
           videoStatus: lesson.videoSrc ? "ready" : null,

@@ -400,7 +400,7 @@
 .sectionBody li {
   min-height: 48px;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #e7e0d6;
@@ -415,6 +415,11 @@
 .sectionBody li strong {
   color: #5b544c;
   font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionBody li small.assignment {
+  color: #b85c38;
   font-weight: 600;
 }
 
@@ -580,7 +585,7 @@
   }
 
   .sectionBody li {
-    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-columns: 36px minmax(0, 1fr);
     padding: 10px 0;
   }
 

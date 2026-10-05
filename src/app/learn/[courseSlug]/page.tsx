@@ -9,6 +9,7 @@ import {
   loadCourseProgress,
 } from "@/lib/learning/progress";
 import { hydrateCourseVideos } from "@/lib/learning/video";
+import { hydrateCourseLessonDescriptions } from "@/lib/learning/lesson-descriptions";
 import { hasActiveProductEntitlement } from "@/lib/store/entitlements";
 import {
   loadMyCourseBySlug,
@@ -62,7 +63,8 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
       return <AdminCoursePreviewEmpty title={previewCourse.title} />;
     }
 
-    const hydratedPreview = await hydrateCourseVideos(supabase, previewCourse);
+    const describedPreview = await hydrateCourseLessonDescriptions(supabase, previewCourse);
+    const hydratedPreview = await hydrateCourseVideos(supabase, describedPreview);
     return (
       <CourseClassroom
         course={hydratedPreview}
@@ -86,7 +88,8 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
 
   // 보관 콘텐츠는 제외하고 작성 중 차시는 강의실 목차에서 잠근다.
   const [course, progressResult] = await Promise.all([
-    hydrateCourseVideos(supabase, catalogItem.classroomCourse),
+    hydrateCourseLessonDescriptions(supabase, catalogItem.classroomCourse)
+      .then((describedCourse) => hydrateCourseVideos(supabase, describedCourse)),
     loadCourseProgress(supabase, catalogItem.classroomCourse),
   ]);
   const progress = progressResult.available

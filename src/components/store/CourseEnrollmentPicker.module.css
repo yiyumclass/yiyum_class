@@ -310,7 +310,17 @@
 
 .disabledAction {
   border: 1px solid rgba(237, 231, 220, 0.18);
+  background: transparent;
   color: #92887d;
+  font-family: inherit;
+  cursor: default;
+}
+
+.availabilityNotice {
+  margin: 20px 38px 0;
+  color: #d7cec2;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .dialogFooter {
@@ -411,6 +421,11 @@
 
   .dialogFooter {
     padding: 0 20px 26px;
+  }
+
+  .availabilityNotice {
+    margin-right: 22px;
+    margin-left: 22px;
   }
 }
 

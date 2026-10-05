@@ -8,6 +8,8 @@ import { canUseLocalCatalogFallback } from "@/lib/runtime/catalog-fallback";
 import { createPublicClient } from "@/lib/supabase/public";
 import { courseProducts } from "./course-products";
 import type { ProductType } from "@/lib/store/product-type";
+import { loadPublicMarketingCurriculum } from "./marketing-curriculum";
+import { marketingCurriculumKeyForProduct, type MarketingCurriculum } from "./marketing-curriculum-types";
 
 export type PublicCourseCatalogItem = {
   productId: string;
@@ -31,6 +33,7 @@ export type PublicCourseCatalogItem = {
   outlineReady: boolean;
   contentReady: boolean;
   source: "database" | "catalog";
+  marketingCurriculum?: MarketingCurriculum | null;
 };
 
 type ProductRow = {
@@ -110,9 +113,10 @@ type EntitledCourseOutlineRow = CourseOutlineRow & {
 
 export const loadPublicCourseCatalog = cache(async function loadPublicCourseCatalog(): Promise<PublicCourseCatalogItem[]> {
   const supabase = createPublicClient();
-  const [productResult, outlineResult] = await Promise.all([
+  const [productResult, outlineResult, marketingCurriculum] = await Promise.all([
     supabase.rpc("get_public_products", { target_slug: null }),
     loadCourseOutlines(supabase),
+    loadPublicMarketingCurriculum(),
   ]);
   const { data: productRows, error: productError } = productResult;
 
@@ -121,7 +125,7 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
       isMissingCatalogSchema(productError.code) &&
       canUseLocalCatalogFallback()
     ) {
-      return buildFallbackCatalog();
+      return attachMarketingCurriculum(buildFallbackCatalog(), marketingCurriculum);
     }
 
     console.error("Failed to load public course products:", productError.message);
@@ -135,17 +139,16 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
 
   if (!outlineResult.available && !canUseLocalCatalogFallback()) {
     console.error("Public course outline RPC is unavailable in production.");
-    return [];
   }
 
   const publishedCourses = outlineResult.available
     ? outlineResult.courses.flatMap(({ productId, course, published }) =>
         published ? [{ productId, course }] : []
       )
-    : await loadPublishedCourses(
+    : canUseLocalCatalogFallback() ? await loadPublishedCourses(
         supabase,
         products.map((product) => product.id)
-      );
+      ) : [];
   if (!publishedCourses) return [];
 
   const outlineByProductId = new Map(
@@ -155,13 +158,13 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
     publishedCourses.map((course) => [course.productId, course.course])
   );
 
-  return products.flatMap((product) => {
+  const catalog = products.flatMap((product) => {
     const publishedCourse = publishedCourseByProductId.get(product.id) ?? null;
     const fallbackOutline = fallbackCourses.find((course) => course.slug === product.slug);
     const course =
       outlineByProductId.get(product.id) ??
       publishedCourse ??
-      (!outlineResult.available ? fallbackOutline : undefined) ??
+      (!outlineResult.available && canUseLocalCatalogFallback() ? fallbackOutline : undefined) ??
       buildPlaceholderCourse(product);
     const classroomCourse = buildClassroomCourse(course, publishedCourse);
 
@@ -170,11 +173,19 @@ export const loadPublicCourseCatalog = cache(async function loadPublicCourseCata
         product,
         course,
         classroomCourse,
-        outlineResult.available ? "database" : "catalog"
+        !outlineResult.available && canUseLocalCatalogFallback() ? "catalog" : "database"
       ),
     ];
   });
+  return attachMarketingCurriculum(catalog, marketingCurriculum);
 });
+
+function attachMarketingCurriculum(catalog: PublicCourseCatalogItem[], curriculum: MarketingCurriculum) {
+  return catalog.map((item) => ({
+    ...item,
+    marketingCurriculum: marketingCurriculumKeyForProduct(item.slug) === curriculum.key ? curriculum : null,
+  }));
+}
 
 export const loadPublicCourseBySlug = cache(async function loadPublicCourseBySlug(
   slug: string

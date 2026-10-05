@@ -28,6 +28,7 @@ import { exportRowsToCsv } from "@/lib/admin/csv";
 import { useTableParams } from "@/lib/admin/use-table-params";
 import AdminDialog, { AdminDialogActions } from "./AdminDialog";
 import AdminProductDetailDialog from "./AdminProductDetailDialog";
+import AdminMembershipSales from "./AdminMembershipSales";
 import { useAdminFeedback } from "./AdminFeedback";
 import AdminPagination, { DEFAULT_ADMIN_PAGE_SIZE } from "./AdminPagination";
 import {
@@ -290,6 +291,8 @@ export default function AdminProductManager({
           </div>
         </div>
       )}
+
+      <AdminMembershipSales products={products} databaseReady={databaseReady} />
 
       <section className={styles.summarySection} aria-labelledby="product-summary-title">
         <div className={styles.summaryMeta}>

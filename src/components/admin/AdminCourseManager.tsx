@@ -44,9 +44,12 @@ import {
   validateCourseVideoFile,
 } from "@/lib/admin/video-file";
 import { useTableParams } from "@/lib/admin/use-table-params";
+import { isMembershipPlanSlug } from "@/lib/store/membership-plans";
+import { getSaleAvailability } from "@/lib/store/sale-availability";
 import AdminDialog, { AdminDialogActions } from "./AdminDialog";
 import { useAdminFeedback } from "./AdminFeedback";
 import AdminLessonVideoDialog from "./AdminLessonVideoDialog";
+import AdminLessonDescriptionDialog from "./AdminLessonDescriptionDialog";
 import {
   AlertIcon,
   ArrowDownIcon,
@@ -86,6 +89,7 @@ type DialogState =
       section: AdminCourseSection;
     }
   | { type: "edit-lesson"; section: AdminCourseSection; lesson: AdminLesson }
+  | { type: "edit-lesson-description"; lesson: AdminLesson }
   | {
       type: "manage-video";
       courseSlug: string;
@@ -493,6 +497,13 @@ export default function AdminCourseManager({
           onClose={() => setDialog(null)}
         />
       )}
+      {dialog?.type === "edit-lesson-description" && (
+        <AdminLessonDescriptionDialog
+          key={dialog.lesson.id}
+          lesson={dialog.lesson}
+          onClose={() => setDialog(null)}
+        />
+      )}
       {dialog?.type === "manage-video" && (
         <AdminLessonVideoDialog
           sectionTitle={dialog.sectionTitle}
@@ -572,9 +583,8 @@ function CourseEditor({
       total + section.lessons.filter((lesson) => lesson.status !== "archived").length,
     0
   );
-  const salesPageReady = course.productStatus === "active" && course.status !== "archived";
   const classroomReady =
-    course.productStatus === "active" && course.status === "published" && curriculumReady;
+    course.productStatus !== "archived" && course.status === "published" && curriculumReady;
   const classroomBlocker = getClassroomBlocker(
     course,
     publishedLessons.length,
@@ -629,15 +639,22 @@ function CourseEditor({
               관리자 미리보기 <span aria-hidden="true">↗</span>
             </Link>
           )}
+          {isMembershipPlanSlug(course.slug) && (
+            <Link href="/admin/curriculum" className={styles.previewLink}>
+              판매 커리큘럼 편집
+            </Link>
+          )}
         </div>
       </header>
 
       <div className={styles.exposureGrid} aria-label="사용자 화면 노출 상태">
         <ExposureState
-          label="판매용 커리큘럼"
-          ready={salesPageReady && outlineLessonCount > 0}
-          value={salesPageReady ? `${outlineLessonCount}개 차시 표시` : "숨김"}
-          description="작성 중 차시도 표시하고 보관한 콘텐츠만 제외합니다."
+          label="강의실 목차"
+          ready={outlineLessonCount > 0}
+          value={`${outlineLessonCount}개 차시 구성`}
+          description={isMembershipPlanSlug(course.slug)
+            ? "실제 수강 콘텐츠입니다. 홈페이지의 판매 커리큘럼 문구는 별도 메뉴에서 관리합니다."
+            : "작성 중 차시도 포함하며 보관한 콘텐츠는 제외합니다."}
         />
         <ExposureState
           label="수강생 강의실"
@@ -645,7 +662,7 @@ function CourseEditor({
           value={classroomReady ? "입장 가능" : "준비 중"}
           description={
             classroomReady
-              ? `${publishedLessons.length}개 차시를 재생할 수 있습니다.`
+              ? `유효한 수강권 보유자가 ${publishedLessons.length}개 차시를 재생할 수 있습니다. 품절은 기존 수강권에 영향을 주지 않습니다.`
               : classroomBlocker
           }
         />
@@ -823,7 +840,18 @@ function CourseSectionCard({
               <span className={styles.lessonIndex}>{lessonIndex + 1}</span>
               <span className={styles.lessonMain}>
                 <strong>{lesson.title}</strong>
-                <small>{lessonIndex + 1}강 · {formatDuration(lesson.durationSeconds)}</small>
+                <small>
+                  {lessonIndex + 1}강 · {formatDuration(lesson.durationSeconds)}
+                  {editable && (
+                    <button
+                      type="button"
+                      className={styles.lessonDescriptionAction}
+                      onClick={() => onOpenDialog({ type: "edit-lesson-description", lesson })}
+                    >
+                      영상 설명
+                    </button>
+                  )}
+                </small>
               </span>
               <span className={lesson.hasVideo ? styles.videoReady : styles.videoMissing}>
                 {lesson.hasVideo ? <VideoIcon /> : <AlertIcon />}
@@ -1579,7 +1607,7 @@ function getClassroomBlocker(
   publishedLessonCount: number,
   missingVideoCount: number
 ) {
-  if (course.productStatus !== "active") return "연결 상품이 판매 중이어야 수강생이 입장할 수 있습니다.";
+  if (course.productStatus === "archived") return "연결 상품이 보관 상태입니다. 상품 상태와 수강권을 확인해 주세요.";
   if (course.status !== "published") return "강의 기본 정보에서 강의 상태를 공개로 변경해 주세요.";
   if (publishedLessonCount === 0) return "공개 챕터 안에 공개 차시가 최소 1개 필요합니다.";
   if (missingVideoCount > 0) return `영상이 없는 공개 차시 ${missingVideoCount}개를 먼저 정리해 주세요.`;
@@ -1593,14 +1621,16 @@ function getCourseStatusConfirmRequest(
   if (nextStatus === "published") {
     return {
       title: `‘${course.title}’을 공개할까요?`,
-      description: "판매 중 상품이라면 수강권 보유자가 강의실에 입장할 수 있습니다.",
+      description: "유효한 수강권 보유자가 강의실에 입장할 수 있습니다. 상품의 품절 여부와 기존 수강 권한은 별개입니다.",
       confirmLabel: "강의 공개",
     };
   }
   if (nextStatus === "archived") {
     return {
       title: `‘${course.title}’을 보관할까요?`,
-      description: "판매 페이지 커리큘럼과 수강생 강의실에서 모두 숨겨집니다.",
+      description: isMembershipPlanSlug(course.slug)
+        ? "수강생 강의실에서 숨겨집니다. 홈페이지의 판매 커리큘럼 문구는 별도로 유지됩니다."
+        : "실제 강의 목차와 수강생 강의실에서 숨겨집니다.",
       confirmLabel: "보관",
       tone: "danger" as const,
     };
@@ -1647,7 +1677,7 @@ function formatStatus(status: AdminCourseStatus) {
 }
 
 function formatProductStatus(status: AdminCourse["productStatus"]) {
-  return { draft: "작성 중", active: "판매 중", paused: "판매 중지", archived: "보관" }[status];
+  return getSaleAvailability(status).label;
 }
 
 function formatDuration(seconds: number) {

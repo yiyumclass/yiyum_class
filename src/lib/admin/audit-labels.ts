@@ -3,12 +3,14 @@
 const ACTION_LABELS: Record<string, string> = {
   "product.created": "상품을 등록했습니다",
   "product.updated": "상품 정보를 변경했습니다",
+  "marketing_curriculum.update": "판매 커리큘럼을 변경했습니다",
   "courses.created": "강의를 연결했습니다",
   "courses.updated": "강의 정보를 변경했습니다",
   "course_sections.created": "챕터를 추가했습니다",
   "course_sections.updated": "챕터를 변경했습니다",
   "lessons.created": "차시를 추가했습니다",
   "lessons.updated": "차시를 변경했습니다",
+  "lessons.description_updated": "영상 설명을 변경했습니다",
   "courses.deleted": "강의를 삭제했습니다",
   "course_sections.deleted": "챕터를 삭제했습니다",
   "lessons.deleted": "차시를 삭제했습니다",
@@ -29,6 +31,7 @@ const ACTION_LABELS: Record<string, string> = {
 const TARGET_LABELS: Record<string, string> = {
   product: "상품",
   products: "상품",
+  marketing_curriculum: "판매 커리큘럼",
   courses: "강의",
   course_sections: "챕터",
   lessons: "차시",
@@ -71,6 +74,7 @@ const METADATA_FIELD_LABELS: Record<string, string> = {
   slug: "식별자",
   title: "제목",
   summary: "소개",
+  description: "설명",
   price_krw: "가격(원)",
   access_period_days: "수강 기간(일)",
   status: "상태",
@@ -101,6 +105,9 @@ const METADATA_FIELD_LABELS: Record<string, string> = {
   id: "ID",
   created_at: "생성 시각",
   updated_at: "수정 시각",
+  curriculum_key: "커리큘럼 식별자",
+  chapters: "챕터와 항목",
+  version: "문서 버전",
 };
 
 export function formatAuditField(key: string) {

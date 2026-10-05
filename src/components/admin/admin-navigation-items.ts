@@ -9,6 +9,7 @@ export const adminNavigation = [
   { label: "대시보드", icon: "dashboard", href: "/admin", ownerOnly: false },
   { label: "상품 관리", icon: "product", href: "/admin/products", ownerOnly: false },
   { label: "강의 관리", icon: "course", href: "/admin/courses", ownerOnly: false },
+  { label: "판매 커리큘럼", icon: "course", href: "/admin/curriculum", ownerOnly: false },
   { label: "주문 · 결제", icon: "order", href: "/admin/orders", ownerOnly: false },
   { label: "회원 · 수강권", icon: "member", href: "/admin/members", ownerOnly: false },
   { label: "학습 현황", icon: "progress", href: "/admin/progress", ownerOnly: false },

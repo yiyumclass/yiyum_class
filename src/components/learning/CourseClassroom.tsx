@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import MuxPlayer from "@mux/mux-player-react";
+import LessonDescription from "./LessonDescription";
 import {
   useCallback,
   useEffect,
@@ -678,6 +679,12 @@ export default function CourseClassroom({
                 {isCurrentComplete ? "학습 완료" : "완료로 표시"}
               </button>
             </div>
+
+            <LessonDescription
+              key={activeLesson.id}
+              description={activeLesson.description}
+              className={styles.lessonDescription}
+            />
 
             <nav className={styles.lessonNavigation} aria-label="차시 이동">
               {previousLesson ? (

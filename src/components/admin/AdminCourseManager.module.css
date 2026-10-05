@@ -566,7 +566,8 @@
 }
 
 .productConnection .product_active { background: #e5ebdf; color: #66735a; }
-.productConnection .product_paused { background: #f2e5d9; color: #9b633e; }
+.productConnection .product_paused,
+.productConnection .product_sold_out { background: #f2e5d9; color: #9b633e; }
 .productConnection .product_archived { background: #e9e7e3; color: #88837c; }
 
 .editorTitle h2 {
@@ -1438,6 +1439,34 @@
 }
 
 .fieldError { color: #a84f39 !important; }
+
+.lessonDescriptionForm {
+  display: grid;
+  gap: var(--admin-gap-md);
+}
+
+.lessonDescriptionAction {
+  margin-left: var(--admin-gap-sm);
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: #884f38;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.lessonDescriptionAction:focus-visible {
+  outline: 2px solid #884f38;
+  outline-offset: 3px;
+}
+
+.lessonDescriptionSaved {
+  margin: 0;
+  color: #68745d;
+  font-size: var(--admin-text-sm);
+}
 
 .selectControl {
   position: relative;

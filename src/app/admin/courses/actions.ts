@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin/auth";
 import type { AdminCourseStatus, AdminLesson } from "@/lib/admin/courses";
 import { getMuxClient } from "@/lib/mux/client";
+import {
+  isLessonDescriptionSchemaMissing,
+  validateLessonDescription,
+} from "@/lib/learning/lesson-description";
 import { createClient } from "@/lib/supabase/server";
 import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
 
@@ -23,6 +27,8 @@ export type CourseFormState = {
   message: string;
   fieldErrors: Partial<Record<CourseField, string>>;
   createdLesson?: AdminLesson;
+  savedDescription?: string;
+  savedDescriptionUpdatedAt?: string;
 };
 
 export type CourseMutationResult = {
@@ -262,6 +268,9 @@ export async function createLessonAction(
     id: createdLesson.id,
     key: createdLesson.lesson_key,
     title: createdLesson.title,
+    description: "",
+    descriptionEditable: false,
+    descriptionUpdatedAt: null,
     durationSeconds: createdLesson.duration_seconds,
     hasVideo: false,
     videoStatus: null,
@@ -320,6 +329,79 @@ export async function updateLessonAction(
 
   revalidateCourses();
   return success("차시 정보를 수정했습니다.");
+}
+
+export async function updateLessonDescriptionAction(
+  lessonId: string,
+  _previousState: CourseFormState,
+  formData: FormData
+): Promise<CourseFormState> {
+  const admin = await requireAdmin();
+  if (!isUuid(lessonId)) return invalidTarget("설명을 수정할 차시를 확인해 주세요.");
+
+  const validation = validateLessonDescription(formData.get("description"));
+  if (!validation.valid) return formError({ description: validation.message });
+  const expectedUpdatedAt = formData.get("expectedUpdatedAt");
+  const expectedMissing = formData.get("expectedMissing");
+  if (
+    typeof expectedUpdatedAt !== "string" ||
+    (expectedMissing !== "true" && expectedMissing !== "false") ||
+    (expectedMissing === "true"
+      ? expectedUpdatedAt !== ""
+      : !isDescriptionTimestamp(expectedUpdatedAt))
+  ) {
+    return invalidTarget("저장 전 영상 설명을 확인하지 못했습니다. 편집 창을 다시 열어 주세요.");
+  }
+
+  const supabase = await createClient();
+  const { data: lesson, error: lessonError } = await supabase
+    .from("lessons")
+    .select("id")
+    .eq("id", lessonId)
+    .maybeSingle<{ id: string }>();
+  if (lessonError || !lesson) return invalidTarget("설명을 수정할 차시를 찾지 못했습니다.");
+
+  const values = { description: validation.description, updated_by: admin.userId };
+  const { data, error } = expectedMissing === "true"
+    ? await supabase
+      .from("lesson_descriptions")
+      .insert({ lesson_id: lesson.id, ...values })
+      .select("lesson_id, updated_at")
+      .maybeSingle<{ lesson_id: string; updated_at: string }>()
+    : await supabase
+      .from("lesson_descriptions")
+      .update(values)
+      .eq("lesson_id", lesson.id)
+      .eq("updated_at", expectedUpdatedAt)
+      .select("lesson_id, updated_at")
+      .maybeSingle<{ lesson_id: string; updated_at: string }>();
+
+  if (error?.code === "23505" || (!error && !data)) return staleLessonDescription();
+
+  if (error || !data) {
+    if (isLessonDescriptionSchemaMissing(error?.code)) {
+      return invalidTarget("영상 설명 저장 기능을 준비하고 있습니다. 준비가 끝난 뒤 다시 저장해 주세요.");
+    }
+    if (error) console.error("Failed to update lesson description:", error.message);
+    return mutationError(error?.code, "영상 설명을 저장하지 못했습니다.");
+  }
+
+  revalidatePath("/admin/courses");
+  revalidatePath("/learn", "layout");
+  return {
+    ...success("영상 설명을 저장했습니다."),
+    savedDescription: validation.description,
+    savedDescriptionUpdatedAt: data.updated_at,
+  };
+}
+
+function isDescriptionTimestamp(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+    && Number.isFinite(Date.parse(value));
+}
+
+function staleLessonDescription(): CourseFormState {
+  return invalidTarget("영상 설명이 다른 곳에서 변경되었습니다. 입력 내용은 유지됩니다. 필요한 내용을 복사한 뒤 페이지를 새로고침하고, 최신 설명을 확인한 뒤 수정해 주세요.");
 }
 
 export async function removeLessonVideoAction(

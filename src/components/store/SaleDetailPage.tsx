@@ -4,6 +4,7 @@ import Link from "next/link";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
 import { resolveSalePrice } from "@/lib/store/pricing";
+import { getSaleAvailabilitySummary } from "@/lib/store/sale-availability";
 import type { SaleDetail } from "@/lib/store/public-sale";
 import ConsultingDetail from "./ConsultingDetail";
 import CourseEnrollmentPicker, {
@@ -29,6 +30,25 @@ export default function SaleDetailPage({
   const sale = resolveSalePrice(item.priceKrw, item.listPriceKrw);
   const isCourse = item.productType === "course";
   const hasMembershipOptions = membershipProducts !== undefined;
+  const marketing = item.marketingCurriculum ?? course?.marketingCurriculum;
+  const curriculumSections = marketing
+    ? marketing.chapters.map((chapter) => ({
+        ...chapter,
+        description: "",
+        items: chapter.items.map((item) => ({ ...item, durationSeconds: null })),
+      }))
+    : course?.course.sections.map((section) => ({
+        key: section.id,
+        title: section.title,
+        description: section.description,
+        items: section.lessons.map((lesson, lessonIndex) => ({
+          key: lesson.id,
+          title: lesson.title,
+          lessonNumber: lessonIndex + 1,
+          kind: "lesson" as const,
+          durationSeconds: lesson.durationSeconds,
+        })),
+      })) ?? [];
 
   const content = (
     <div className={styles.page}>
@@ -147,7 +167,7 @@ export default function SaleDetailPage({
           </div>
         </section>
 
-        {course ? (
+        {isCourse ? (
         <section
           id="curriculum"
           className={styles.curriculum}
@@ -158,13 +178,13 @@ export default function SaleDetailPage({
               <span>CURRICULUM</span>
               <h2 id="curriculum-title" className="serif">강의 구성</h2>
             </div>
-            {!course.outlineReady && <p>상세 커리큘럼 준비 중</p>}
+            {curriculumSections.length === 0 && <p>상세 커리큘럼 준비 중</p>}
           </div>
 
-          {course.course.sections.length > 0 ? (
+          {curriculumSections.length > 0 ? (
             <div className={styles.sectionList}>
-              {course.course.sections.map((section, sectionIndex) => (
-                <details key={section.id} open={sectionIndex === 0}>
+              {curriculumSections.map((section, sectionIndex) => (
+                <details key={section.key} open={sectionIndex === 0}>
                   <summary>
                     <span className={`serif ${styles.sectionNumber}`}>
                       {String(sectionIndex + 1).padStart(2, "0")}
@@ -177,11 +197,17 @@ export default function SaleDetailPage({
                   <div className={styles.sectionBody}>
                     {section.description && <p>{section.description}</p>}
                     <ol>
-                      {section.lessons.map((lesson, lessonIndex) => (
-                        <li key={lesson.id}>
-                          <span>{String(lessonIndex + 1).padStart(2, "0")}</span>
-                          <strong>{lesson.title}</strong>
-                          <small>{formatLessonDuration(lesson.durationSeconds)}</small>
+                      {section.items.map((item) => (
+                        <li key={item.key}>
+                          <span>{item.lessonNumber === null ? "—" : `${item.lessonNumber}강`}</span>
+                          <strong>{item.title}</strong>
+                          {marketing ? (
+                            <small className={item.kind === "assignment" ? styles.assignment : undefined}>
+                              {item.kind === "assignment" ? "과제" : "강의"}
+                            </small>
+                          ) : (
+                            <small>{formatLessonDuration(item.durationSeconds ?? 0)}</small>
+                          )}
                         </li>
                       ))}
                     </ol>
@@ -224,7 +250,7 @@ export default function SaleDetailPage({
         <section className={styles.bottomCta}>
           <div>
             <span>READY TO START?</span>
-            <h2 className="serif">{closingHeadline(item)}</h2>
+            <h2 className="serif">{closingHeadline(item, membershipProducts)}</h2>
           </div>
           <div>
             {!isCourse && (
@@ -297,7 +323,15 @@ function priceLabel(item: SaleDetail) {
   return "수강료";
 }
 
-function closingHeadline(item: SaleDetail) {
+function closingHeadline(item: SaleDetail, membershipProducts?: MembershipProductOption[]) {
+  if (membershipProducts !== undefined) {
+    const availability = getSaleAvailabilitySummary(membershipProducts.map((product) =>
+      product.status ?? (product.soldOut ? "sold_out" : "active")
+    ));
+    if (availability === "all_sold_out") return "이번 모집은 마감되었어요.";
+    if (availability === "unavailable") return "다음 신청을 준비하고 있어요.";
+    return "내 속도에 맞춰 시작해 보세요.";
+  }
   if (item.soldOut) return "이번 모집은 마감되었어요.";
   if (item.productType === "consulting") return "계정을 함께 열어볼 준비가 되셨다면.";
   if (item.productType === "ebook") {

@@ -8,9 +8,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import * as membershipPlans from "../src/lib/store/membership-plans.ts";
 import * as pricing from "../src/lib/store/pricing.ts";
+import * as saleAvailability from "../src/lib/store/sale-availability.ts";
+import * as marketingCurriculumTypes from "../src/lib/store/marketing-curriculum-types.ts";
 import type { MembershipProductOption } from "../src/components/store/CourseEnrollmentPicker";
 import type { PublicCourseCatalogItem } from "../src/lib/store/public-course-catalog";
 import type { SaleCard, SaleDetail } from "../src/lib/store/public-sale";
+import type { AdminProduct } from "../src/lib/admin/products";
 
 function sourceFile(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -51,6 +54,7 @@ function renderPicker(products: MembershipProductOption[]) {
     },
     "@/lib/store/membership-plans": membershipPlans,
     "@/lib/store/pricing": pricing,
+    "@/lib/store/sale-availability": saleAvailability,
     "./CourseEnrollmentPicker.module.css": { default: {} },
   });
   return renderToStaticMarkup(React.createElement(CourseEnrollmentProvider, { products }));
@@ -78,6 +82,34 @@ test("수강 방식 선택의 제목·접근성 이름·선택 버튼은 관리�
   }
 });
 
+test("등급별 판매 관리도 고정된 기본 이름 대신 현재 상품명을 표시한다", () => {
+  const subject = loadModule<{ default: React.ComponentType<{ products: AdminProduct[]; databaseReady: boolean }> }>(
+    "src/components/admin/AdminMembershipSales.tsx",
+    {
+      react: { ...React, useActionState: (action: unknown, state: unknown) => [state, action, false] },
+      "react/jsx-runtime": jsxRuntime,
+      "@/app/admin/products/actions": { updateProductStatusAction: async () => ({ ok: true, message: "saved" }) },
+      "@/lib/store/membership-plans": membershipPlans,
+      "@/lib/store/pricing": pricing,
+      "@/lib/store/sale-availability": saleAvailability,
+      "./AdminMembershipSales.module.css": { default: {} },
+    }
+  );
+  const products = membershipPlans.membershipPlanDefinitions.map((plan) => ({
+    slug: plan.slug,
+    title: `운영자가 수정한 상품 ${plan.order}`,
+    priceKrw: plan.fallbackPriceKrw,
+    status: "sold_out",
+    source: "database",
+    productType: "course",
+  })) as AdminProduct[];
+  const markup = renderToStaticMarkup(React.createElement(subject.default, { products, databaseReady: true }));
+  for (const product of products) {
+    assert.ok(markup.includes(product.title));
+    assert.ok(markup.includes(`aria-label="${product.title} 판매 상태"`));
+  }
+});
+
 test("품절 상품도 DB 이름을 표시하고 누락 상품만 기본 이름으로 비활성 표시한다", () => {
   const [plan] = membershipPlans.membershipPlanDefinitions;
   const markup = renderPicker([{
@@ -89,7 +121,7 @@ test("품절 상품도 DB 이름을 표시하고 누락 상품만 기본 이름�
   }]);
 
   assert.ok(markup.includes("관리자 지정 마감 클래스"));
-  assert.ok(markup.includes("지금은 신청 마감"));
+  assert.ok(markup.includes("품절"));
   assert.ok(markup.includes("판매 준비 중"));
   assert.ok(markup.includes(membershipPlans.membershipPlanDefinitions[1].title));
   assert.ok(markup.includes(membershipPlans.membershipPlanDefinitions[2].title));
@@ -141,6 +173,8 @@ test("공통 강의 소개에는 원본 강의명을 쓰되 개별 판매 상품
     "@/lib/store/product-pages": {},
     "@/lib/store/public-detail-items": {},
     "@/lib/store/membership-plans": membershipPlans,
+    "@/lib/store/marketing-curriculum-types": marketingCurriculumTypes,
+    "@/lib/store/marketing-curriculum": {},
     "@/lib/store/public-course-catalog": {
       loadPublicCourseCatalog: async () => products,
       loadPublicCourseBySlug: async (slug: string) => products.find((product) => product.slug === slug),
@@ -159,6 +193,13 @@ test("공통 강의 소개에는 원본 강의명을 쓰되 개별 판매 상품
     assert.equal(detail.checkoutHref, `/checkout?product=${plan.slug}`);
   }
   assert.equal((await sale.loadPublicSaleDetail("other-course")).title, "별도 판매 상품");
+  products[0].soldOut = true;
+  assert.equal((await sale.loadPublicSaleCatalog())[0].soldOut, false);
+  for (const product of products.filter((product) => membershipPlans.isMembershipPlanSlug(product.slug))) {
+    product.soldOut = true;
+  }
+  assert.equal((await sale.loadPublicSaleCatalog())[0].soldOut, true);
+  assert.equal((await sale.loadPublicSaleCatalog())[1].soldOut, false);
 });
 
 test("홈과 상세 페이지 모두 DB 상품명을 수강 방식 선택창에 전달한다", () => {

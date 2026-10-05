@@ -12,6 +12,8 @@ import {
   membershipPlanDefinitions,
 } from "@/lib/store/membership-plans";
 import { loadPublicCourseCatalog } from "@/lib/store/public-course-catalog";
+import { loadPublicMarketingCurriculum } from "@/lib/store/marketing-curriculum";
+import { countMarketingLessons } from "@/lib/store/marketing-curriculum-types";
 
 // 상품 가격과 판매 상태는 어드민에서 바뀌므로 홈을 요청할 때 최신 DB 값을 읽는다.
 export const dynamic = "force-dynamic";
@@ -19,17 +21,11 @@ export const dynamic = "force-dynamic";
 const featuredCourseSlug = "sns-monetization";
 const landingCourseDescription =
   "계정 세팅부터 콘텐츠, 알고리즘, 브랜드 협업 준비와 브랜딩까지 계정을 체계적으로 운영하는 전 과정을 배웁니다.";
-const landingLessonTitleOverrides: Record<string, string> = {
-  "sns-22": "팔로워 규모별로 검토할 수익화 방식과 선택 기준",
-  "sns-23": "브랜드 협업 준비 로드맵 — 팔로워 규모별 점검 항목",
-  "sns-24": "단가 협상 실전편 — 제작 범위와 원고료 검토 기준",
-  "sns-25": "광고 단가 협상 전에 확인할 5가지 기준",
-  "sns-26": "브랜드 이메일·DM 제안서 작성 템플릿",
-  "sns-30": "얼굴 공개 없이 운영하는 크리에이터의 콘텐츠 공통점",
-};
-
 export default async function Home() {
-  const courseCatalog = await loadPublicCourseCatalog();
+  const [courseCatalog, marketingCurriculum] = await Promise.all([
+    loadPublicCourseCatalog(),
+    loadPublicMarketingCurriculum(),
+  ]);
   const featuredItem = courseCatalog.find((item) => item.slug === featuredCourseSlug) ?? null;
   const pricingSlugs = new Set<string>(membershipPlanDefinitions.map((plan) => plan.slug));
   const classProducts = courseCatalog
@@ -41,11 +37,8 @@ export default async function Home() {
       soldOut: item.soldOut,
       checkoutHref: item.checkoutHref,
     }));
-  const sections = featuredItem?.course.sections ?? [];
-  const lessonCount = sections.reduce(
-    (total, section) => total + section.lessons.length,
-    0
-  );
+  const sections = marketingCurriculum.chapters;
+  const lessonCount = countMarketingLessons(sections);
   const courseTitle = featuredItem?.course.title ?? "이윰 SNS 수익화 클래스";
 
   return (
@@ -225,13 +218,13 @@ export default async function Home() {
           </div>
           <div style={{fontSize: '14px', color: '#57514A'}}>{sections.length}개 챕터 · 총 <span className="serif" style={{fontSize: '20px', color: '#201C17'}}>{lessonCount}</span>강</div>
         </div>
-        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '18ch'}}>{featuredItem ? landingCourseDescription : "공개된 커리큘럼을 확인해 보세요."}</h2>
+        <h2 data-reveal="" className="serif" style={{fontSize: 'clamp(30px,4vw,50px)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: '0 0 56px', maxWidth: '18ch'}}>{sections.length > 0 ? landingCourseDescription : "공개된 커리큘럼을 확인해 보세요."}</h2>
 
         <div style={{borderTop: '1px solid #201C17'}}>
           {sections.length > 0 ? (
             sections.map((section, sectionIndex) => (
               <details
-                key={section.id}
+                key={section.key}
                 open={sectionIndex === 0}
                 style={{
                   borderBottom:
@@ -251,16 +244,12 @@ export default async function Home() {
                   <span className="chev" style={{fontSize: '22px', color: '#B85C38', fontWeight: '300'}}>+</span>
                 </summary>
                 <div className="cbody" style={{padding: '0 4px 30px 82px'}}>
-                  {section.description && (
-                    <p style={{margin: '0 0 10px', color: '#7C7367', fontSize: '14px', lineHeight: '1.7'}}>
-                      {section.description}
-                    </p>
-                  )}
                   <ol style={{listStyle: 'none', padding: '0', margin: '0'}}>
-                    {section.lessons.map((lesson, lessonIndex) => (
-                      <li key={lesson.id} style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5'}}>
-                        <span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px'}}>{String(lessonIndex + 1).padStart(2, "0")}</span>
-                        {landingLessonTitleOverrides[lesson.id] ?? lesson.title}
+                    {section.items.map((item) => (
+                      <li key={item.key} style={{display: 'flex', gap: '16px', padding: '12px 0', fontSize: '15px', color: '#4E483F', lineHeight: '1.5', alignItems: 'baseline'}}>
+                        <span style={{color: '#B49F8C', flexShrink: '0', fontSize: '13px', minWidth: '28px'}}>{item.lessonNumber === null ? "—" : `${item.lessonNumber}강`}</span>
+                        <span style={{flex: '1', minWidth: '0'}}>{item.title}</span>
+                        <span style={{color: item.kind === "assignment" ? '#B85C38' : '#7C7367', flexShrink: '0', fontSize: '12px'}}>{item.kind === "assignment" ? "과제" : "강의"}</span>
                       </li>
                     ))}
                   </ol>

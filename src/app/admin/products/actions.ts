@@ -6,6 +6,7 @@ import type { AdminProductStatus } from "@/lib/admin/products";
 import { createClient } from "@/lib/supabase/server";
 import { isSafeLocalPath, isUuid } from "@/lib/validation/safe-input";
 import type { ProductType } from "@/lib/store/product-type";
+import { isMembershipPlanSlug, membershipPlanDefinitions } from "@/lib/store/membership-plans";
 
 export type CreateProductState = {
   status: "idle" | "error" | "success";
@@ -239,18 +240,21 @@ export async function updateProductStatusAction(
 
   const supabase = await createClient();
   if (nextStatus === "active") {
-    const { data: targetProduct } = await supabase
+    const { data: targetProduct, error: targetError } = await supabase
       .from("products")
       .select("product_type")
       .eq("id", productId)
       .maybeSingle<{ product_type: ProductType }>();
+    if (targetError || !targetProduct) {
+      return { ok: false, message: "판매할 상품을 확인하지 못했습니다. 새로고침한 뒤 다시 시도해 주세요." };
+    }
     if (targetProduct?.product_type === "course") {
-      const { data: scope } = await supabase
+      const { data: scope, error: scopeError } = await supabase
         .from("product_course_scopes")
         .select("product_id")
         .eq("product_id", productId)
         .maybeSingle<{ product_id: string }>();
-      if (!scope) {
+      if (scopeError || !scope) {
         return {
           ok: false,
           message: "원본 강의와 판매 범위를 먼저 연결한 뒤 판매를 시작해 주세요.",
@@ -588,7 +592,12 @@ function validateListPrice(values: {
 function revalidatePublicCatalog(slug: string) {
   revalidatePath("/");
   revalidatePath("/courses");
-  revalidatePath(`/courses/${slug}`);
+  const slugs = isMembershipPlanSlug(slug)
+    ? membershipPlanDefinitions.map((plan) => plan.slug)
+    : [slug];
+  for (const affectedSlug of slugs) {
+    revalidatePath(`/courses/${affectedSlug}`);
+  }
   revalidatePath("/checkout");
   revalidatePath("/learn", "layout");
   revalidatePath("/my");

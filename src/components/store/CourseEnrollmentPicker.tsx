@@ -15,6 +15,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { membershipPlanDefinitions } from "@/lib/store/membership-plans";
+import { getSaleAvailability, getSaleAvailabilitySummary } from "@/lib/store/sale-availability";
 import {
   calculateMonthlyInstallmentKrw,
   formatKrw,
@@ -28,6 +29,7 @@ export type MembershipProductOption = {
   title: string;
   priceKrw: number;
   soldOut: boolean;
+  status?: string;
   checkoutHref: string;
 };
 
@@ -64,6 +66,11 @@ export function CourseEnrollmentProvider({
     () => new Map(products.map((product) => [product.slug, product])),
     [products]
   );
+  const tierStatuses = membershipPlanDefinitions.map((plan) => {
+    const product = productBySlug.get(plan.slug);
+    return product?.status ?? (product ? (product.soldOut ? "sold_out" : "active") : undefined);
+  });
+  const saleSummary = getSaleAvailabilitySummary(tierStatuses);
   const show = useCallback((trigger: HTMLButtonElement) => {
     returnFocusRef.current = trigger;
     setOpen(true);
@@ -149,8 +156,15 @@ export function CourseEnrollmentProvider({
           </button>
         </header>
 
+        {saleSummary !== "available" && (
+          <p className={styles.availabilityNotice} role="status">
+            {saleSummary === "all_sold_out" ? "현재 모든 등급이 품절입니다. 가격과 혜택은 아래에서 비교할 수 있어요." :
+              saleSummary === "unavailable" ? "현재 신청 가능한 등급이 없습니다. 판매 준비 상태를 확인해 주세요." :
+              "품절 또는 준비 중인 등급을 제외하고 판매 중인 등급을 선택할 수 있어요."}
+          </p>
+        )}
         <div className={styles.planGrid}>
-          {membershipPlanDefinitions.map((plan) => {
+          {membershipPlanDefinitions.map((plan, index) => {
             const product = productBySlug.get(plan.slug);
             const title = product?.title ?? plan.title;
             const priceKrw = product?.priceKrw ?? plan.fallbackPriceKrw;
@@ -159,7 +173,7 @@ export function CourseEnrollmentProvider({
               installmentMonths
             );
             const monthlyIsEstimate = priceKrw % installmentMonths !== 0;
-            const unavailable = !product || product.soldOut;
+            const availability = getSaleAvailability(tierStatuses[index]);
 
             return (
               <article
@@ -215,10 +229,10 @@ export function CourseEnrollmentProvider({
                   ))}
                 </ul>
 
-                {unavailable ? (
-                  <span className={styles.disabledAction} aria-disabled="true">
-                    {product?.soldOut ? "지금은 신청 마감" : "판매 준비 중"}
-                  </span>
+                {!product || !availability.canPurchase ? (
+                  <button type="button" className={styles.disabledAction} disabled>
+                    {availability.label}
+                  </button>
                 ) : (
                   <Link href={product.checkoutHref} className={styles.selectAction}>
                     {plan.icon} {title} 선택 <span aria-hidden="true">→</span>

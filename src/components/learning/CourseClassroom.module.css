@@ -300,6 +300,43 @@
   padding: 34px 4px 12px;
 }
 
+.lessonDescription {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #f4f1ec;
+  color: #5c554d;
+  overflow-wrap: anywhere;
+}
+
+.lessonDescription h2 {
+  margin: 0 0 12px;
+  color: #3e3832;
+  font-size: 15px;
+}
+
+.lessonDescription p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.lessonDescription p + p {
+  margin-top: 14px;
+}
+
+.lessonDescription a {
+  color: #884f38;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lessonDescription a:focus-visible {
+  outline: 2px solid #884f38;
+  outline-offset: 3px;
+}
+
 .progressSaveWarning {
   min-height: 46px;
   margin-bottom: 18px;
