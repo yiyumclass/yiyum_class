@@ -562,7 +562,7 @@ export default function CourseClassroom({
                     playbackId={muxPlayback.playbackId}
                     tokens={{ playback: muxPlayback.token }}
                     streamType="on-demand"
-                    poster={course.posterSrc || undefined}
+                    poster=""
                     playsInline
                     preload="metadata"
                     accentColor="#D9825E"
