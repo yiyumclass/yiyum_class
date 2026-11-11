@@ -186,6 +186,14 @@ test("카드사와 할부는 자체 UI 없이 토스 결제창형에서 선택�
   assert.doesNotMatch(paymentForm, /<select|type="radio"|flowMode|cardCompany/);
 });
 
+test("현대카드 심사 미통과 동안 결제 전 이용 불가 안내를 보여준다", () => {
+  const paymentForm = readFileSync(
+    new URL("../src/components/checkout/TossPaymentForm.tsx", import.meta.url),
+    "utf8"
+  );
+  assert.match(paymentForm, /현재 현대카드는 이용이 어렵습니다\. 다른 카드를 이용해 주세요\./);
+});
+
 test("결제창형은 중복 요청과 가격 변경을 방어하고 취소 URL에 주문을 남긴다", () => {
   const paymentForm = readFileSync(
     new URL("../src/components/checkout/TossPaymentForm.tsx", import.meta.url),

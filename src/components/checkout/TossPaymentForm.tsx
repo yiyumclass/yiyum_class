@@ -102,6 +102,7 @@ export default function TossPaymentForm({
       <p style={{ color: "#B7A995", fontSize: 13, lineHeight: 1.7, margin: "0 0 20px" }}>
         카드사와 할부는 다음 토스 결제창에서 선택합니다.
         <br />할부 가능 여부와 무이자 혜택은 카드사·카드 종류에 따라 다릅니다.
+        <br />현재 현대카드는 이용이 어렵습니다. 다른 카드를 이용해 주세요.
       </p>
       <label
         style={{

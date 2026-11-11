@@ -67,6 +67,13 @@ Vercel에서 `NEXT_PUBLIC_TOSS_CLIENT_KEY`와 `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_K
 - 조회 시점의 Preview에는 `NEXT_PUBLIC_TOSS_CLIENT_KEY`와 `NEXT_PUBLIC_TOSS_WIDGET_VARIANT_KEY`가 없었다. 원격 Preview 결제 검증에는 테스트 키 쌍·`toss_test`·`CARD_ONLY`를 환경별로 준비해야 한다. 로컬 테스트 성공이 원격 Preview 설정 완료를 의미하지 않는다.
 - 푸시 전 자동 테스트 145개, TypeScript, 변경 파일 ESLint 및 로컬 프로덕션 빌드가 통과했다. 빌드는 로컬 테스트 결제 환경변수로 수행했으므로 운영 결제 연결 검증을 대신하지 않는다.
 
+## 2026-11-12 현대카드 심사 미통과
+
+- 3기 모집(12월)을 앞두고 현대카드 재심사를 요청했으나 통과하지 못했다는 연락을 받았다. 현대카드는 계속 제외한다.
+- 결제창형 `renderPaymentWindow()`는 `variantKey`만 받으므로 코드에서 카드사를 뺄 수 없다. 예전 API 개별 연동의 `cardCompany` 방식은 쓸 수 없다. 실제 차단은 라이브 `DEFAULT` UI → 카드사 목록에서 현대카드를 끄고 저장/게시하는 어드민 작업이며, 코드 배포와 별개로 해야 한다.
+- 결제 폼 상단 안내에 "현재 현대카드는 이용이 어렵습니다. 다른 카드를 이용해 주세요." 문구를 복구했다. 이 문구는 `41986c7`에서 결제창형으로 전환할 때 빠졌다.
+- 이후 심사를 통과하면 어드민에서 현대카드를 켜고, 이 안내 문구와 테스트를 함께 제거한다.
+
 ## 공식 근거
 
 - https://docs.tosspayments.com/guides/v2/payment-widget/integration-window
